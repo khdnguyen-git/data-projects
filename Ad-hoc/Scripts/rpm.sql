@@ -1,0 +1,4 @@
+-- 2024 80k members eligible for rpm auth
+-- 76k not meating dx; 96% not meeting condition
+-- How many of these 76k have HF condition in 2022 -> 2025 in cosmos_pr
+-- Mbi with 

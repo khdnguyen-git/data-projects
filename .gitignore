@@ -1,3 +1,22 @@
+# Data 
+Data/
+Input/
+Output/
+data/
+**/data/
+
+# R
+**/.Rproj.user/
+**/.Rhistory
+
+# IDE
+**/.dbeaver
+.vscode/settings.json
+
+# Environment
+.env
+.conda
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

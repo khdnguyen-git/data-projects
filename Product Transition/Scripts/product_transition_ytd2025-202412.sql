@@ -1,0 +1,680 @@
+-- Claims 202412;
+drop table tmp_1m.kn_distinct_mbi_202412;
+create table tmp_1m.kn_distinct_mbi_202412 as
+select distinct		
+	  fin_mbi_hicn_fnl as mbi
+from fichsrv.tre_membership
+where 1 = 1
+	and sgr_source_name = 'COSMOS'
+	and fin_brand = 'M&R'
+	and migration_source not in ('OAH', 'CSP')
+	and fin_product_level_3 not in ('INSTITUTIONAL')
+	and global_cap = 'NA' 
+	and fin_inc_month = '202412'
+
+drop table tmp_1m.kn_mbi_claims_202412;
+create table tmp_1m.kn_mbi_claims_202412 as
+select 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from tmp_1m.kn_distinct_mbi_202412 as a
+join tadm_tre_cpy.glxy_op_f_202503 as b
+	on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2024'
+group by 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+union 
+select 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from tmp_1m.kn_distinct_mbi_202412 as a
+join tadm_tre_cpy.glxy_pr_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2024'
+group by
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+;
+
+-- Claims 2025;
+drop table tmp_1m.kn_distinct_mbi_2025ytd;
+create table tmp_1m.kn_distinct_mbi_2025ytd as
+select distinct		
+	  fin_mbi_hicn_fnl as mbi
+from fichsrv.tre_membership
+where 1 = 1
+	and sgr_source_name = 'COSMOS'
+	and fin_brand = 'M&R'
+	and migration_source not in ('OAH', 'CSP')
+	and fin_product_level_3 not in ('INSTITUTIONAL')
+	and global_cap = 'NA' 
+	and fin_inc_year = '2025'
+
+drop table tmp_1m.kn_mbi_claims_2025ytd;
+create table tmp_1m.kn_mbi_claims_2025ytd as
+select 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from tmp_1m.kn_distinct_mbi_2025ytd as a
+join tadm_tre_cpy.glxy_op_f_202503 as b
+	on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2025'
+group by 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+union 
+select 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from tmp_1m.kn_distinct_mbi_2025ytd as a
+join tadm_tre_cpy.glxy_pr_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2025'
+group by 
+	b.brand_fnl
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.service_code
+	, b.fst_srvc_year
+	, b.fst_srvc_month
+;
+
+-- Membership 202412
+drop table tmp_1m.kn_mbi_mms_202412;
+create table tmp_1m.kn_mbi_mms_202412 as
+select 
+	b.fin_brand 
+	, b.fin_tfm_product_new 
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month
+ 	, count(distinct b.fin_mbi_hicn_fnl) as mbrs
+from tmp_1m.kn_distinct_mbi_202412 as a
+join fichsrv.tre_membership b
+	on a.mbi = b.fin_mbi_hicn_fnl 
+where b.fin_inc_year = '2024'
+group by
+	b.fin_brand 
+	, b.fin_tfm_product_new 
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month	
+;
+
+-- Membership 2025
+drop table tmp_1m.kn_mbi_mms_2025ytd;
+create table tmp_1m.kn_mbi_mms_2025ytd as
+select 
+	b.fin_brand 
+	, b.fin_tfm_product_new 
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month
+ 	, count(distinct b.fin_mbi_hicn_fnl) as mbrs
+from tmp_1m.kn_distinct_mbi_2025ytd as a
+join fichsrv.tre_membership b
+	on a.mbi = b.fin_mbi_hicn_fnl 
+where b.fin_inc_year = '2025'
+group by
+	b.fin_brand 
+	, b.fin_tfm_product_new 
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month	
+;
+-- Stack 202412 claims and membership tables;
+create table tmp_1m.kn_claims_mms_202412 as
+select
+	'Claims' as category
+	, brand_fnl
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, tfm_product_new_fnl
+	, group_ind_fnl	
+	, product_level_3_fnl
+	, component
+	, hce_service_code
+	, fst_srvc_year
+	, fst_srvc_month
+	, allowed
+	, paid
+	, 0 as mbrs
+from tmp_1m.kn_mbi_claims_202412
+union all
+select
+	'Membership' as category
+	, fin_brand
+	, case when fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then fin_tfm_product_new
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, fin_tfm_product_new
+	, fin_g_i
+	, fin_product_level_3
+	, '' as component
+	, '' as hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+	, 0 as allowed
+	, 0 as paid
+	, mbrs
+from tmp_1m.kn_mbi_mms_202412
+
+-- Stack 2025ytd claims and membership tables;
+create table tmp_1m.kn_claims_mms_2025ytd as
+select
+	'Claims' as category
+	, brand_fnl
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, tfm_product_new_fnl
+	, group_ind_fnl	
+	, product_level_3_fnl
+	, component
+	, hce_service_code
+	, fst_srvc_year
+	, fst_srvc_month
+	, allowed
+	, paid
+	, 0 as mbrs
+from tmp_1m.kn_mbi_claims_2025ytd
+union all
+select
+	'Membership' as category
+	, fin_brand
+	, case when fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then fin_tfm_product_new
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, fin_tfm_product_new
+	, fin_g_i
+	, fin_product_level_3
+	, '' as component
+	, '' as hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+	, 0 as allowed
+	, 0 as paid
+	, mbrs
+from tmp_1m.kn_mbi_mms_2025ytd
+
+-- Find intersection;
+create table tmp_1m.kn_x_mbi_202412_2025ytd as
+select 
+	coalesce(a.mbi, b.mbi) as mbi
+from tmp_1m.kn_distinct_mbi_202412 as a
+inner join tmp_1m.kn_distinct_mbi_2025ytd as b
+on a.mbi = b.mbi
+;
+
+-- Find claims products;
+create table tmp_1m.kn_x_mbi_products_claims_202412 as
+select
+	a.mbi
+	, b.tfm_product_new_fnl
+	, b.product_level_3_fnl
+from tmp_1m.kn_x_mbi_202412_2025ytd as a
+join tadm_tre_cpy.glxy_op_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_month = '202412'
+union 
+select
+	a.mbi
+	, b.tfm_product_new_fnl
+	, b.product_level_3_fnl
+from tmp_1m.kn_x_mbi_202412_2025ytd as a
+join tadm_tre_cpy.glxy_pr_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_month = '202412'
+;
+
+create table tmp_1m.kn_x_mbi_products_claims_2025YTD as
+select
+	a.mbi
+	, b.tfm_product_new_fnl
+	, b.product_level_3_fnl
+from tmp_1m.kn_x_mbi_202412_2025ytd as a
+join tadm_tre_cpy.glxy_op_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2025'
+union 
+select
+	a.mbi
+	, b.tfm_product_new_fnl
+	, b.product_level_3_fnl
+from tmp_1m.kn_x_mbi_202412_2025ytd as a
+join tadm_tre_cpy.glxy_pr_f_202503 as b
+on a.mbi = b.gal_mbi_hicn_fnl
+where fst_srvc_year = '2025'
+;
+
+-- Find membership products
+create table tmp_1m.kn_x_claims_mms_202412 as
+select
+	mbi
+	, 'Claims' as category
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as old_product
+	, tfm_product_new_fnl
+	, product_level_3_fnl
+from tmp_1m.kn_x_mbi_products_claims_202412
+union all
+select
+	mbi
+	, 'Membership' as category
+	, case when fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then fin_tfm_product_new
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as old_product
+	, fin_tfm_product_new
+	, fin_product_level_3
+from tmp_1m.kn_x_mbi_products_mms_202412
+;
+
+
+create table tmp_1m.kn_x_claims_mms_2025ytd as
+select
+	mbi
+	, 'Claims' as category
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as new_product
+	, tfm_product_new_fnl
+	, product_level_3_fnl
+from tmp_1m.kn_x_mbi_products_claims_2025YTD
+union all
+select
+	mbi
+	, 'Membership' as category
+	, case when fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then fin_tfm_product_new
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as new_product
+	, fin_tfm_product_new
+	, fin_product_level_3
+from tmp_1m.kn_x_mbi_products_mms_2025ytd
+
+drop table tmp_1m.kn_x_products_202412_2025ytd
+create table tmp_1m.kn_x_products_202412_2025ytd as
+select distinct
+	coalesce(a.mbi, b.mbi) as mbi 
+	, a.old_product
+	, b.new_product
+	, concat(a.old_product, "-", b.new_product) as product_transition
+from tmp_1m.kn_x_claims_mms_202412 as a
+inner join tmp_1m.kn_x_claims_mms_2025ytd as b
+on a.mbi = b.mbi;
+
+
+
+
+
+drop table kn_x_claims_mms_2025ytd
+create table kn_x_claims_mms_2025ytd as
+select distinct
+	mbi
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	      when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as new_product
+from tmp_1m.kn_x_mbi_products_claims_2025YTD
+union all
+select distinct
+	mbi
+	, case when fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then fin_tfm_product_new
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when fin_tfm_product_new = 'DUAL_CHRONIC' and fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as new_product
+from tmp_1m.kn_x_mbi_products_mms_2025ytd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table tmp_1m.kn_x_mbi_products_mms_202412 as
+select
+	a.mbi
+	, a.hce_cohort
+	'Membership' as category
+	, case when b.fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then b.fin_tfm_product_new
+	      when b.fin_tfm_product_new = 'DUAL_CHRONIC' and b.fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when b.fin_tfm_product_new = 'DUAL_CHRONIC' and b.fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, fin_tfm_product_new
+from tmp_1m.kn_x_mbi_202412_2025ytd as a
+left join fichsrv.tre_membership as b
+on a.mbi = b.fin_mbi_hicn_fnl
+
+union all
+select
+	a.mbi
+	, a.hce_cohort
+	'Membership' as category
+	, case when b.fin_tfm_product_new in ('HMO', 'PPO', 'NPPO') then b.fin_tfm_product_new
+	      when b.fin_tfm_product_new = 'DUAL_CHRONIC' and b.fin_product_level_3 = 'DUAL' then 'DUAL'
+	      when b.fin_tfm_product_new = 'DUAL_CHRONIC' and b.fin_product_level_3 = 'CHRONIC' then 'CHRONIC'
+	      else 'OTHER' end as product
+	, fin_tfm_product_new
+	, fin_g_i
+	, fin_product_level_3
+	, '' as component
+	, '' as hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+	, 0 as allowed
+	, 0 as paid
+	, mbrs
+from tmp_1m.kn_mbi_mms_202412
+
+
+-- Get hce_cohort;
+create table tmp_1m.kn_mbi_cohort_202412_2025ytd as
+select 
+	a.*
+	, b.hce_cohort
+from tmp_1m.kn_mbi_202412_2025ytd as a 
+left join tmp_1y.2024_2025_HCE_COHORT_6 as b
+on a.mbi = b.fin_mbi_hicn_fnl
+;
+
+-- Get product information
+create table tmp_1m.kn_old_product_202412 as
+select 
+	a.*
+	, b.*
+	null as new_product
+from tmp_1m.kn_mbi_cohort_202412_2025ytd as a
+left join kn_claims_mms_202412 as b
+on a.mbi = b.mbi
+;
+
+create table tmp_1m.kn_new_product_2025ytd as
+select 
+	a.*
+	, b.*
+	, null as old_product
+from tmp_1m.kn_mbi_cohort_202412_2025ytd as a
+left join kn_claims_mms_2025ytd as b
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+drop table tmp_1m.kn_product_claims_2025ytd;
+create table tmp_1m.kn_product_claims_2025ytd as
+select 
+	  fin_brand 
+	, new_product
+	, tfm_product_new_fnl
+	, group_ind_fnl
+	, product_level_3_fnl
+	, component
+	, hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+ 	, sum(allw_amt_fnl) as allowed
+	, sum(net_pd_amt_fnl) as paid
+from tmp_1m.kn_mbi_product_2025ytd
+group by 
+	  fin_brand 
+	, new_product
+	, tfm_product_new_fnl
+	, group_ind_fnl
+	, product_level_3_fnl
+	, component
+	, fin_inc_year
+	, fin_inc_month
+;
+
+
+
+-- 202412;
+drop table tmp_1m.kn_old_product_202412;
+create table tmp_1m.kn_old_product_202412 as
+with kn_distinct_mbi_202412 as (
+	select distinct		
+		  fin_mbi_hicn_fnl as mbi
+	from fichsrv.tre_membership
+	where 1 = 1
+		and sgr_source_name = 'COSMOS'
+		and fin_brand = 'M&R'
+		and migration_source not in ('OAH', 'CSP')
+		and fin_product_level_3 not in ('INSTITUTIONAL')
+		and global_cap = 'NA' 
+		and fin_inc_month = '202412'
+)
+select 
+	  b.fin_brand
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	       else 'Others'
+	  end as old_product
+	, tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fin_inc_year
+	, b.fin_inc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from kn_distinct_mbi_202412 as a 
+inner join fichsrv.tre_membership as b
+	on a.mbi = b.fin_mbi_hicn_fnl
+group by
+	  b.fin_brand
+	, old_product
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.fin_inc_year
+	, b.fin_inc_month
+;
+
+
+
+
+
+
+create table tmp_1m.kn_distinct_mbi_2025ytd_202412 as 
+select 
+	  a.mbi
+	, b.mbi
+from tmp_1m.kn_distinct_mbi_2025ytd as a 
+inner join tmp_1m.kn_distinct_mbi_202412 as b 
+	on a.mbi = b.mbi
+;
+
+
+create table tmp_1m.kn_claims_2025ytd_202412 as 
+select 
+	  b.brand_fnl
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	       else 'Others'
+	  end as product
+	, tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.hce_service_code
+	, b.fin_inc_year
+	, b.fin_inc_month
+ 	, sum(b.allw_amt_fnl) as allowed
+	, sum(b.net_pd_amt_fnl) as paid	
+from tmp_1m.kn_distinct_mbi_2025ytd_202412 as a 
+inner join tre.membership as b
+	on a.mbi = b.fin_mbi_hicn_fnl
+group by
+	  b.brand_fnl
+	, product
+	, b.tfm_product_new_fnl
+	, b.group_ind_fnl
+	, b.product_level_3_fnl
+	, b.component
+	, b.fin_inc_year
+	, b.fin_inc_month
+;
+
+create table tmp_1m.kn_mbr_2025ytd_202412 as
+select
+	  b.fin_brand 
+	, case when tfm_product_new_fnl in ('HMO', 'PPO', 'NPPO') then tfm_product_new_fnl
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'DUAL' then 'DUAL'
+	       when tfm_product_new_fnl = 'DUAL_CHRONIC' and product_level_3_fnl = 'CHRONIC' then 'CHRONIC'
+	       else 'Other'
+	  end as product
+	, tfm_product_new_fnl
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month
+ 	, count(distinct b.fin_mbi_hicn_fnl) as n_mbr
+from tmp_1m.kn_distinct_mbi_2025ytd_202412 as a 
+inner join fichsrv.tre_membership as b
+	on a.mbi = b.fin_mbi_hicn_fnl 
+group by
+	  b.fin_brand 
+	, product
+	, b.fin_tfm_product_new 
+	, b.fin_g_i 
+	, b.fin_product_level_3 
+	, b.fin_inc_year
+	, b.fin_inc_month
+;
+
+create table tmp_1m.kn_mbi_claims_mbr_2025ytd_202412 as 
+select 
+	, 'Claims' as category
+	, brand_fnl
+	, product
+	, case when fin_inc_year = '2025' then product else null end as new_product,
+	, case when fin_inc_month = '202412' then product else null end as old_product
+	, tfm_product_new_fnl
+	, group_ind_fnl	
+	, product_level_3_fnl
+	, component
+	, hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+	, allowed
+	, paid
+	, 0 as n_mbr
+from tmp_1m.kn_mbi_claims_2025ytd_202412
+union all
+select
+	, 'Membership' as category
+	, fin_brand
+	, product
+	, case when fin_inc_year = '2025' then product else null end as new_product,
+	, case when fin_inc_month = '202412' then product else null end as old_product
+	, fin_tfm_product_new
+	, fin_g_i
+	, fin_product_level_3
+	, '' as component
+	, '' as hce_service_code
+	, fin_inc_year
+	, fin_inc_month
+	, 0 as allowed
+	, 0 as paid
+	, n_mbr
+from tmp_1m.kn_mbi_mbr_2025ytd_202412
+
