@@ -9,4 +9,21 @@
 	<natures>
 		<nature>org.jkiss.dbeaver.DBeaverNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>Scripts/202508_DCSNP_2024_vs_2025.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/LOC/Scripts/202508_DCSNP_2024_vs_2025.sql</location>
+		</link>
+		<link>
+			<name>Scripts/LOC_TIN.sas</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/LOC/Scripts/LOC_TIN.sas</location>
+		</link>
+		<link>
+			<name>Scripts/Leading Indicator Pull v7_KN.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/LOC/Scripts/Leading Indicator Pull v7_KN.sql</location>
+		</link>
+	</linkedResources>
 </projectDescription>

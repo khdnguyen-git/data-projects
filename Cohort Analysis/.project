@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>Cohort Analysis</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>org.jkiss.dbeaver.DBeaverNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Scripts/cohort_analysis_202504.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/Cohort Analysis/Scripts/cohort_analysis_202504.sql</location>
+		</link>
+		<link>
+			<name>Scripts/cohort_analytics_202505.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/Cohort Analysis/Scripts/cohort_analytics_202505.sql</location>
+		</link>
+		<link>
+			<name>Scripts/scratchpad.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/Cohort Analysis/Scripts/scratchpad.sql</location>
+		</link>
+	</linkedResources>
+</projectDescription>
