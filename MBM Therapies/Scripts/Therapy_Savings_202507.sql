@@ -1,1266 +1,816 @@
+/*==============================================================================
+ * MEMBERSHIP DETAIL PROCESSING
+ * Creates base membership table with pilot/national deployment flags
+ *==============================================================================*/
 
-/*Official version, making top edits on Wycliffe's code
-1. Define Pilot as the 4 states + Individual population; push the Group to National 
-2. Adding ama_pl_of_srvc_cd 49 to the 'Office' category; adding 19, 22, 24 to the OP_REHAB; remove 98943 from Chiro
-
-*/
-
---select * from fichsrv.tre_membership limit 2;
-
-/*______________[ Membership Detail]___________________________________________________________________________________*/							
-DROP table TMP_7d.kn_MBM_dtl;					
-create table TMP_7d.kn_MBM_dtl stored as ORC as 					
+drop table tmp_7d.kn_mbm_dtl;					
+create table tmp_7d.kn_mbm_dtl stored as orc as 					
 select 			
 	fin_mbi_hicn_fnl			
-	,FIN_INC_MONTH			
-	,FIN_INC_QTR 		
-	,fin_market AS MARKET_FNL		
-	,case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end	as MBM_DEPLOY_DT
-	,fin_g_i AS GROUP_IND_FNL		
-	,case when b.migration_source = 'CIP' THEN 'CIP'				
-		  when b.migration_source in ('PC','MEDICA') THEN 'SouthFlorida'					
+	, fin_inc_month			
+	, fin_inc_qtr 		
+	, fin_market as market_fnl		
+	, case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end as mbm_deploy_dt
+	, fin_g_i as group_ind_fnl		
+	, case when b.migration_source = 'CIP' then 'CIP'				
+		  when b.migration_source in ('PC','MEDICA') then 'SouthFlorida'					
 		  when b.fin_product_level_3='DUAL' and b.tfm_include_flag=1 then 'M&R DUALS'					
 		  when b.fin_product_level_3='DUAL' and b.tfm_include_flag=0 then 'C&S DUALS'					
-		  when b.migration_source = 'NA' and b.fin_g_i = 'I' THEN 'Legacy Individual'					
-	      when b.fin_g_i = 'G' THEN 'Group'					
-	      else 'OTHERS' end as POPULATION					
-	,if(GLOBAL_CAP = 'NA',1,0) GLOBAL_CAP		
-	,if(TFM_INCLUDE_FLAG = '1'	,1,0) TFM_INCLUDE	
-	,if(FIN_PRODUCT_LEVEL_3 IN ('INSTITUTIONAL'),1,0) INST		
-	,if(fin_product_level_2 IN ('PFFS'),1,0) PFFS		
-	,if(SPECIAL_NETWORK IN ('ERICKSON'),1,0) ERK			
-	,SGR_SOURCE_NAME  		
-	, 1  MM		
-from fichsrv.tre_membership B 			  --select * from fichsrv.tre_membership limit 2;
+		  when b.migration_source = 'NA' and b.fin_g_i = 'I' then 'Legacy Individual'					
+	      when b.fin_g_i = 'G' then 'Group'					
+	      else 'OTHERS' end as population					
+	, if(global_cap = 'NA',1,0) as global_cap		
+	, if(tfm_include_flag = '1',1,0) as tfm_include	
+	, if(fin_product_level_3 in ('INSTITUTIONAL'),1,0) as inst		
+	, if(fin_product_level_2 in ('PFFS'),1,0) as pffs		
+	, if(special_network in ('ERICKSON'),1,0) as erk			
+	, sgr_source_name  		
+	, 1 as mm		
+from fichsrv.tre_membership as b 			  
 where year(fin_incurred_dt) > 2018			
- 	  AND b.FIN_BRAND = 'M&R'	
+ 	  and b.fin_brand = 'M&R'	
  	  and b.fin_product_level_3 not in ('INSTITUTIONAL', 'DUAL')
 group by 			
 	fin_mbi_hicn_fnl			
-	,FIN_INC_MONTH			
-	,FIN_INC_QTR 		
-	,fin_market  		
-	,case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end	  --caroline edited to show Pilot only take Individual in the 4 states. Groups go to National.
-	,fin_g_i  		
-    ,case when b.migration_source = 'CIP' THEN 'CIP'				
-          when b.migration_source in ('PC','MEDICA') THEN 'SouthFlorida'					
+	, fin_inc_month			
+	, fin_inc_qtr 		
+	, fin_market  		
+	, case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end
+	, fin_g_i  		
+    , case when b.migration_source = 'CIP' then 'CIP'				
+          when b.migration_source in ('PC','MEDICA') then 'SouthFlorida'					
 		  when b.fin_product_level_3='DUAL' and b.tfm_include_flag=1 then 'M&R DUALS'					
 		  when b.fin_product_level_3='DUAL' and b.tfm_include_flag=0 then 'C&S DUALS'					
-		  WHEN b.migration_source = 'NA' and b.fin_g_i = 'I' THEN 'Legacy Individual'					
-		  when b.fin_g_i = 'G' THEN 'Group'					
+		  when b.migration_source = 'NA' and b.fin_g_i = 'I' then 'Legacy Individual'					
+		  when b.fin_g_i = 'G' then 'Group'					
 		  else 'OTHERS' end  					
-	,if(GLOBAL_CAP = 'NA',1,0)  		 
-	,if(TFM_INCLUDE_FLAG = '1'	,1,0)  	
-	,if(FIN_PRODUCT_LEVEL_3 IN ('INSTITUTIONAL'),1,0)  		
-	,if(fin_product_level_2 IN ('PFFS'),1,0) 		
-	,IF(SPECIAL_NETWORK IN ('ERICKSON'),1,0) 			
-	,SGR_SOURCE_NAME
+	, if(global_cap = 'NA',1,0)  		 
+	, if(tfm_include_flag = '1',1,0)  	
+	, if(fin_product_level_3 in ('INSTITUTIONAL'),1,0)  		
+	, if(fin_product_level_2 in ('PFFS'),1,0) 		
+	, if(special_network in ('ERICKSON'),1,0) 			
+	, sgr_source_name
 ;		
 		
-select count(*) from TMP_7d.kn_MBM_dtl;  -- 430370488 415060257  407463331 399836379   392256742 (removed 2019) 442855070  435558291  428264965  450161568
+select count(*) from tmp_7d.kn_mbm_dtl;  -- 430370488 415060257  407463331 399836379   392256742 (removed 2019) 442855070  435558291  428264965  450161568
 								
-	/*______________[ Membership Summary]___________________________________________________________________________________*/							
-DROP TABLE TMP_1y.kn_MBM_MSHP; 							
-CREATE TABLE TMP_1y.kn_MBM_MSHP  stored as orc AS 							
-	select 							
-		 fin_inc_month ep_start_mo							
-		,SUBSTRING(MARKET_FNL,0,2) market_fnl							
-		,mbm_deploy_dt							
-		,group_ind_fnl							
-		,population							
-		,global_cap							
-		,tfm_include							
-		,inst							
-		,pffs							
-		,erk							
-		,sgr_source_name							
-		,sum(mm) mm 							
-		,SUBSTRING(fin_inc_month,0,4) EP_YR 							
-		,SUBSTRING(fin_inc_month,5,2) EP_MNTH							
-	from TMP_7d.kn_MBM_dtl  a
-	where global_cap = 1
-	GROUP BY 							
-		fin_inc_month							
-		,SUBSTRING(MARKET_FNL,0,2)  							
-		,mbm_deploy_dt							
-		,group_ind_fnl							
-		,population							
-		,global_cap							
-		,tfm_include							
-		,inst							
-		,pffs							
-		,erk							
-		,sgr_source_name
+/*==============================================================================
+ * MEMBERSHIP SUMMARY CREATION
+ * Aggregates membership data and creates summary tables for analysis
+ *==============================================================================*/
+
+drop table tmp_1y.kn_mbm_mshp; 							
+create table tmp_1y.kn_mbm_mshp stored as orc as 							
+select 							
+	fin_inc_month as ep_start_mo							
+	, substring(market_fnl,0,2) as market_fnl							
+	, mbm_deploy_dt							
+	, group_ind_fnl							
+	, population							
+	, global_cap							
+	, tfm_include							
+	, inst							
+	, pffs							
+	, erk							
+	, sgr_source_name							
+	, sum(mm) as mm 							
+	, substring(fin_inc_month,0,4) as ep_yr 							
+	, substring(fin_inc_month,5,2) as ep_mnth							
+from tmp_7d.kn_mbm_dtl as a
+where global_cap = 1
+group by 							
+	fin_inc_month							
+	, substring(market_fnl,0,2)  							
+	, mbm_deploy_dt							
+	, group_ind_fnl							
+	, population							
+	, global_cap							
+	, tfm_include							
+	, inst							
+	, pffs							
+	, erk							
+	, sgr_source_name
 ;	
-select count(*) from TMP_1y.kn_MBM_MSHP; 
--- 9606
 
---caroline
-drop table TMP_1y.kn_MBM_MSHP_sum1;
-create table TMP_1y.kn_MBM_MSHP_sum1 stored as orc as
-	SELECT 
-		'MM' as data_type
-		,ep_start_mo
-		,'' as visit_mo
-		,mbm_deploy_dt as pilot_nat
-		,'' as category
-		,'' as claim_status
-		,0 as visit_ep_lag
-		,0 as visit_runout_mo
-		,0 as ep_cnt
-		,0 as visit_cnt
-		,0 as allowed_amt
-		,sum(mm) as mms
-	FROM TMP_1y.kn_MBM_MSHP
-	where population not in ('M&R DUALS', 'C&S DUALS')
-	group by 
-		ep_start_mo
-		,mbm_deploy_dt
+select count(*) from tmp_1y.kn_mbm_mshp; -- 9606
+
+drop table tmp_1y.kn_mbm_mshp_sum1;
+create table tmp_1y.kn_mbm_mshp_sum1 stored as orc as
+select 
+	'MM' as data_type
+	, ep_start_mo
+	, '' as visit_mo
+	, mbm_deploy_dt as pilot_nat
+	, '' as category
+	, '' as claim_status
+	, 0 as visit_ep_lag
+	, 0 as visit_runout_mo
+	, 0 as ep_cnt
+	, 0 as visit_cnt
+	, 0 as allowed_amt
+	, sum(mm) as mms
+from tmp_1y.kn_mbm_mshp
+where population not in ('M&R DUALS', 'C&S DUALS')
+group by 
+	ep_start_mo
+	, mbm_deploy_dt
 ;
---132 128 126 124  144 142   select count(*) from TMP_1y.kn_MBM_MSHP_sum1;
--- 132 select count(*) from TMP_1m.kn_MBM_MSHP_sum1;
 
+select count(*) from tmp_1y.kn_mbm_mshp_sum1; -- 132 128 126 124  144 142
 
-select * from TMP_1y.kn_MBM_MSHP_sum1;
-
+select * from tmp_1y.kn_mbm_mshp_sum1;
 --_____________[ END OF MEMBERSHIP ]_____________________________________
 
 
-/*_______________[ bring in LOPA ]_________________________________________________________________________________*/
-describe formatted tmp_1y.PA_TRCKNG_op_EVNT_LOPA_DTL;
-describe formatted tmp_1y.PA_TRCKNG_pr_EVNT_LOPA_DTL;
+/*==============================================================================
+ * LOPA DATA INTEGRATION
+ * Processes LOPA (Loss of Prior Authorization) data for OP and PR claims
+ *==============================================================================*/
 
+describe formatted tmp_1y.pa_trckng_op_evnt_lopa_dtl;
+describe formatted tmp_1y.pa_trckng_pr_evnt_lopa_dtl;
 
-drop table TMP_1y.kn_LOPA_op_1;
-create table TMP_1y.kn_LOPA_op_1 as
+drop table tmp_1y.kn_lopa_op_1;
+create table tmp_1y.kn_lopa_op_1 as
 select  
-	case when Include_non_sug_event=1 then MBI_DOS end as Total_Mbi_Dos
-	,case when final_LOPA_IND=1 and   mbr_DOS_latest_submission=1 and Include_non_sug_event=1 then MBI_DOS end as still_LOPA_MBI_DOS
-	,case when Include_non_sug_event=1  and  (final_LOPA_IND<>1  OR  mbr_DOS_latest_submission<>1)  then MBI_DOS end as Overturn_LOPA_MBI_DOS
-	,*
-from tmp_1y.PA_TRCKNG_op_EVNT_LOPA_DTL
+	case when include_non_sug_event=1 then mbi_dos end as total_mbi_dos
+	, case when final_lopa_ind=1 and mbr_dos_latest_submission=1 and include_non_sug_event=1 then mbi_dos end as still_lopa_mbi_dos
+	, case when include_non_sug_event=1 and (final_lopa_ind<>1 or mbr_dos_latest_submission<>1) then mbi_dos end as overturn_lopa_mbi_dos
+	, *
+from tmp_1y.pa_trckng_op_evnt_lopa_dtl
 ;	
--- 2484707 2417275  2306199  2164101  1729931 1526791   1338831   select count(*) from TMP_1y.kn_LOPA_op_1  	
--- 2484707   select count(*) from TMP_1m.kn_LOPA_op_1  	
 
+select count(*) from tmp_1y.kn_lopa_op_1; -- 2484707 2417275  2306199  2164101  1729931 1526791   1338831
 
-drop table TMP_1y.kn_LOPA_op;
-create table TMP_1y.kn_LOPA_op as
+drop table tmp_1y.kn_lopa_op;
+create table tmp_1y.kn_lopa_op as
 select 
-	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_LOPA
-	,*
-from TMP_1y.kn_LOPA_op_1
+	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
+	, *
+from tmp_1y.kn_lopa_op_1
 ; 
---2417275  2306199 2164101	select count(*) from TMP_1y.kn_LOPA_op
 
-drop table TMP_1y.kn_LOPA_pr_1;
-create table TMP_1y.kn_LOPA_pr_1 as
+select count(*) from tmp_1y.kn_lopa_op; -- 2417275  2306199 2164101
+
+drop table tmp_1y.kn_lopa_pr_1;
+create table tmp_1y.kn_lopa_pr_1 as
 select  
-	MBI_DOS as Total_Mbi_Dos
-	,case when final_LOPA_IND=1 and   mbr_DOS_latest_submission=1  then MBI_DOS end as still_LOPA_MBI_DOS
-	,case when final_LOPA_IND<>1  OR  mbr_DOS_latest_submission<>1  then MBI_DOS end as Overturn_LOPA_MBI_DOS
-	,*
-	from tmp_1y.PA_TRCKNG_pr_EVNT_LOPA_DTL
+	mbi_dos as total_mbi_dos
+	, case when final_lopa_ind=1 and mbr_dos_latest_submission=1 then mbi_dos end as still_lopa_mbi_dos
+	, case when final_lopa_ind<>1 or mbr_dos_latest_submission<>1 then mbi_dos end as overturn_lopa_mbi_dos
+	, *
+from tmp_1y.pa_trckng_pr_evnt_lopa_dtl
 ;	
---3714719  3501938 3263702     select count(*) from TMP_1y.kn_LOPA_pr_1
 
-drop table TMP_1y.kn_LOPA_pr;
-create table TMP_1y.kn_LOPA_pr as
+select count(*) from tmp_1y.kn_lopa_pr_1; -- 3714719  3501938 3263702
+
+drop table tmp_1y.kn_lopa_pr;
+create table tmp_1y.kn_lopa_pr as
 select 
-	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_LOPA
-	,*
-from TMP_1y.kn_LOPA_pr_1
+	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
+	, *
+from tmp_1y.kn_lopa_pr_1
 ;
---3714719  3501938 3263702	select count(*) from TMP_1y.kn_LOPA_pr
 
+select count(*) from tmp_1y.kn_lopa_pr; -- 3714719  3501938 3263702
 		
-/*______________[PR CLAIM PULL]___________________________________________________________________________________*/;	
-DROP TABLE TMP_1y.kn_MBM_EPISODE_1; 
- CREATE TABLE TMP_1y.kn_MBM_EPISODE_1 AS 
- SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,case when b.ever_lopa is not null then 1 else 0 end as LOPA_FLG
-			,case when b.still_LOPA_MBI_DOS is not null then 1 else 0 end as still_LOPA
-			,case when b.Overturn_LOPA_MBI_DOS is not null then 1 else 0 end as overturn_LOPA
-			, 0 APC_PBL_FLG
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-FROM   FICHSRV.COSMOS_PR a
-LEFT JOIN  TMP_1y.kn_LOPA_pr b		   --select * from TMP_1y.kn_LOPA_pr				 
-		on concat(a.gal_mbi_hicn_fnl, "_", a.fst_srvc_dt) = b.Total_Mbi_Dos 
-        and a.proc_cd = b.proc_cd
-        and a.prov_tin = b.prov_tin
-WHERE 	a.TFM_INCLUDE_FLAG = 1 			
-		AND a.GLOBAL_CAP IN ('NA')			
-		AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL' )		--remove Duals from the data for now; Duals will go live 4/1/2025???	
-		AND a.plan_level_2_fnl NOT IN ('PFFS')			
-		AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-		AND a.ST_ABBR_CD = a.MARKET_FNL			
-		AND a.prov_prtcp_sts_cd = 'P'			
-		AND (SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3 or SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> '3') -- REMOVE THIS TO INCLUDE HH CLAIMS 
-		AND (a.ama_pl_of_srvc_cd <> 12 or a.ama_pl_of_srvc_cd <> '12')     
-		AND (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	OR 
-	 	a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-	AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131') --HH, workers comp, etc.
-GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,case when b.ever_lopa is not null then 1 else 0 end
-			,case when b.still_LOPA_MBI_DOS is not null then 1 else 0 end
-			,case when b.Overturn_LOPA_MBI_DOS is not null then 1 else 0 end
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') )) 		
-		ORDER BY a.GAL_MBI_HICN_FNL ASC;
---64354173  62711063  60990327       select count(*) from TMP_1y.kn_MBM_EPISODE_1 	
+/*==============================================================================
+ * PROFESSIONAL CLAIMS PROCESSING
+ * Processes PR claims with LOPA flags and categorization
+ *==============================================================================*/
 
-/*	
---Pulling pr claims for 2018, 2019, 2020  --only need to run once. Ran on 10/8/2024
-drop table 	TMP_1y.kn_MBM_EPISODE_1_2018_2020;
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_1_2018_2020 AS 
- SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,0 as LOPA_FLG
-			,0 as still_LOPA
-			,0 as overturn_LOPA
-			,0 APC_PBL_FLG
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-FROM   tadm_tre_cpy.glxy_pr_f_2018 a
-WHERE 	a.TFM_INCLUDE_FLAG = 1 			
-		AND a.GLOBAL_CAP IN ('NA')			
-		AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL' )		
-		AND a.plan_level_2_fnl NOT IN ('PFFS')			
-		AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-		AND a.ST_ABBR_CD = a.MARKET_FNL			
-		AND a.prov_prtcp_sts_cd = 'P'			
-		AND (SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3 or SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> '3') -- REMOVE THIS TO INCLUDE HH CLAIMS 
-		AND (a.ama_pl_of_srvc_cd <> 12 or a.ama_pl_of_srvc_cd <> '12')     
-		AND (a.proc_cd in
-				('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 	     '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-	    		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 		 '98940', '98941', '98942') 
-     	     OR 
-	 		a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131') --HH, workers comp, etc.
-GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') )) 		
-		--ORDER BY a.GAL_MBI_HICN_FNL ASC
-union all
-SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,0 as LOPA_FLG
-			,0 as still_LOPA
-			,0 as overturn_LOPA
-			, 0 APC_PBL_FLG
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-FROM   tadm_tre_cpy.glxy_pr_f_2019 a
-WHERE 	a.TFM_INCLUDE_FLAG = 1 			
-		AND a.GLOBAL_CAP IN ('NA')			
-		AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL' )		
-		AND a.plan_level_2_fnl NOT IN ('PFFS')			
-		AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-		AND a.ST_ABBR_CD = a.MARKET_FNL			
-		AND a.prov_prtcp_sts_cd = 'P'			
-		AND (SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3 or SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> '3') -- REMOVE THIS TO INCLUDE HH CLAIMS 
-		AND (a.ama_pl_of_srvc_cd <> 12 or a.ama_pl_of_srvc_cd <> '12')     
-		AND (a.proc_cd in
+drop table tmp_1y.kn_mbm_episode_1; 
+create table tmp_1y.kn_mbm_episode_1 as 
+select			
+	a.gal_mbi_hicn_fnl as mbi		
+	, a.component		
+	, a.eventkey as id		
+	, a.service_code  		
+	, a.fst_srvc_dt as start_dt		
+	, a.fst_srvc_month as serv_month		
+	, a.fst_srvc_qtr as hce_qtr		
+	, to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as hctapaidmonth		
+	, a.market_fnl		
+	, a.group_ind_fnl		
+	, a.proc_cd		
+	, a.rvnu_cd		
+	, a.primary_diag_cd		
+	, a.ahrq_diag_genl_catgy_desc		
+	, a.ahrq_diag_dtl_catgy_desc		
+	, a.prov_prtcp_sts_cd		
+	, a.prov_tin		
+	, a.full_nm as prov_full_nm
+	, case when b.ever_lopa is not null then 1 else 0 end as lopa_flg
+	, case when b.still_lopa_mbi_dos is not null then 1 else 0 end as still_lopa
+	, case when b.overturn_lopa_mbi_dos is not null then 1 else 0 end as overturn_lopa
+	, 0 as apc_pbl_flg
+	, if(a.proc_cd in ('98940','98941','98942') and a.component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd in ('22','62', '19', '24') and a.component = 'OP','OP_REHAB','Other') )) as category		
+	, sum(a.allw_amt_fnl) as allowed		
+	, sum(a.net_pd_amt_fnl) as paid		
+	, sum(0) as tadm_util		
+	, count(distinct a.eventkey) as visits                     		
+	, sum(a.adj_srvc_unit_cnt) as adj_srvc_units		
+from fichsrv.cosmos_pr as a
+left join tmp_1y.kn_lopa_pr as b		   
+	on concat(a.gal_mbi_hicn_fnl, "_", a.fst_srvc_dt) = b.total_mbi_dos 
+    and a.proc_cd = b.proc_cd
+    and a.prov_tin = b.prov_tin
+where a.tfm_include_flag = 1 			
+	and a.global_cap in ('NA')			
+	and a.product_level_3_fnl not in ('INSTITUTIONAL', 'DUAL' )			
+	and a.plan_level_2_fnl not in ('PFFS')			
+	and a.special_network not in ('ERICKSON')			
+	and a.st_abbr_cd = a.market_fnl			
+	and a.prov_prtcp_sts_cd = 'P'			
+	and (substring(coalesce(a.bil_typ_cd,'0'),0,1) <> 3 or substring(coalesce(a.bil_typ_cd,'0'),0,1) <> '3')
+	and (a.ama_pl_of_srvc_cd <> 12 or a.ama_pl_of_srvc_cd <> '12')     
+	and (a.proc_cd in
 		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
 		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
 		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
 		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
 		 '98940', '98941', '98942') 
-     	OR 
-	 	a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131') --HH, workers comp, etc.
-GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') )) 		
-		--ORDER BY a.GAL_MBI_HICN_FNL ASC
-union all
-SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,0 as LOPA_FLG
-			,0 as still_LOPA
-			,0 as overturn_LOPA
-			, 0 APC_PBL_FLG
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-FROM   tadm_tre_cpy.glxy_pr_f_2020 a
-WHERE 	a.TFM_INCLUDE_FLAG = 1 			
-		AND a.GLOBAL_CAP IN ('NA')			
-		AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL')	
-		AND a.plan_level_2_fnl NOT IN ('PFFS')			
-		AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-		AND a.ST_ABBR_CD = a.MARKET_FNL			
-		AND a.prov_prtcp_sts_cd = 'P'			
-		AND (SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3 or SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> '3') -- REMOVE THIS TO INCLUDE HH CLAIMS 
-		AND (a.ama_pl_of_srvc_cd <> 12 or a.ama_pl_of_srvc_cd <> '12')     
-		AND (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	OR 
-	 	a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131') --HH, workers comp, etc.
-GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') )) 		
-		--ORDER BY a.GAL_MBI_HICN_FNL ASC
-;
---21694518 22395739    select count(*) from TMP_1y.kn_MBM_EPISODE_1_2018_2020
-*/	
+     	or 
+	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
+	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
+group by			
+	a.gal_mbi_hicn_fnl		
+	, a.component		
+	, a.eventkey		
+	, a.service_code		
+	, a.fst_srvc_dt  		
+	, a.fst_srvc_month  		
+	, a.fst_srvc_qtr  		
+	, to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
+	, a.market_fnl		
+	, a.group_ind_fnl		
+	, a.proc_cd		
+	, a.rvnu_cd		
+	, a.primary_diag_cd		
+	, a.ahrq_diag_genl_catgy_desc		
+	, a.ahrq_diag_dtl_catgy_desc		
+	, a.prov_prtcp_sts_cd		
+	, a.prov_tin		
+	, a.full_nm 
+	, case when b.ever_lopa is not null then 1 else 0 end
+	, case when b.still_lopa_mbi_dos is not null then 1 else 0 end
+	, case when b.overturn_lopa_mbi_dos is not null then 1 else 0 end
+	, if(a.proc_cd in ('98940','98941','98942') and a.component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd in ('22','62', '19', '24') and a.component = 'OP','OP_REHAB','Other') )) 		
+order by a.gal_mbi_hicn_fnl asc;
+
+select count(*) from tmp_1y.kn_mbm_episode_1; -- 64354173  62711063  60990327
+
 	
-/*______________[OP CLAIM PULL APC ]___(APC = Ambulatory Payment Code)________________________________________________________________________________*/;	
-DROP TABLE TMP_1y.kn_MBM_CLAIMS; 
-CREATE TABLE TMP_1y.kn_MBM_CLAIMS AS 
+/*==============================================================================
+ * OUTPATIENT CLAIMS APC PROCESSING
+ * Processes OP claims with APC flags and LOPA integration
+ *==============================================================================*/
+
+drop table tmp_1y.kn_mbm_claims; 
+create table tmp_1y.kn_mbm_claims as 
 select *
-	,max(if(instr(clm_rev_rsn_1_10,'00473-') > 0 , 1,0)) over (partition by SITE_CD,CLM_AUD_NBR,SBSCR_NBR) CLM_APC_FLG
-	,sum(ALLW_AMT_FNL) over (partition by SITE_CD,CLM_AUD_NBR,SBSCR_NBR) CLM_ALLW_AMNT
+	, max(if(instr(clm_rev_rsn_1_10,'00473-') > 0 , 1,0)) over (partition by site_cd,clm_aud_nbr,sbscr_nbr) as clm_apc_flg
+	, sum(allw_amt_fnl) over (partition by site_cd,clm_aud_nbr,sbscr_nbr) as clm_allw_amnt
 from 
 	(select *	
-	    	,concat(a.clm_rev_rsn_1_cd ,'-',a.clm_rev_rsn_2_cd,'-',a.clm_rev_rsn_3_cd,'-',a.clm_rev_rsn_4_cd,'-',a.clm_rev_rsn_5_cd,'-',a.clm_rev_rsn_6_cd,'-',a.clm_rev_rsn_7_cd,'-',a.clm_rev_rsn_8_cd,'-',a.clm_rev_rsn_9_cd,'-',a.clm_rev_rsn_10_cd, '-') clm_rev_rsn_1_10																																													
-     from FICHSRV.COSMOS_OP a
+	    	, concat(a.clm_rev_rsn_1_cd ,'-',a.clm_rev_rsn_2_cd,'-',a.clm_rev_rsn_3_cd,'-',a.clm_rev_rsn_4_cd,'-',a.clm_rev_rsn_5_cd,'-',a.clm_rev_rsn_6_cd,'-',a.clm_rev_rsn_7_cd,'-',a.clm_rev_rsn_8_cd,'-',a.clm_rev_rsn_9_cd,'-',a.clm_rev_rsn_10_cd, '-') as clm_rev_rsn_1_10																																													
+     from fichsrv.cosmos_op as a
 	 where (a.proc_cd in 			
 			  ('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
 		 	   '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
 	   		   '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
 	 	       '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
 		 	   '98940', '98941', '98942')
-		      OR RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		    AND PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
-	)e ;
---77536654  75713104  73889849     72274650           select count(*) from TMP_1y.kn_MBM_CLAIMS
+		      or rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
+		    and proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
+	) as e ;
 
+select count(*) from tmp_1y.kn_mbm_claims; -- 77536654  75713104  73889849     72274650
 
-DROP TABLE TMP_1y.kn_MBM_EPISODE_1b; 
- CREATE TABLE TMP_1y.kn_MBM_EPISODE_1b AS 
-		SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.HCE_SERVICE_CODE SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,case when b.ever_lopa is not null then 1 else 0 end as LOPA_FLG
-			,case when b.still_LOPA_MBI_DOS is not null then 1 else 0 end as still_LOPA
-			,case when b.Overturn_LOPA_MBI_DOS is not null then 1 else 0 end as overturn_LOPA
-			,case when a.CLM_APC_FLG = 1 and  c.rsn_cd in ('208','176','943') then 1 else 0 end as APC_PBL_FLG  	
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-		FROM  TMP_1y.kn_MBM_CLAIMS a
-		left join  TMP_1y.kn_LOPA_op b
-		on  concat(a.gal_mbi_hicn_fnl, "_", a.fst_srvc_dt) = b.Total_Mbi_Dos 
-            and a.proc_cd = b.proc_cd
-            --and a.service_code = b.service_code
-            and a.prov_tin = b.prov_tin
-        left join fichsrv.TADM_GLXY_REASON_CODE c
-        on a.FNL_RSN_CD_SYS_ID = c.RSN_CD_SYS_ID
-		WHERE a.TFM_INCLUDE_FLAG = 1 			
-					AND a.GLOBAL_CAP IN ('NA')			
-					AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL')			
-					AND a.plan_level_2_fnl NOT IN ('PFFS')			
-					AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-					--AND ST_ABBR_CD IN ('AR', 'GA', 'NJ', 'SC','CT','NC','PA','NY','AL')			
-					AND a.ST_ABBR_CD = a.MARKET_FNL			
-					AND a.prov_prtcp_sts_cd = 'P'			
-					AND SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3			
-					AND a.ama_pl_of_srvc_cd <> 12 			
-					AND (a.proc_cd in 			
-			  				('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 					 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 					 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 					 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 					 '98940', '98941', '98942') 
-		      				OR a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		      		AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')			
-		GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.HCE_SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,case when b.ever_lopa is not null then 1 else 0 end
-			,case when b.still_LOPA_MBI_DOS is not null then 1 else 0 end
-			,case when b.Overturn_LOPA_MBI_DOS is not null then 1 else 0 end
-			,case when a.CLM_APC_FLG = 1 and  c.rsn_cd in ('208','176','943') then 1 else 0 end
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))   		
-		ORDER BY a.GAL_MBI_HICN_FNL ASC
+drop table tmp_1y.kn_mbm_episode_1b; 
+create table tmp_1y.kn_mbm_episode_1b as 
+select			
+	a.gal_mbi_hicn_fnl as mbi		
+	, a.component		
+	, a.eventkey as id		
+	, a.hce_service_code as service_code  		
+	, a.fst_srvc_dt as start_dt		
+	, a.fst_srvc_month as serv_month		
+	, a.fst_srvc_qtr as hce_qtr		
+	, to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as hctapaidmonth		
+	, a.market_fnl		
+	, a.group_ind_fnl		
+	, a.proc_cd		
+	, a.rvnu_cd		
+	, a.primary_diag_cd		
+	, a.ahrq_diag_genl_catgy_desc		
+	, a.ahrq_diag_dtl_catgy_desc		
+	, a.prov_prtcp_sts_cd		
+	, a.prov_tin		
+	, a.full_nm as prov_full_nm
+	, case when b.ever_lopa is not null then 1 else 0 end as lopa_flg
+	, case when b.still_lopa_mbi_dos is not null then 1 else 0 end as still_lopa
+	, case when b.overturn_lopa_mbi_dos is not null then 1 else 0 end as overturn_lopa
+	, case when a.clm_apc_flg = 1 and c.rsn_cd in ('208','176','943') then 1 else 0 end as apc_pbl_flg  	
+	, if(a.proc_cd in ('98940','98941','98942') and a.component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd in ('22','62', '19', '24') and a.component = 'OP','OP_REHAB','Other') )) as category		
+	, sum(a.allw_amt_fnl) as allowed		
+	, sum(a.net_pd_amt_fnl) as paid		
+	, sum(0) as tadm_util		
+	, count(distinct a.eventkey) as visits                     		
+	, sum(a.adj_srvc_unit_cnt) as adj_srvc_units		
+from tmp_1y.kn_mbm_claims as a
+left join tmp_1y.kn_lopa_op as b
+	on concat(a.gal_mbi_hicn_fnl, "_", a.fst_srvc_dt) = b.total_mbi_dos 
+    and a.proc_cd = b.proc_cd
+    and a.prov_tin = b.prov_tin
+left join fichsrv.tadm_glxy_reason_code as c
+    on a.fnl_rsn_cd_sys_id = c.rsn_cd_sys_id
+where a.tfm_include_flag = 1 			
+	and a.global_cap in ('NA')			
+	and a.product_level_3_fnl not in ('INSTITUTIONAL', 'DUAL')			
+	and a.plan_level_2_fnl not in ('PFFS')			
+	and a.special_network not in ('ERICKSON')			
+	and a.st_abbr_cd = a.market_fnl			
+	and a.prov_prtcp_sts_cd = 'P'			
+	and substring(coalesce(a.bil_typ_cd,'0'),0,1) <> 3			
+	and a.ama_pl_of_srvc_cd <> 12 			
+	and (a.proc_cd in 			
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
+		 '98940', '98941', '98942') 
+		or a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
+	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')			
+group by			
+	a.gal_mbi_hicn_fnl		
+	, a.component		
+	, a.eventkey		
+	, a.hce_service_code		
+	, a.fst_srvc_dt  		
+	, a.fst_srvc_month  		
+	, a.fst_srvc_qtr  		
+	, to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
+	, a.market_fnl		
+	, a.group_ind_fnl		
+	, a.proc_cd		
+	, a.rvnu_cd		
+	, a.primary_diag_cd		
+	, a.ahrq_diag_genl_catgy_desc		
+	, a.ahrq_diag_dtl_catgy_desc		
+	, a.prov_prtcp_sts_cd		
+	, a.prov_tin		
+	, a.full_nm 
+	, case when b.ever_lopa is not null then 1 else 0 end
+	, case when b.still_lopa_mbi_dos is not null then 1 else 0 end
+	, case when b.overturn_lopa_mbi_dos is not null then 1 else 0 end
+	, case when a.clm_apc_flg = 1 and c.rsn_cd in ('208','176','943') then 1 else 0 end
+	, if(a.proc_cd in ('98940','98941','98942') and a.component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd in ('22','62', '19', '24') and a.component = 'OP','OP_REHAB','Other') ))   		
+order by a.gal_mbi_hicn_fnl asc
 ; 
---38657890  37706450  36737912  35885437      select count(*) from TMP_1y.kn_MBM_EPISODE_1b
 
-/*
---pulling OP claims for 2018, 2019, 2020 - Only need to run once, ran on 10/8/2024
-drop table TMP_1y.kn_MBM_CLAIMS_2018_2020;
-CREATE TABLE TMP_1y.kn_MBM_CLAIMS_2018_2020 AS 
-select *
-	,max(if(instr(clm_rev_rsn_1_10,'00473-') > 0 , 1,0)) over (partition by SITE_CD,CLM_AUD_NBR,SBSCR_NBR) CLM_APC_FLG
-	,sum(ALLW_AMT_FNL) over (partition by SITE_CD,CLM_AUD_NBR,SBSCR_NBR) CLM_ALLW_AMNT
-from 
-	(select GAL_MBI_HICN_FNL ,COMPONENT,EVENTKEY,HCE_SERVICE_CODE SERVICE_CODE,FST_SRVC_DT,FST_SRVC_MONTH ,FST_SRVC_QTR,adjd_dt,MARKET_FNL,GROUP_IND_FNL,PROC_CD,RVNU_CD,PRIMARY_DIAG_CD,AHRQ_DIAG_GENL_CATGY_DESC,AHRQ_DIAG_DTL_CATGY_DESC,PROV_PRTCP_STS_CD,PROV_TIN,FULL_NM,ama_pl_of_srvc_cd ,ALLW_AMT_FNL,NET_PD_AMT_FNL,ADJ_SRVC_UNIT_CNT,TFM_INCLUDE_FLAG ,GLOBAL_CAP,PRODUCT_LEVEL_3_FNL ,plan_level_2_fnl,SPECIAL_NETWORK,ST_ABBR_CD,bil_typ_cd,SITE_CD,CLM_AUD_NBR,SBSCR_NBR,FNL_RSN_CD_SYS_ID
-	    	,concat(a.clm_rev_rsn_1_cd ,'-',a.clm_rev_rsn_2_cd,'-',a.clm_rev_rsn_3_cd,'-',a.clm_rev_rsn_4_cd,'-',a.clm_rev_rsn_5_cd,'-',a.clm_rev_rsn_6_cd,'-',a.clm_rev_rsn_7_cd,'-',a.clm_rev_rsn_8_cd,'-',a.clm_rev_rsn_9_cd,'-',a.clm_rev_rsn_10_cd, '-') clm_rev_rsn_1_10																																													
-     from tadm_tre_cpy.glxy_op_f_2018 a
-	 where (a.proc_cd in 			
-			  ('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 	   '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 	   '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		  	   '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 	   '98940', '98941', '98942') 
-		    OR RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		   AND PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
-union ALL 
-select GAL_MBI_HICN_FNL ,COMPONENT,EVENTKEY,HCE_SERVICE_CODE SERVICE_CODE,FST_SRVC_DT,FST_SRVC_MONTH ,FST_SRVC_QTR,adjd_dt,MARKET_FNL,GROUP_IND_FNL,PROC_CD,RVNU_CD,PRIMARY_DIAG_CD,AHRQ_DIAG_GENL_CATGY_DESC,AHRQ_DIAG_DTL_CATGY_DESC,PROV_PRTCP_STS_CD,PROV_TIN,FULL_NM,ama_pl_of_srvc_cd ,ALLW_AMT_FNL,NET_PD_AMT_FNL,ADJ_SRVC_UNIT_CNT,TFM_INCLUDE_FLAG ,GLOBAL_CAP,PRODUCT_LEVEL_3_FNL ,plan_level_2_fnl,SPECIAL_NETWORK,ST_ABBR_CD,bil_typ_cd,SITE_CD,CLM_AUD_NBR,SBSCR_NBR,FNL_RSN_CD_SYS_ID
-	    	,concat(a.clm_rev_rsn_1_cd ,'-',a.clm_rev_rsn_2_cd,'-',a.clm_rev_rsn_3_cd,'-',a.clm_rev_rsn_4_cd,'-',a.clm_rev_rsn_5_cd,'-',a.clm_rev_rsn_6_cd,'-',a.clm_rev_rsn_7_cd,'-',a.clm_rev_rsn_8_cd,'-',a.clm_rev_rsn_9_cd,'-',a.clm_rev_rsn_10_cd, '-') clm_rev_rsn_1_10																																													
-from tadm_tre_cpy.glxy_op_f_2019 a
-where (a.proc_cd in 			
-			  ('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 	   '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 	   '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		  	   '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 	   '98940', '98941', '98942') 
-		      OR RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-	   AND PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
-union ALL 
-select GAL_MBI_HICN_FNL ,COMPONENT,EVENTKEY,HCE_SERVICE_CODE SERVICE_CODE,FST_SRVC_DT,FST_SRVC_MONTH ,FST_SRVC_QTR,adjd_dt,MARKET_FNL,GROUP_IND_FNL,PROC_CD,RVNU_CD,PRIMARY_DIAG_CD,AHRQ_DIAG_GENL_CATGY_DESC,AHRQ_DIAG_DTL_CATGY_DESC,PROV_PRTCP_STS_CD,PROV_TIN,FULL_NM,ama_pl_of_srvc_cd ,ALLW_AMT_FNL,NET_PD_AMT_FNL,ADJ_SRVC_UNIT_CNT,TFM_INCLUDE_FLAG ,GLOBAL_CAP,PRODUCT_LEVEL_3_FNL ,plan_level_2_fnl,SPECIAL_NETWORK,ST_ABBR_CD,bil_typ_cd,SITE_CD,CLM_AUD_NBR,SBSCR_NBR,FNL_RSN_CD_SYS_ID
-		    	,concat(a.clm_rev_rsn_1_cd ,'-',a.clm_rev_rsn_2_cd,'-',a.clm_rev_rsn_3_cd,'-',a.clm_rev_rsn_4_cd,'-',a.clm_rev_rsn_5_cd,'-',a.clm_rev_rsn_6_cd,'-',a.clm_rev_rsn_7_cd,'-',a.clm_rev_rsn_8_cd,'-',a.clm_rev_rsn_9_cd,'-',a.clm_rev_rsn_10_cd, '-') clm_rev_rsn_1_10																																													
-from tadm_tre_cpy.glxy_op_f_2020 a
-where (a.proc_cd in 			
-			  ('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 	   '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 	   '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		  	   '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 	   '98940', '98941', '98942')
-		     OR RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-	   AND PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
-	)e ;
---38195692   38203014             select count(*) from TMP_1y.kn_MBM_CLAIMS_2018_2020
+select count(*) from tmp_1y.kn_mbm_episode_1b; -- 38657890  37706450  36737912  35885437
 
+/*==============================================================================
+ * CLAIMS UNION AND CATEGORIZATION
+ * Combines PR and OP claims, adds provider tags and deployment categories
+ *==============================================================================*/
 
-DROP TABLE TMP_1y.kn_MBM_EPISODE_1b_2018_2020; 
- CREATE TABLE TMP_1y.kn_MBM_EPISODE_1b_2018_2020 AS 
-		SELECT			
-			a.GAL_MBI_HICN_FNL AS MBI		
-			,a.COMPONENT		
-			,a.EVENTKEY AS ID		
-			,a.SERVICE_CODE  		
-			,a.FST_SRVC_DT AS START_DT		
-			,a.FST_SRVC_MONTH AS SERV_MONTH		
-			,a.FST_SRVC_QTR HCE_QTR		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy'))) as HCTAPaidMonth		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM as PROV_FULL_NM
-			,0 as LOPA_FLG
-			,0 as still_LOPA
-			,0 as overturn_LOPA
-			,case when a.CLM_APC_FLG = 1 and  c.rsn_cd in ('208','176','943') then 1 else 0 end as APC_PBL_FLG  	
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))  CATEGORY		
-			,sum(a.ALLW_AMT_FNL) as ALLOWED		
-			,sum(a.NET_PD_AMT_FNL) as PAID		
-			,sum(0) as TADM_UTIL		
-			,COUNT(DISTINCT a.EVENTKEY) as Visits                     		
-			,sum(a.ADJ_SRVC_UNIT_CNT) AS ADJ_SRVC_UNITS		
-		FROM  TMP_1y.kn_MBM_CLAIMS_2018_2020 a
-		left join fichsrv.TADM_GLXY_REASON_CODE c
-        on a.FNL_RSN_CD_SYS_ID = c.RSN_CD_SYS_ID
-		WHERE a.TFM_INCLUDE_FLAG = 1 			
-					AND a.GLOBAL_CAP IN ('NA')			
-					AND a.PRODUCT_LEVEL_3_FNL NOT IN ('INSTITUTIONAL', 'DUAL')			
-					AND a.plan_level_2_fnl NOT IN ('PFFS')			
-					AND a.SPECIAL_NETWORK NOT IN ('ERICKSON')			
-					--AND ST_ABBR_CD IN ('AR', 'GA', 'NJ', 'SC','CT','NC','PA','NY','AL')			
-					AND a.ST_ABBR_CD = a.MARKET_FNL			
-					AND a.prov_prtcp_sts_cd = 'P'			
-					AND SUBSTRING(coalesce(a.bil_typ_cd,'0'),0,1) <> 3			
-					AND a.ama_pl_of_srvc_cd <> 12 			
-					AND (a.proc_cd in 			
-			  				('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 					 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 					 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 					 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 					 '98940', '98941', '98942') 
-		      				OR a.RVNU_CD IN ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-		      		AND a.PROC_CD NOT IN ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')			
-		GROUP BY			
-			a.GAL_MBI_HICN_FNL		
-			,a.COMPONENT		
-			,a.EVENTKEY		
-			,a.SERVICE_CODE		
-			,a.FST_SRVC_DT  		
-			,a.FST_SRVC_MONTH  		
-			,a.FST_SRVC_QTR  		
-			,to_date(from_unixtime(unix_timestamp(concat(date_format(date_add(a.adjd_dt,10),'MM'),'-','1','-',date_format(date_add(a.adjd_dt,10),'yyyy')),'MM-dd-yyyy')))		
-			,a.MARKET_FNL		
-			,a.GROUP_IND_FNL		
-			,a.PROC_CD		
-			,a.RVNU_CD		
-			,a.PRIMARY_DIAG_CD		
-			,a.AHRQ_DIAG_GENL_CATGY_DESC		
-			,a.AHRQ_DIAG_DTL_CATGY_DESC		
-			,a.PROV_PRTCP_STS_CD		
-			,a.PROV_TIN		
-			,a.FULL_NM 
-			,case when a.CLM_APC_FLG = 1 and  c.rsn_cd in ('208','176','943') then 1 else 0 end
-			,if(a.proc_cd in ('98940','98941','98942') and a.Component = 'PR' , 'Chiro' ,if(a.ama_pl_of_srvc_cd in ('11', '49'), 'Office',if(a.ama_pl_of_srvc_cd IN ('22','62', '19', '24') and  a.Component = 'OP','OP_REHAB','Other') ))   		
-		ORDER BY a.GAL_MBI_HICN_FNL ASC
-; 
---36737912  32319558    select count(*) from TMP_1y.kn_MBM_EPISODE_1b
-*/
-	
---union PR and OP claims	
-/*
-TMP_1y.kn_MBM_EPISODE_1	  (PR 2021 and later)	
-TMP_1y.kn_MBM_EPISODE_1b  (OP 2021 and later)
-TMP_1y.kn_MBM_EPISODE_1_2018_2020 (PR 2018-2020)
-TMP_1y.kn_MBM_EPISODE_1b_2018_2020  (OP 2018-2020)
-*/
-
-DROP TABLE TMP_1y.kn_MBM_EPISODE_1c;
-create table TMP_1y.kn_MBM_EPISODE_1c as
-select * from TMP_1y.kn_MBM_EPISODE_1
+drop table tmp_1y.kn_mbm_episode_1c;
+create table tmp_1y.kn_mbm_episode_1c as
+select * from tmp_1y.kn_mbm_episode_1
 union all
-select * from TMP_1y.cl_MBM_EPISODE_1_2018_2020
+select * from tmp_1y.cl_mbm_episode_1_2018_2020
 union all
-select * from TMP_1y.kn_MBM_EPISODE_1b
+select * from tmp_1y.kn_mbm_episode_1b
 union all
-select * from TMP_1y.cl_MBM_EPISODE_1b_2018_2020
+select * from tmp_1y.cl_mbm_episode_1b_2018_2020
 ;
---134268620 141253070  138658520  135969246		select count(*) from TMP_1y.kn_MBM_EPISODE_1c
 
-select * from TMP_1y.kn_MBM_EPISODE_1c limit 2;
+select count(*) from tmp_1y.kn_mbm_episode_1c; -- 134268620 141253070  138658520  135969246
+
+select * from tmp_1y.kn_mbm_episode_1c limit 2;
 select serv_month, sum(allowed) as allowedamt 
-from TMP_1y.kn_MBM_EPISODE_1c
+from tmp_1y.kn_mbm_episode_1c
 where serv_month = '202407'
 group by serv_month;
 
---$  81,004,260.74
-
-
-
-
-/*
-INSERT INTO TMP_1y.kn_MBM_EPISODE_1			
-SELECT * FROM TMP_1y.kn_MBM_EPISODE_1b
+drop table tmp_1y.kn_mbm_episode_2; 
+create table tmp_1y.kn_mbm_episode_2 as 			
+select			
+	*			
+	, if(dnl_allowed > 0.01, 'Paid', if(still_lopa = 1, 'LOPA', if(apc_pbl_flg = 1, 'APC-Paid', 'Other Denied' ))) as claim_status
+	, if(tin_num is null,0,1) as optum_flg 			
+	, case when proc_cd in ('98940','98941','98942')  			
+		 then 'Chiro'			
+			when proc_cd in ('97001','97002','97003','97004','97012','97016','97018','97022','97024','97026'	
+		  ,'97028','97032','97033','97034','97035','97036','97039','97110','97112','97113'			
+		  ,'97116','97124','97139','97140','97150','97161','97162','97163','97164','97165'			
+		  ,'97166','97167','97168','97530','97532','97533','97535','97537','97542','97545'			
+		  ,'97546','97750','97755','97760','97761','97762','97799','G0129','G0151','G0152'			
+		  ,'G0281','G0282','G0283','G9041','G9043','G9044','S9129','S9131')			
+			     then 'PT-OT'	
+			when proc_cd in ('70371','92506','92507','92508','92521','92522','92523','92524','92526','92626'	
+		    ,'92627','92630','92633','96105','S9128') 			
+			     then 'ST'	
+		  else 'Other' end 			
+			as mbmserv_dtl	
+	, case when (market_fnl in ('AR', 'GA', 'NJ', 'SC') and group_ind_fnl = 'I') then
+			case when category = 'OP_REHAB' then 'Phase-II'
+			else
+			case when tin_num is null then'Phase-II' 
+			else 'Phase-I' end 
+			end 
+			else 'National'
+	end as mbm_deploy_dt	
+from (select a.*, tin_num  			
+      from (select *
+		        , sum(allowed) over (partition by id,start_dt,category) as dnl_allowed
+                , max(lopa_flg) over (partition by id,start_dt,category ) as max_lopa_flg
+             from tmp_1y.kn_mbm_episode_1c) as a 			
+             left join tmp_1y.p8001_optum_tin_2 as b 			
+             on prov_tin = tin_num 			
+             and i = 1 ) as b 	
 ;
-*/
 
-
---select * from TMP_1y.kn_MBM_EPISODE_1 where mbi in ( '7FR1DH1AJ99', '7FR3UP9RH60')
-		
-/*______________[Add Optum Provider tags & Category definitions ]___________________________________________________________________________________*/;	
-DROP TABLE TMP_1y.kn_MBM_EPISODE_2; 
-create table TMP_1y.kn_MBM_EPISODE_2 as 			
-		select			
-		*			
-		,IF(DNL_ALLOWED > 0.01, 'Paid', IF(still_LOPA = 1, 'LOPA', IF(APC_PBL_FLG = 1, 'APC-Paid', 'Other Denied' )))CLAIM_STATUS   --CAROLINE updated LOPA flag to use Still_LOPA
-		,IF(TIN_NUM IS NULL,0,1) OPTUM_FLG 			
-		,case when PROC_CD in ('98940','98941','98942')  			
-		     then 'Chiro'			
-				when PROC_CD in ('97001','97002','97003','97004','97012','97016','97018','97022','97024','97026'	
-		      ,'97028','97032','97033','97034','97035','97036','97039','97110','97112','97113'			
-		      ,'97116','97124','97139','97140','97150','97161','97162','97163','97164','97165'			
-		      ,'97166','97167','97168','97530','97532','97533','97535','97537','97542','97545'			
-		      ,'97546','97750','97755','97760','97761','97762','97799','G0129','G0151','G0152'			
-		      ,'G0281','G0282','G0283','G9041','G9043','G9044','S9129','S9131')			
-				     then  'PT-OT'	
-				when PROC_CD in ('70371','92506','92507','92508','92521','92522','92523','92524','92526','92626'	
-		        ,'92627','92630','92633','96105','S9128') 			
-				     then  'ST'	
-		      else 'Other' end 			
-				as MBMserv_dtl	
-		,case when (market_fnl in ('AR', 'GA', 'NJ', 'SC') and group_ind_fnl = 'I') then   --caroline edited to only keep Individual in Pilot, Groups move to National
-					case when  CATEGORY = 'OP_REHAB' then 'Phase-II'
-					else
-					case when TIN_NUM is NULL then'Phase-II' 
-					else 'Phase-I'	end 
-					end 
-					else 'National'
-		end as MBM_DEPLOY_DT	
-		from (SELECT a.*, tin_num  			
-		      FROM  (SELECT *
-					        ,SUM(ALLOWED) OVER (PARTITION BY ID,START_DT,CATEGORY) DNL_ALLOWED
-		                    ,MAX(LOPA_FLG) OVER (PARTITION BY ID,START_DT,CATEGORY ) MAX_LOPA_FLG
-		             FROM TMP_1y.kn_MBM_EPISODE_1c) a 			
-		             left join TMP_1Y.P8001_OPTUM_TIN_2 b 			
-		             on prov_tin = tin_num 			
-		             and i = 1 ) b 	
-;
--- 134268620 141253070  138658520  135969246		select count(*) from TMP_1y.kn_MBM_EPISODE_2
+select count(*) from tmp_1y.kn_mbm_episode_2; -- 134268620 141253070  138658520  135969246
 
 select serv_month, sum(allowed) as allowedamt 
-from TMP_1y.kn_MBM_EPISODE_2
-where serv_month = '202406'  -- 73491717.81 73432103.42  73635236.05  73,514,079.66 (shorter proc_cd list)  76,561,115.88 (original proc_cd list) 
-group by serv_month;
-
-/*
-select   
-	mbi , start_dt , proc_cd , count(*) as cnt
-from TMP_1y.kn_MBM_EPISODE_2
-group by mbi, start_dt, proc_cd 
-having count(*) >1
-
-select * 
-from TMP_1y.kn_MBM_EPISODE_2
-where mbi = '1A09DN3RY47'
-      and start_dt = '2022-03-29'
-      and proc_cd = '97022'
-   
-select * 
-from FICHSRV.COSMOS_OP
-where GAL_MBI_HICN_FNL = '1A09DN3RY47'
-      and fst_srvc_dt = '2022-03-29'
-      and proc_cd = '97022'
-      
-select * 
-from tmp_1y.PA_TRCKNG_OP_CLM_LOPA
-where 
-
-GAL_MBI_HICN_FNL = '1A09DN3RY47'
-      and fst_srvc_dt = '2022-03-29'
-      and proc_cd = '97022'
-      
-      
-select distinct service_code from tmp_1y.PA_TRCKNG_OP_CLM_LOPA
+from tmp_1y.kn_mbm_episode_2
+where serv_month = '202406'  
+group by serv_month; -- 73491717.81 73432103.42  73635236.05  73,514,079.66 (shorter proc_cd list)  76,561,115.88 (original proc_cd list)
 
 
+/*==============================================================================
+ * EPISODE ANALYSIS FRAMEWORK
+ * Creates episode aggregation and visit ranking structure
+ *==============================================================================*/
 
---select * from TMP_1Y.P8001_OPTUM_TIN_2
-select * from TMP_1y.kn_MBM_EPISODE_2 limit 2;
-*/
-
-
-/*
-_____________caroline: LOPA Count_________________________
-select * from TMP_1y.kn_MBM_EPISODE_2 limit 10;
-
---sum on DOS Month
-drop table TMP_7d.kn_MBM_EPISODE_2_lopa
-create table TMP_7d.kn_MBM_EPISODE_2_lopa as
-select
-component
---,start_dt
-,serv_month
-,case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end as pilot_national
-,market_fnl
-,group_ind_fnl
-,category
-,claim_status
-,sum(visits) as visit_cnt
-,sum(dnl_allowed) as allowed_amt
-from TMP_1y.kn_MBM_EPISODE_2
-where serv_month > '202109'
-group by
-component
---,start_dt
-,serv_month
-,case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end
-,market_fnl
-,group_ind_fnl
-,category
-,claim_status
-
-select count(*) from TMP_7d.kn_MBM_EPISODE_2_lopa --39421
-select * from TMP_7d.kn_MBM_EPISODE_2_lopa
-
---sum on DOS Daily for 9/1/2024 and after
-drop table TMP_7d.kn_MBM_EPISODE_2_lopa_daily
-create table TMP_7d.kn_MBM_EPISODE_2_lopa_daily as
-select
-component
-,start_dt
-,serv_month
-,case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end as pilot_national
-,market_fnl
-,group_ind_fnl
-,category
-,claim_status
-,sum(visits) as visit_cnt
-,sum(dnl_allowed) as allowed_amt
-from TMP_1y.kn_MBM_EPISODE_2
-where start_dt > '2024-08-31'
-group by
-component
-,start_dt
-,serv_month
-,case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end
-,market_fnl
-,group_ind_fnl
-,category
-,claim_status
-
-select count(*) from TMP_7d.kn_MBM_EPISODE_2_lopa_daily --30032
-select * from TMP_7d.kn_MBM_EPISODE_2_lopa_daily
-
-/*______________[Final Agggregation]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_3;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_3 AS SELECT			
-			concat(MBI,'-',CATEGORY) MBI		
-			,COMPONENT		
-			,ID		
-			--,SERVICE_CODE		
-			,START_DT		
-			,SERV_MONTH		
-			,HCE_QTR		
-			,min(HCTAPaidMonth) as HCTAPaidMonth		
-			,MBM_DEPLOY_DT		
-			,MARKET_FNL	
-			,CLAIM_STATUS
-			,CAST(MBMserv_dtl as varchar (10)) AS MBMserv 		
-		--	,case when HHserv_dtl in ('RN' ,'PT' ,'OT' ,'Aide','LPN' ,'ST' ,'SW' ) then HHserv_dtl 		
-		--		else "Ancillary" end as HHserv	
-			--,PROV_PRTCP_STS_CD			
-			,CATEGORY	
-			,sum(ALLOWED) as ALLOWED		
-			,sum(PAID) as PAID		
-			,sum(TADM_UTIL) as TADM_UTIL
-			,count(distinct concat(id,START_DT)) as Visits 
-			,count(Visits) as Vsts                     		
-			,sum(ADJ_SRVC_UNITS) AS ADJ_SRVC_UNITS		
-		FROM TMP_1y.kn_MBM_EPISODE_2
-		WHERE PROV_PRTCP_STS_CD='P'	
-		--AND GROUP_IND_FNL = 'I'
-			--AND MBMserv_dtl in ('RN' ,'PT' ,'OT' ,'Aide','LPN' ,'ST' ,'SW' ) --Removed Ancillary service codes		
-		GROUP BY			
-		    concat(MBI,'-',CATEGORY)
-			,COMPONENT		
-			,ID		
-			--,SERVICE_CODE		
-			,START_DT		
-			,SERV_MONTH		
-			,HCE_QTR		
-		--	,HCTAPaidMonth		
-			,MBM_DEPLOY_DT		
-			,MARKET_FNL		
-			,CLAIM_STATUS		
-			,MBMserv_dtl		
-		--	,case when HHserv_dtl in ('RN' ,'PT' ,'OT' ,'Aide','LPN' ,'ST' ,'SW' ) then HHserv_dtl 		
-		--		else "Ancillary" end	
-			--,PROV_PRTCP_STS_CD		
-			,OPTUM_FLG		
-			,CATEGORY	
-		ORDER BY MBI,MBMserv,START_DT,ID
+drop table tmp_1y.kn_mbm_episode_3;  
+create table tmp_1y.kn_mbm_episode_3 as 
+select			
+	concat(mbi,'-',category) as mbi		
+	, component		
+	, id		
+	, start_dt		
+	, serv_month		
+	, hce_qtr		
+	, min(hctapaidmonth) as hctapaidmonth		
+	, mbm_deploy_dt		
+	, market_fnl	
+	, claim_status
+	, cast(mbmserv_dtl as varchar (10)) as mbmserv 		
+	, category	
+	, sum(allowed) as allowed		
+	, sum(paid) as paid		
+	, sum(tadm_util) as tadm_util
+	, count(distinct concat(id,start_dt)) as visits 
+	, count(visits) as vsts                     		
+	, sum(adj_srvc_units) as adj_srvc_units		
+from tmp_1y.kn_mbm_episode_2
+where prov_prtcp_sts_cd='P'	
+group by			
+    concat(mbi,'-',category)
+	, component		
+	, id		
+	, start_dt		
+	, serv_month		
+	, hce_qtr		
+	, mbm_deploy_dt		
+	, market_fnl		
+	, claim_status		
+	, mbmserv_dtl		
+	, optum_flg		
+	, category	
+order by mbi,mbmserv,start_dt,id
 ;
-	
--- 63423287 66929218  65797555     64650521  select count(*) from TMP_1y.kn_MBM_EPISODE_3  -- where mbi like '7GT2FY4RA93%'
 
-/*______________[Rank-Visits]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_4;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_4 AS  			
-SELECT 
-	MBI
-	,COMPONENT
-	,ID
-	--,SERVICE_CODE
-	,START_DT
-	,ROW_NUMBER() OVER (PARTITION BY MBI,MBM_DEPLOY_DT ORDER BY START_DT ) I 
-	,SERV_MONTH
-	,HCE_QTR
-	,HCTAPAIDMONTH
-	,MBM_DEPLOY_DT
-	,MARKET_FNL
-	,CLAIM_STATUS
-	,MBMSERV
-	--,PROV_PRTCP_STS_CD
-	,CATEGORY
-	,ALLOWED
-	,PAID
-	,TADM_UTIL
-	,VISITS
-	,VSTS
-	,ADJ_SRVC_UNITS
-FROM  TMP_1y.kn_MBM_EPISODE_3 A
+select count(*) from tmp_1y.kn_mbm_episode_3; -- 63423287 66929218  65797555     64650521
+
+drop table tmp_1y.kn_mbm_episode_4;  
+create table tmp_1y.kn_mbm_episode_4 as  			
+select 
+	mbi
+	, component
+	, id
+	, start_dt
+	, row_number() over (partition by mbi,mbm_deploy_dt order by start_dt ) as i 
+	, serv_month
+	, hce_qtr
+	, hctapaidmonth
+	, mbm_deploy_dt
+	, market_fnl
+	, claim_status
+	, mbmserv
+	, category
+	, allowed
+	, paid
+	, tadm_util
+	, visits
+	, vsts
+	, adj_srvc_units
+from tmp_1y.kn_mbm_episode_3 as a
 ;
---66929218  65797555   64650521    select count(*) from TMP_1y.kn_MBM_EPISODE_4   -- where mbi like '7GT2FY4RA93%'
-drop table tmp_1m.kn_MBM_EPISODE_lag ;
-create table tmp_1m.kn_MBM_EPISODE_lag  as 
+
+select count(*) from tmp_1y.kn_mbm_episode_4; -- 66929218  65797555   64650521
+
+drop table tmp_1m.kn_mbm_episode_lag ;
+create table tmp_1m.kn_mbm_episode_lag as 
 select 
 	*
-from tmp_1y.knt_MBM_EPISODE_lag 
+from tmp_1y.knt_mbm_episode_lag 
 ;
 
-/*______________[Visits Episode Lag]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_lag;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_lag  AS  
-SELECT A.MBI
-	,A.COMPONENT
-	,A.ID
-	,A.START_DT
-	,B.START_DT PREV_START_DT
-	,datediff(A.START_DT,B.START_DT) Visit_dy_lag
-	,if(datediff(A.START_DT,B.START_DT) > 30,1,0) Ep_flag
-	,A.I 
-	,B.I PREV_I
-	,A.SERV_MONTH
-	,A.HCE_QTR
-	,A.HCTAPAIDMONTH
-	,A.MBM_DEPLOY_DT
-	,A.MARKET_FNL
-	,A.CLAIM_STATUS
-	,A.MBMSERV
-	,A.CATEGORY
-	,A.ALLOWED
-	,A.PAID
-	,A.TADM_UTIL
-	,A.VISITS
-	,A.VSTS
-	,A.ADJ_SRVC_UNITS
-FROM  TMP_1y.kn_MBM_EPISODE_4  A
-LEFT JOIN TMP_1y.kn_MBM_EPISODE_4 B 
-ON 	A.MBI = B.MBI 
-	AND A.MBM_DEPLOY_DT = B.MBM_DEPLOY_DT
-	AND A.I = B.I+1 
+/*==============================================================================
+ * VISIT EPISODE LAG CALCULATION
+ * Calculates time gaps between visits and episode flags
+ *==============================================================================*/
+
+drop table tmp_1y.kn_mbm_episode_lag;  
+create table tmp_1y.kn_mbm_episode_lag as  
+select a.mbi
+	, a.component
+	, a.id
+	, a.start_dt
+	, b.start_dt as prev_start_dt
+	, datediff(a.start_dt,b.start_dt) as visit_dy_lag
+	, if(datediff(a.start_dt,b.start_dt) > 30,1,0) as ep_flag
+	, a.i 
+	, b.i as prev_i
+	, a.serv_month
+	, a.hce_qtr
+	, a.hctapaidmonth
+	, a.mbm_deploy_dt
+	, a.market_fnl
+	, a.claim_status
+	, a.mbmserv
+	, a.category
+	, a.allowed
+	, a.paid
+	, a.tadm_util
+	, a.visits
+	, a.vsts
+	, a.adj_srvc_units
+from tmp_1y.kn_mbm_episode_4 as a
+left join tmp_1y.kn_mbm_episode_4 as b 
+	on a.mbi = b.mbi 
+	and a.mbm_deploy_dt = b.mbm_deploy_dt
+	and a.i = b.i+1 
 ;
+
+select count(*) from tmp_1y.kn_mbm_episode_lag; -- 66929218  65797555  64650521
  
---66929218  65797555  64650521   select count(*) from TMP_1y.kn_MBM_EPISODE_lag	     --  where mbi like '7GT2FY4RA93%'
- 
+/*==============================================================================
+ * EPISODE START DATE DETERMINATION
+ * Identifies episode boundaries and calculates cumulative episodes
+ *==============================================================================*/
 
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/;
-DROP TABLE TMP_1y.kn_MBM_EPISODE_vst_ep_2;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_vst_ep_2  AS  
-SELECT A.MBI
-	,A.COMPONENT
-	,A.ID
-	,A.START_DT
-	,A.PREV_START_DT
-	,Visit_dy_lag
-	,Ep_flag
-	,MIN(START_DT) OVER (PARTITION BY MBI,CMLTV_EPISODES ) EP_START_DT
-	,CMLTV_EPISODES
-	,A.I 
-	,A.PREV_I
-	,A.SERV_MONTH
-	,A.HCE_QTR
-	,A.HCTAPAIDMONTH
-	,MIN(HCTAPAIDMONTH) OVER (PARTITION BY MBI,CMLTV_EPISODES ) EP_HCTAPAIDMONTH
-	,A.MBM_DEPLOY_DT
-	,A.MARKET_FNL
-	,A.CLAIM_STATUS
-	,A.MBMSERV
-	,A.CATEGORY
-	,A.ALLOWED
-	,A.PAID
-	,A.TADM_UTIL
-	,A.VISITS
-	,A.VSTS
-	,A.ADJ_SRVC_UNITS
-FROM (SELECT *  
- 			,SUM(IF(PREV_START_DT IS NULL,1,Ep_flag)) OVER (PARTITION BY  MBI ORDER BY START_DT  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) CMLTV_EPISODES 
-	  FROM TMP_1y.kn_MBM_EPISODE_LAG ) A
- ;
+drop table tmp_1y.kn_mbm_episode_vst_ep_2;  
+create table tmp_1y.kn_mbm_episode_vst_ep_2 as  
+select a.mbi
+	, a.component
+	, a.id
+	, a.start_dt
+	, a.prev_start_dt
+	, visit_dy_lag
+	, ep_flag
+	, min(start_dt) over (partition by mbi,cmltv_episodes ) as ep_start_dt
+	, cmltv_episodes
+	, a.i 
+	, a.prev_i
+	, a.serv_month
+	, a.hce_qtr
+	, a.hctapaidmonth
+	, min(hctapaidmonth) over (partition by mbi,cmltv_episodes ) as ep_hctapaidmonth
+	, a.mbm_deploy_dt
+	, a.market_fnl
+	, a.claim_status
+	, a.mbmserv
+	, a.category
+	, a.allowed
+	, a.paid
+	, a.tadm_util
+	, a.visits
+	, a.vsts
+	, a.adj_srvc_units
+from (select *  
+ 		, sum(if(prev_start_dt is null,1,ep_flag)) over (partition by mbi order by start_dt rows between unbounded preceding and current row) as cmltv_episodes 
+	  from tmp_1y.kn_mbm_episode_lag ) as a
+;
 
---66929218  65797555  64650521   select count(*) from TMP_1y.kn_MBM_EPISODE_vst_ep_2      -- where mbi like '7GT2FY4RA93%'
+select count(*) from tmp_1y.kn_mbm_episode_vst_ep_2; -- 66929218  65797555  64650521
 
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/;
-DROP TABLE TMP_1y.kn_MBM_EPISODE_SMRY;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_SMRY AS  
+drop table tmp_1y.kn_mbm_episode_smry;  
+create table tmp_1y.kn_mbm_episode_smry as  
 select  
-	A.SERV_MONTH VISIT_MONTH
-	,DATE_FORMAT(EP_START_DT,'yyyyMM') EP_START_MO 
-	,A.HCTAPAIDMONTH
-	,A.MBM_DEPLOY_DT
-	,A.MARKET_FNL
-	,A.CLAIM_STATUS
-	,A.MBMSERV
-	,A.CATEGORY
-	,COUNT(DISTINCT MBI) MBR_COUNT
-	,SUM(A.ALLOWED) ALLW 
-	,SUM(A.PAID) PD 
-	,SUM(A.VISITS) VISITS
-	,SUM(Ep_flag) EPISODES
-from TMP_1y.kn_MBM_EPISODE_vst_ep_2 a
-GROUP BY 
-	A.SERV_MONTH  
-	,DATE_FORMAT(EP_START_DT,'yyyyMM') 
-	,A.HCTAPAIDMONTH
-	,A.MBM_DEPLOY_DT
-	,A.MARKET_FNL	
-	,A.CLAIM_STATUS
-	,A.MBMSERV
-	,A.CATEGORY
+	a.serv_month as visit_month
+	, date_format(ep_start_dt,'yyyyMM') as ep_start_mo 
+	, a.hctapaidmonth
+	, a.mbm_deploy_dt
+	, a.market_fnl
+	, a.claim_status
+	, a.mbmserv
+	, a.category
+	, count(distinct mbi) as mbr_count
+	, sum(a.allowed) as allw 
+	, sum(a.paid) as pd 
+	, sum(a.visits) as visits
+	, sum(ep_flag) as episodes
+from tmp_1y.kn_mbm_episode_vst_ep_2 as a
+group by 
+	a.serv_month  
+	, date_format(ep_start_dt,'yyyyMM') 
+	, a.hctapaidmonth
+	, a.mbm_deploy_dt
+	, a.market_fnl	
+	, a.claim_status
+	, a.mbmserv
+	, a.category
 ;
---1555388  1526174  1496541   select count(*) from TMP_1y.kn_MBM_EPISODE_SMRY
+
+select count(*) from tmp_1y.kn_mbm_episode_smry; -- 1555388  1526174  1496541
   
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_RO_LAG;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_RO_LAG   AS  
-SELECT A.MBI
-	,A.COMPONENT
-	,A.ID
-	,A.START_DT
-	,floor((DATEDIFF(HCTAPAIDMONTH,START_DT)+20)/30.5) VISIT_RUNOUT_MO  
-	,round((DATEDIFF(HCTAPAIDMONTH,START_DT)+20)/1,0) VISIT_RUNOUT 
-	,floor(DATEDIFF(START_DT,EP_START_DT)/30.5) VISIT_EP_LAG 
-	,Visit_dy_lag
-	,IF(PREV_START_DT IS NULL,1,Ep_flag) Ep_flag
-	,EP_START_DT
-	,CMLTV_EPISODES
-	,A.I 
-	,A.PREV_I
-	,A.SERV_MONTH
-	,A.HCE_QTR
-	,A.HCTAPAIDMONTH
-	,EP_HCTAPAIDMONTH
-	,A.MBM_DEPLOY_DT
-	,A.MARKET_FNL
-	,A.CLAIM_STATUS
-	,A.MBMSERV
-	,A.CATEGORY
-	,A.ALLOWED
-	,A.PAID
-	,A.TADM_UTIL
-	,A.VISITS
-	,A.VSTS
-	,A.ADJ_SRVC_UNITS
-FROM TMP_1y.kn_MBM_EPISODE_vst_ep_2 A
+/*==============================================================================
+ * EPISODE SUMMARY AND RUNOUT ANALYSIS
+ * Calculates runout periods and creates aggregated episode data
+ *==============================================================================*/
+
+drop table tmp_1y.kn_mbm_episode_ro_lag;  
+create table tmp_1y.kn_mbm_episode_ro_lag as  
+select a.mbi
+	, a.component
+	, a.id
+	, a.start_dt
+	, floor((datediff(hctapaidmonth,start_dt)+20)/30.5) as visit_runout_mo  
+	, round((datediff(hctapaidmonth,start_dt)+20)/1,0) as visit_runout 
+	, floor(datediff(start_dt,ep_start_dt)/30.5) as visit_ep_lag 
+	, visit_dy_lag
+	, if(prev_start_dt is null,1,ep_flag) as ep_flag
+	, ep_start_dt
+	, cmltv_episodes
+	, a.i 
+	, a.prev_i
+	, a.serv_month
+	, a.hce_qtr
+	, a.hctapaidmonth
+	, ep_hctapaidmonth
+	, a.mbm_deploy_dt
+	, a.market_fnl
+	, a.claim_status
+	, a.mbmserv
+	, a.category
+	, a.allowed
+	, a.paid
+	, a.tadm_util
+	, a.visits
+	, a.vsts
+	, a.adj_srvc_units
+from tmp_1y.kn_mbm_episode_vst_ep_2 as a
 ;
 
---66929218  65797555  64650521  select count(*) from TMP_1y.kn_MBM_EPISODE_RO_LAG --  where mbi like '7GT2FY4RA93%'
+select count(*) from tmp_1y.kn_mbm_episode_ro_lag; -- 66929218  65797555  64650521
 
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_RO_LAG2;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_RO_LAG2   AS  
-SELECT 
-	A.MBI
-	,A.ID
-	,EP_START_DT
-	,CMLTV_EPISODES
-	,START_DT
-	,DATE_FORMAT(EP_START_DT,'yyyyMM') EP_START_MO 
-	,DATE_FORMAT(EP_START_DT,'yyyy') ep_start_YEAR
-	,MARKET_FNL
-	,MBM_DEPLOY_DT
-	,CATEGORY
-	,CLAIM_STATUS
-	,HCTAPAIDMONTH
-	,MBMSERV VISIT_MBMSERV
-	,VISIT_RUNOUT_MO
-	,0 EP_RUNOUT_MO
-	,DATE_FORMAT(START_DT,'yyyyMM') VISIT_MO
-	,VISIT_EP_LAG 
-	,Ep_flag EPISODES
-	,VISITS
-	,ALLOWED
-	,0 MM 
-FROM TMP_1y.kn_MBM_EPISODE_RO_LAG A
-;
---66929218  65797555  64650521    select count(*) from  TMP_1y.kn_MBM_EPISODE_RO_LAG2
-
-
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_AGG6_EP;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_AGG6_EP    AS  
-SELECT 
-	'EPISODES' DATA_TYPE
-	,EP_START_MO 
-	,CONCAT(ep_start_YEAR,'Q9') EP_START_QTR
-	,MARKET_FNL
-	,MBM_DEPLOY_DT
-	,CATEGORY
-	,CLAIM_STATUS
-	,''VISIT_MBMSERV
-	,0 VISIT_RUNOUT_MO
-	,0 EP_RUNOUT_MO
-	,0 VISIT_MO
-	,0 VISIT_EP_LAG 
-	,SUM(EPISODES) EPISODES 
-	,0 VISITS 
-	,0 ALLOWED
-	,0 MM 
-FROM (SELECT * FROM TMP_1y.kn_MBM_EPISODE_RO_LAG2  WHERE  EPISODES = 1 )A
-GROUP BY 
-	EP_START_MO
-	,CONCAT(ep_start_YEAR,'Q9')
-	,MARKET_FNL
-	,MBM_DEPLOY_DT
-	,CATEGORY
-	,CLAIM_STATUS
+drop table tmp_1y.kn_mbm_episode_ro_lag2;  
+create table tmp_1y.kn_mbm_episode_ro_lag2 as  
+select 
+	a.mbi
+	, a.id
+	, ep_start_dt
+	, cmltv_episodes
+	, start_dt
+	, date_format(ep_start_dt,'yyyyMM') as ep_start_mo 
+	, date_format(ep_start_dt,'yyyy') as ep_start_year
+	, market_fnl
+	, mbm_deploy_dt
+	, category
+	, claim_status
+	, hctapaidmonth
+	, mbmserv as visit_mbmserv
+	, visit_runout_mo
+	, 0 as ep_runout_mo
+	, date_format(start_dt,'yyyyMM') as visit_mo
+	, visit_ep_lag 
+	, ep_flag as episodes
+	, visits
+	, allowed
+	, 0 as mm 
+from tmp_1y.kn_mbm_episode_ro_lag as a
 ;
 
---45630  44961 44193  43381   select count(*) from TMP_1y.kn_MBM_EPISODE_AGG6_EP 
- 
+select count(*) from tmp_1y.kn_mbm_episode_ro_lag2; -- 66929218  65797555  64650521
 
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/
-DROP TABLE TMP_1y.kn_MBM_EPISODE_AGG6;  
-CREATE TABLE TMP_1y.kn_MBM_EPISODE_AGG6 AS  
-	SELECT 
-	'VISITS' DATA_TYPE
-	,EP_START_MO 
-	,CONCAT(ep_start_YEAR,'Q9') EP_START_QTR
-	,MARKET_FNL
-	,MBM_DEPLOY_DT
-	,CATEGORY
-	,CLAIM_STATUS
-	,VISIT_MBMSERV
-	,VISIT_RUNOUT_MO
-	,EP_RUNOUT_MO
-	,VISIT_MO
-	,VISIT_EP_LAG 
-	,SUM(0) EPISODES 
-	,SUM(VISITS) VISITS 
-	,SUM(ALLOWED) ALLOWED
-	,0 MM 
-FROM TMP_1y.kn_MBM_EPISODE_RO_LAG2
-GROUP BY 
-	EP_START_MO 
-	,CONCAT(ep_start_YEAR,'Q9') 
-	,MARKET_FNL
-	,MBM_DEPLOY_DT
-	,CATEGORY
-	,CLAIM_STATUS
-	,VISIT_MBMSERV
-	,VISIT_RUNOUT_MO
-	,EP_RUNOUT_MO
-	,VISIT_MO
-	,VISIT_EP_LAG
- ;
+drop table tmp_1y.kn_mbm_episode_agg6_ep;  
+create table tmp_1y.kn_mbm_episode_agg6_ep as  
+select 
+	'EPISODES' as data_type
+	, ep_start_mo 
+	, concat(ep_start_year,'Q9') as ep_start_qtr
+	, market_fnl
+	, mbm_deploy_dt
+	, category
+	, claim_status
+	, '' as visit_mbmserv
+	, 0 as visit_runout_mo
+	, 0 as ep_runout_mo
+	, 0 as visit_mo
+	, 0 as visit_ep_lag 
+	, sum(episodes) as episodes 
+	, 0 as visits 
+	, 0 as allowed
+	, 0 as mm 
+from (select * from tmp_1y.kn_mbm_episode_ro_lag2 where episodes = 1 ) as a
+group by 
+	ep_start_mo
+	, concat(ep_start_year,'Q9')
+	, market_fnl
+	, mbm_deploy_dt
+	, category
+	, claim_status
+;
 
+select count(*) from tmp_1y.kn_mbm_episode_agg6_ep; -- 45630  44961 44193  43381
 
---2322113  2278610 2234635    select count(*) from TMP_1y.kn_MBM_EPISODE_AGG6
+drop table tmp_1y.kn_mbm_episode_agg6;  
+create table tmp_1y.kn_mbm_episode_agg6 as  
+select 
+	'VISITS' as data_type
+	, ep_start_mo 
+	, concat(ep_start_year,'Q9') as ep_start_qtr
+	, market_fnl
+	, mbm_deploy_dt
+	, category
+	, claim_status
+	, visit_mbmserv
+	, visit_runout_mo
+	, ep_runout_mo
+	, visit_mo
+	, visit_ep_lag 
+	, sum(0) as episodes 
+	, sum(visits) as visits 
+	, sum(allowed) as allowed
+	, 0 as mm 
+from tmp_1y.kn_mbm_episode_ro_lag2
+group by 
+	ep_start_mo 
+	, concat(ep_start_year,'Q9') 
+	, market_fnl
+	, mbm_deploy_dt
+	, category
+	, claim_status
+	, visit_mbmserv
+	, visit_runout_mo
+	, ep_runout_mo
+	, visit_mo
+	, visit_ep_lag
+;
 
-/*______________[ Episode START DATES  ]___________________________________________________________________________________*/
-  
-INSERT INTO TMP_1y.kn_MBM_EPISODE_AGG6   
-SELECT * FROM TMP_1y.kn_MBM_EPISODE_AGG6_EP A;
+select count(*) from tmp_1y.kn_mbm_episode_agg6; -- 2322113  2278610 2234635
 
- 
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change data_type data_type varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change ep_start_mo ep_start_mo varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change ep_start_qtr ep_start_qtr varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change mbm_deploy_dt mbm_deploy_dt varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change claim_status claim_status varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change visit_mo visit_mo varchar(20);
-alter table  TMP_1y.kn_MBM_EPISODE_AGG6 change category category varchar(20);
+insert into tmp_1y.kn_mbm_episode_agg6   
+select * from tmp_1y.kn_mbm_episode_agg6_ep as a;
 
---2367743  2323571  2278828  2235149   select count(*) from TMP_1y.kn_MBM_EPISODE_AGG6  
+alter table tmp_1y.kn_mbm_episode_agg6 change data_type data_type varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change ep_start_mo ep_start_mo varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change ep_start_qtr ep_start_qtr varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change mbm_deploy_dt mbm_deploy_dt varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change claim_status claim_status varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change visit_mo visit_mo varchar(20);
+alter table tmp_1y.kn_mbm_episode_agg6 change category category varchar(20);
 
-select * from TMP_1y.kn_MBM_EPISODE_AGG6 limit 2;
+select count(*) from tmp_1y.kn_mbm_episode_agg6; -- 2367743  2323571  2278828  2235149
 
+select * from tmp_1y.kn_mbm_episode_agg6 limit 2;
 
 select sum(allowed) 
-from TMP_1y.kn_MBM_EPISODE_AGG6
-where visit_mo = '202406';  --73432103.42  73635236.05  73514079.66  
+from tmp_1y.kn_mbm_episode_agg6
+where visit_mo = '202406'; -- 73432103.42  73635236.05  73514079.66
 
 
 /*___________________[ SUMARIZING DATA FOR EXCEL ]_________________________________________________*/
 
+/*==============================================================================
+ * FINAL DATA AGGREGATION FOR REPORTING
+ * Creates summary tables for Excel reporting and analysis
+ *==============================================================================*/
 
---___________________  Summarize for Excel  ______________________
-drop table TMP_1y.kn_MBM_EPISODE_AGG6_sum1;
-create table TMP_1y.kn_MBM_EPISODE_AGG6_sum1 stored as orc AS 	
+drop table tmp_1y.kn_mbm_episode_agg6_sum1;
+create table tmp_1y.kn_mbm_episode_agg6_sum1 stored as orc as 	
 select 
 	data_type,
 	ep_start_mo,
 	substring(ep_start_mo, 0, 4) as ep_year,
 	substring(ep_start_mo, 5,2) as ep_month,
 	visit_mo,
-	case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end as Pilot_Nat,  --caroline: force Phase-I and Phase-II to Pilot
+	case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end as pilot_nat,
 	category,
---	claim_status,
 	visit_ep_lag ,
 	visit_runout_mo,
 	sum(episodes) as ep_cnt,
 	sum(visits) as visit_cnt,
-	sum(allowed) as Allowed_Amt,
-	sum(mm) as MMs
-from TMP_1y.kn_MBM_EPISODE_AGG6
-where ep_start_mo > '201812' --and claim_status in ('APC-Paid','Paid')    --remove the paid condition on 2/21/2025
+	sum(allowed) as allowed_amt,
+	sum(mm) as mms
+from tmp_1y.kn_mbm_episode_agg6
+where ep_start_mo > '201812'
 group by
 	data_type,
 	ep_start_mo,
@@ -1272,31 +822,27 @@ group by
 	claim_status,
 	visit_ep_lag,
 	visit_runout_mo
-UNION 
+union 
 select 
 	data_type,
 	ep_start_mo,
 	substring(ep_start_mo, 0, 4) as ep_year,
 	substring(ep_start_mo, 5,2) as ep_month,
 	visit_mo,
-	Pilot_Nat,  --caroline: force Phase-I and Phase-II to Pilot
+	pilot_nat,
 	category,
---	claim_status,
 	visit_ep_lag ,
 	visit_runout_mo,
 	ep_cnt,
 	visit_cnt,
-	Allowed_Amt,
-	MMs
-from TMP_1y.kn_MBM_MSHP_sum1
+	allowed_amt,
+	mms
+from tmp_1y.kn_mbm_mshp_sum1
 ;
 
-select count(*) from TMP_1y.kn_MBM_EPISODE_AGG6_sum1;  --184351 236851  231611  226322  220,968   Paid and Denied
+select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1; -- 184351 236851  231611  226322  220,968
 
-select * from TMP_1y.kn_MBM_EPISODE_AGG6_sum1;
-
---ALL ABOVE RAN AS OF 7/25/2025
-
+select * from tmp_1y.kn_mbm_episode_agg6_sum1;
 
 
 
