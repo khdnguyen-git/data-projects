@@ -179,19 +179,16 @@ desc formatted mard.m1_claims_f;
 
 alter table tmp_1m.kn_cgm_mbi
 set tblproperties ('bucketing_version' = '1');
-alter table mard.m1_claims_f
-set tblproperties ('bucketing_version' = '1');
+
 
 --pulling pharm CGMs from bdpaas vs sas (change as of 9/25/2023)
 drop table tmp_1m.kn_cgm_pharmacy;
 create table tmp_1m.kn_cgm_pharmacy stored as orc 
 tblproperties('bucketing_version' = '1') as 
 select
-    a.mbi
-    , a.auth_month
-    , a.case_id
-    , date_of_service 
-    , servicemonth 
+	mbi_hicn_fnl as mbi
+    , date_of_service
+    , servicemonth
     , gpi 
     , gpi_class 
     , drug_name 
@@ -227,9 +224,7 @@ select
     , tadm_tfm_include_flag
     , tadm_source
     , tadm_partb_flag
-from tmp_1m.kn_cgm_mbi as a
-left join mard.m1_claims_f as b
-	on a.mbi = b.mbi_hicn_fnl
+from mard.m1_claims_f
 where product_service_id 
     in ('08627009111', '08627001601', '08627005303', '08627007801', '08627007701', '57599080300', '57599080000', 
         '57599000200', '57599000101', '57599081800', '76300000805', '43169070405', '63000017962', '63000033698', 
@@ -246,6 +241,15 @@ where product_service_id
     and year(date_of_service) in ('2024', '2025')
 ;
 
+
+
+
+
+
+
+select * from tmp_1m.kn_cgm_auth_claim_check;
+
+
 select tadm_source from mard.m1_claims_f group by tadm_source;
 
 -- month n_auth n_auth with claims within past 6 months 
@@ -254,46 +258,472 @@ select tadm_source from mard.m1_claims_f group by tadm_source;
 select count(distinct mbi) from tmp_1m.kn_cgm_pharmacy;
 select count(distinct mbi) from tmp_1m.kn_cgm_mbi;
 
+desc formatted tmp_1m.kn_cgm_mbi;
+
+desc formatted tmp_1m.kn_cgm_pharmacy;
 
 select count(mbi) from tmp_1m.kn_cgm_pharmacy;
 
-drop table if exists tmp_1m.kn_cgm_202501;
-create temporary table tmp_1m.kn_cgm_202501 as
-with auth_202501 as (
-select distinct
+drop table if exists tmp_1m.kn_cgm_202504;
+create temporary table tmp_1m.kn_cgm_202504 as
+with auth_202504 as (
+select
 	mbi
 	, auth_month
 from tmp_1m.kn_cgm_mbi
-where auth_month = '202501'
+where auth_month = '202504'
 ),
-claims_202501_lag6m as (
+claims_202504_lag6m as (
 select 
 	a.mbi
 	, a.auth_month
-	, b.claim_month
-from auth_202501 as a
+from auth_202504 as a
 left join tmp_1m.kn_cgm_pharmacy as b
 	on a.mbi = b.mbi
-where b.claim_month between '202408' and '202501'
+where b.servicemonth between '202411' and '202504'
 )
 select 
 	auth_month
-	, claim_month
-	, count(mbi) as mm
-from claims_202501_lag6m
+	, count(distinct mbi) as mm
+from claims_202504_lag6m
 group by 
 	auth_month
-	, claim_month
 ;
 
+select count(*) from tmp_1m.kn_cgm_pharmacy
+where servicemonth between '202411' and '202504'
+
+select count(*) from tmp_1m.kn_cgm_pharmacy
+where cast(servicemonth as varchar(10)) between '202411' and '202504'
+
+
+-- Header
+drop table if exists tmp_1m.kn_cgm_202501;
+create temporary table tmp_1m.kn_cgm_202501 tblproperties('bucketing_version' = '1') as
+with auth_202501 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202501'
+    ) 
+    , claims_202501_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202501 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202408' and '202501'
+    )
 select
-	auth_month
-	, count(distinct case_id) as n_auth
-	, count(distinct mbi) as mm
-from tmp_1m.kn_cgm_mbi
-group by auth_month
-order by auth_month
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202501_lag6m
+group by
+    auth_month
 ;
+
+drop table if exists tmp_1m.kn_cgm_202502;
+create temporary table tmp_1m.kn_cgm_202502 tblproperties('bucketing_version' = '1') as
+with auth_202502 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202502'
+    ) 
+    , claims_202502_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202502 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202409' and '202502'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202502_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_202503;
+create temporary table tmp_1m.kn_cgm_202503 tblproperties('bucketing_version' = '1') as
+with auth_202503 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202503'
+    ) 
+    , claims_202503_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202503 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202410' and '202503'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202503_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_202504;
+create temporary table tmp_1m.kn_cgm_202504 tblproperties('bucketing_version' = '1') as
+with auth_202504 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202504'
+    ) 
+    , claims_202504_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202504 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202411' and '202504'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202504_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_202505;
+create temporary table tmp_1m.kn_cgm_202505 tblproperties('bucketing_version' = '1') as
+with auth_202505 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202505'
+    ) 
+    , claims_202505_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202505 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202412' and '202505'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202505_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_202506;
+create temporary table tmp_1m.kn_cgm_202506 tblproperties('bucketing_version' = '1') as
+with auth_202506 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202506'
+    ) 
+    , claims_202506_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202506 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202501' and '202506'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202506_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_202507;
+create temporary table tmp_1m.kn_cgm_202507 tblproperties('bucketing_version' = '1') as
+with auth_202507 as 
+    ( select
+        mbi
+        , auth_month
+    from tmp_1m.kn_cgm_mbi
+    where auth_month = '202507'
+    ) 
+    , claims_202507_lag6m 
+    as 
+    ( select
+        a.mbi
+        , a.auth_month
+    from auth_202507 as a
+    left join tmp_1m.kn_cgm_pharmacy as b
+        on  a.mbi = b.mbi
+    where b.servicemonth between '202502' and '202507'
+    )
+select
+    auth_month
+    , count(distinct mbi) as mm
+from claims_202507_lag6m
+group by
+    auth_month
+;
+
+drop table if exists tmp_1m.kn_cgm_auth_claim_count;
+create table tmp_1m.kn_cgm_auth_claim_count stored as orc tblproperties('bucketing_version' = '1') as
+select * from tmp_1m.kn_cgm_202501
+union all
+select * from tmp_1m.kn_cgm_202502
+union all
+select * from tmp_1m.kn_cgm_202503
+union all
+select * from tmp_1m.kn_cgm_202504
+union all
+select * from tmp_1m.kn_cgm_202505
+union all
+select * from tmp_1m.kn_cgm_202506
+union all
+select * from tmp_1m.kn_cgm_202507
+;
+
+desc formatted tmp_1m.kn_cgm_202507;
+
+select * from tmp_1m.kn_cgm_auth_claim_count
+order by auth_month;
+
+drop table tmp_1m.kn_cgm_auth_claim_compare;
+create temporary table tmp_1m.kn_cgm_auth_claim_compare tblproperties('bucketing_version' = '1') as
+with auth_count as (
+	select 
+		auth_month
+		, count(distinct mbi) as n_auth
+	from tmp_1m.kn_cgm_mbi
+	group by 
+		auth_month
+),
+claims as (
+	select 
+		auth_month
+		, mm as mm_with_claims_6m
+	from tmp_1m.kn_cgm_auth_claim_count
+)
+select
+	a.auth_month
+	, a.n_auth
+	, b.mm_with_claims_6m
+	, (mm_with_claims_6m / n_auth) * 100 as pct
+from auth_count as a 
+join claims as b
+	on a.auth_month = b.auth_month
+order by auth_month;
+
+select * from tmp_1m.kn_cgm_auth_claim_compare;
+
+desc formatted tmp_1m.kn_cgm_auth_mbi_group1;
+
+-- MM group
+drop table tmp_1m.kn_cgm_auth_mbi_group1;
+create table tmp_1m.kn_cgm_auth_mbi_group1 tblproperties('bucketing_version' = '1') as  
+select
+	mbi
+from tmp_1m.kn_cgm_mbi
+where auth_month between '202501' and '202503'
+;
+
+drop table tmp_1m.kn_cgm_auth_mbi_group2;
+create table tmp_1m.kn_cgm_auth_mbi_group2 tblproperties('bucketing_version' = '1') as 
+select
+	mbi 
+from tmp_1m.kn_cgm_mbi
+where auth_month between '202504' and '202507'
+;
+
+
+
+
+drop table tmp_1m.kn_cgm_auth_mbi_both_groups;
+create table tmp_1m.kn_cgm_auth_mbi_both_groups tblproperties('bucketing_version' = '1') as 
+select
+	a.mbi
+from tmp_1m.kn_cgm_auth_mbi_only_group1 as a 
+join tmp_1m.kn_cgm_auth_mbi_only_group2 as b
+	on a.mbi = b.mbi
+;
+
+select count(*) from tmp_1m.kn_cgm_auth_mbi_both_groups;
+
+drop table tmp_1m.kn_cgm_auth_mbi_only_group1;
+create table tmp_1m.kn_cgm_auth_mbi_only_group1 tblproperties('bucketing_version' = '1') as 
+select distinct
+	a.mbi
+from tmp_1m.kn_cgm_auth_mbi_group1 as a 
+left join tmp_1m.kn_cgm_auth_mbi_group2 as b 
+	on a.mbi = b.mbi
+where b.mbi is null;
+
+drop table tmp_1m.kn_cgm_auth_mbi_only_group2;
+create table tmp_1m.kn_cgm_auth_mbi_only_group2 tblproperties('bucketing_version' = '1') as 
+select distinct
+	a.mbi
+from tmp_1m.kn_cgm_auth_mbi_group2 as a 
+left join tmp_1m.kn_cgm_auth_mbi_group1 as b
+	on a.mbi = b.mbi
+where b.mbi is null;
+
+select count(*) from tmp_1m.kn_cgm_auth;
+
+
+
+
+--desc formatted tmp_1m.kn_cgm_auth_mbi_only_group1;
+--desc formatted tmp_1m.kn_cgm_auth_mbi_group1;
+--
+--desc formatted tmp_1m.kn_cgm_auth_mbi_only_group2;
+--desc formatted tmp_1m.kn_cgm_auth_mbi_group2;
+--
+--
+--select count(mbi) from tmp_1m.kn_cgm_auth_mbi_group1; -- 17,670
+--select count(distinct mbi) from tmp_1m.kn_cgm_auth_mbi_only_group1; -- 16,436
+--
+--select count(mbi) from tmp_1m.kn_cgm_auth_mbi_group2; -- 43,631
+--select count(distinct mbi) from tmp_1m.kn_cgm_auth_mbi_only_group2; -- 42,397
+--
+
+
+drop table if exists tmp_1m.kn_cgm_mm_group1;
+create table tmp_1m.kn_cgm_mm_group1 tblproperties('bucketing_version' = '1') as 
+with latest as (
+    select 
+        b.fin_mbi_hicn_fnl as mbi
+        , b.fin_inc_month
+        , b.fin_g_i
+        , b.fin_contractpbp
+        , b.fin_tfm_product_new
+        , b.fin_product_level_3
+        , b.migration_source
+        , b.fin_brand
+        , b.global_cap
+        , b.fin_market
+        , b.nce_purchaser_id
+        , b.nce_src_sys_mdcl_pln_id
+        , b.gal_cust_seg_nbr
+        , row_number() over (partition by b.fin_mbi_hicn_fnl order by b.fin_inc_month desc) as rn
+    from fichsrv.tre_membership as b
+    where b.fin_inc_month  between '202501' and '202503'
+)
+select 
+    a.mbi
+    , b.fin_inc_month
+    , case 
+        when b.fin_tfm_product_new = 'NICE HMO' then b.nce_purchaser_id || '-' || substr(b.nce_src_sys_mdcl_pln_id, 3, 3)
+        else substr(b.gal_cust_seg_nbr, 5, 5) 
+      end as group_id
+    , b.fin_g_i
+    , b.fin_contractpbp
+    , b.fin_tfm_product_new
+    , b.fin_product_level_3
+    , b.migration_source
+    , b.fin_brand
+    , b.global_cap
+    , b.fin_market
+    , '1' as groupnum
+from tmp_1m.kn_cgm_auth_mbi_only_group1 as a
+join latest as b 
+    on a.mbi = b.mbi
+    and b.rn = 1;
+
+
+drop table if exists tmp_1m.kn_cgm_mm_group2;
+create table tmp_1m.kn_cgm_mm_group2 tblproperties('bucketing_version' = '1') as 
+with latest as (
+    select 
+        b.fin_mbi_hicn_fnl as mbi
+        , b.fin_inc_month
+        , b.fin_g_i
+        , b.fin_contractpbp
+        , b.fin_tfm_product_new
+        , b.fin_product_level_3
+        , b.migration_source
+        , b.fin_brand
+        , b.global_cap
+        , b.fin_market
+        , b.nce_purchaser_id
+        , b.nce_src_sys_mdcl_pln_id
+        , b.gal_cust_seg_nbr
+        , row_number() over (partition by b.fin_mbi_hicn_fnl order by b.fin_inc_month desc) as rn
+    from fichsrv.tre_membership as b
+    where b.fin_inc_month  between '202504' and '202507'
+)
+select 
+    a.mbi
+    , b.fin_inc_month
+    , case 
+        when b.fin_tfm_product_new = 'NICE HMO' then b.nce_purchaser_id || '-' || substr(b.nce_src_sys_mdcl_pln_id, 3, 3)
+        else substr(b.gal_cust_seg_nbr, 5, 5) 
+      end as group_id
+    , b.fin_g_i
+    , b.fin_contractpbp
+    , b.fin_tfm_product_new
+    , b.fin_product_level_3
+    , b.migration_source
+    , b.fin_brand
+    , b.global_cap
+    , b.fin_market
+    , '2' as groupnum
+from tmp_1m.kn_cgm_auth_mbi_only_group2 as a
+join latest as b 
+    on a.mbi = b.mbi
+    and b.rn = 1;
+
+select count(distinct mbi) from tmp_1m.kn_cgm_mm_group1; -- 16,029
+select count(distinct mbi) from tmp_1m.kn_cgm_mm_group2; -- 41,182
+
+
+drop table if exists tmp_1m.kn_cgm_mm_group_12; 
+create table tmp_1m.kn_cgm_mm_group_12 
+stored as orc tblproperties('bucketing_version' = '1') as 
+select 
+	*
+from tmp_1m.kn_cgm_mm_group1
+union all
+select 
+	*
+from tmp_1m.kn_cgm_mm_group2
+;
+
+
+select 
+	*
+	, count(distinct mbi) as mm
+
+
+
+
+
+
+
+
+
+
+
 
 
 
