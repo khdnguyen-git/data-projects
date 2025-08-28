@@ -1,3 +1,4 @@
+AbstractTextEditor.Accessibility.WideCaret=false
 AbstractTextEditor.Color.Background=39,40,34
 AbstractTextEditor.Color.Background.SystemDefault=false
 AbstractTextEditor.Color.FindScope=0,0,0
@@ -10,7 +11,7 @@ AbstractTextEditor.Color.SelectionForeground.SystemDefault=false
 PHPReadOccurrenceIndicationColor=0,0,0
 PHPWriteOccurrenceIndicationColor=0,0,0
 SQLEditor.extraPanels.ratio=500-500
-SQLEditor.resultSet.ratio=716-283
+SQLEditor.resultSet.ratio=633-357
 asOccurencesIndicationColor=0,0,0
 breakpointIndicationColor=43,101,164
 currentIPColor=62,61,50
