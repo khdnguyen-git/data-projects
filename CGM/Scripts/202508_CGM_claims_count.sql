@@ -504,6 +504,91 @@ union all
 select * from tmp_1m.kn_cgm_202507
 ;
 
+
+create table tmp_1m.kn_cgm_auth_claim_count_v2 as
+with service_month_var as (
+	select 
+		*
+		, cast(servicemonth as varchar(6)) as service_month
+from tmp_1m.kn_cgm_pharmacy
+)
+select
+	a.auth_month
+	, count(distinct case when b.service_month is not null then a.mbi end) as mm
+from tmp_1m.kn_cgm_mbi as a
+join service_month_var as b
+	on a.mbi = b.mbi
+	and b.service_month >=
+		case
+			when substr(a.auth_month, 5, 2) = '01' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '08')
+			when substr(a.auth_month, 5, 2) = '02' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '09')
+			when substr(a.auth_month, 5, 2) = '03' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '10')
+			when substr(a.auth_month, 5, 2) = '04' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '11')
+			when substr(a.auth_month, 5, 2) = '05' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '12')
+			when substr(a.auth_month, 5, 2) = '06' then concat(substr(a.auth_month, 1, 4), '01')
+			when substr(a.auth_month, 5, 2) = '07' then concat(substr(a.auth_month, 1, 4), '02')
+			when substr(a.auth_month, 5, 2) = '08' then concat(substr(a.auth_month, 1, 4), '03')
+			when substr(a.auth_month, 5, 2) = '09' then concat(substr(a.auth_month, 1, 4), '04')
+			when substr(a.auth_month, 5, 2) = '10' then concat(substr(a.auth_month, 1, 4), '05')
+			when substr(a.auth_month, 5, 2) = '11' then concat(substr(a.auth_month, 1, 4), '06')
+			when substr(a.auth_month, 5, 2) = '12' then concat(substr(a.auth_month, 1, 4), '07')
+		end 
+	and b.service_month <= a.auth_month
+group by a.auth_month;
+
+
+select * from tmp_1m.kn_cgm_auth_claim_count_v2
+
+--202501	3140
+--202502	2186
+--202503	2634
+--202504	8269
+--202505	6377
+--202506	5241
+--202507	6112
+
+select * from tmp_1m.kn_cgm_auth_claim_count;
+
+--202501	3140
+--202502	2186
+--202503	2634
+--202504	8269
+--202505	6377
+--202506	5241
+--202507	6112
+
+create table tmp_1m.kn_cgm_auth_claim_count_v2 as
+with mapped as (
+    select
+        a.auth_month
+        , a.mbi
+        , case
+            when substr(a.auth_month, 5, 2) = '01' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '08')
+            when substr(a.auth_month, 5, 2) = '02' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '09')
+            when substr(a.auth_month, 5, 2) = '03' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '10')
+            when substr(a.auth_month, 5, 2) = '04' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '11')
+            when substr(a.auth_month, 5, 2) = '05' then concat(cast(substr(a.auth_month, 1, 4) as int) - 1, '12')
+            when substr(a.auth_month, 5, 2) = '06' then concat(substr(a.auth_month, 1, 4), '01')
+            when substr(a.auth_month, 5, 2) = '07' then concat(substr(a.auth_month, 1, 4), '02')
+            when substr(a.auth_month, 5, 2) = '08' then concat(substr(a.auth_month, 1, 4), '03')
+            when substr(a.auth_month, 5, 2) = '09' then concat(substr(a.auth_month, 1, 4), '04')
+            when substr(a.auth_month, 5, 2) = '10' then concat(substr(a.auth_month, 1, 4), '05')
+            when substr(a.auth_month, 5, 2) = '11' then concat(substr(a.auth_month, 1, 4), '06')
+            when substr(a.auth_month, 5, 2) = '12' then concat(substr(a.auth_month, 1, 4), '07')
+        end as start_month
+    from tmp_1m.kn_cgm_mbi as a
+)
+select
+    m.auth_month
+    , count(distinct case when b.servicemonth is not null then m.mbi end) as mm
+from mapped as m
+join tmp_1m.kn_cgm_pharmacy as b
+    on m.mbi = b.mbi
+    and b.servicemonth >= m.start_month
+    and b.servicemonth <= m.auth_month
+group by m.auth_month;
+
+
 desc formatted tmp_1m.kn_cgm_202507;
 
 select * from tmp_1m.kn_cgm_auth_claim_count

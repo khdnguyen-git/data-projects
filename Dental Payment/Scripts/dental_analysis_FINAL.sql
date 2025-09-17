@@ -146,6 +146,10 @@ group by
     , fin_g_i
 ;
 
+select * from tmp_1m.kn_dental_claims;
+select * from tmp_1m.kn_dental_mbr;
+
+
 select * from tmp_1m.kn_dental_claims_unit limit 2;
 
 create table tmp_1m.kn_dental_mbr as 
