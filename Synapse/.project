@@ -9,4 +9,16 @@
 	<natures>
 		<nature>org.jkiss.dbeaver.DBeaverNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>Scripts/Scripts</name>
+			<type>2</type>
+			<location>//C:/Users/knguy139/Documents/Projects/Synapse/Scripts/</location>
+		</link>
+		<link>
+			<name>Scripts/synapse_GA_NC_Leakage_202510.sql</name>
+			<type>1</type>
+			<location>//C:/Users/knguy139/Documents/Projects/Synapse/Scripts/synapse_GA_NC_Leakage_202510.sql</location>
+		</link>
+	</linkedResources>
 </projectDescription>

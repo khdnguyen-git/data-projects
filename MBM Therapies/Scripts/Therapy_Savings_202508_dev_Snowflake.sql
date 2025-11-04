@@ -3,23 +3,22 @@
  * Creates base membership table with pilot/national deployment flags
  *==============================================================================*/
 
-
 drop table if exists tmp_7d.knd_mbm_dtl_202508;
 create or replace temporary view tmp_7d.knd_mbm_dtl_202508 as					
 select 			
 	fin_mbi_hicn_fnl			
-	, fin_inc_month			
+	, fin_inc_month		
 	, fin_inc_qtr 		
 	, fin_market as market_fnl		
 	, case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end as mbm_deploy_dt
-	, fin_g_i as group_ind_fnl		
-	, case when b.migration_source = 'CIP' then 'CIP'				
-		  when b.migration_source in ('PC', 'MEDICA') then 'SouthFlorida'					
-		  when b.fin_product_level_3 = 'DUAL' and b.tfm_include_flag = 1 then 'M&R DUALS'					
-		  when b.fin_product_level_3 = 'DUAL' and b.tfm_include_flag = 0 then 'C&S DUALS'					
-		  when b.migration_source = 'NA' and b.fin_g_i = 'I' then 'Legacy Individual'					
-	      when b.fin_g_i = 'G' then 'Group'					
-	      else 'OTHERS' end as population					
+	, fin_g_i as group_ind_fnl	
+	, case when migration_source = 'CIP' then 'CIP'				
+		  when migration_source in ('PC', 'MEDICA') then 'SouthFlorida'					
+		  when fin_product_level_3 = 'DUAL' and tfm_include_flag = 1 then 'M&R DUALS'					
+		  when fin_product_level_3 = 'DUAL' and tfm_include_flag = 0 then 'C&S DUALS'					
+		  when migration_source = 'NA' and fin_g_i = 'I' then 'Legacy Individual'					
+	      when fin_g_i = 'G' then 'Group'					
+	      else 'OTHERS' end as mbm_population	
 	, iff(global_cap = 'NA', 1, 0) as global_cap
 	, iff(tfm_include_flag = '1', 1, 0) as tfm_include	
 	, iff(fin_product_level_3 in ('INSTITUTIONAL'), 1, 0) as inst		
@@ -27,23 +26,24 @@ select
 	, iff(special_network in ('ERICKSON'), 1, 0) as erk			
 	, sgr_source_name  		
 	, 1 as mm		
-from fichsrv.tre_membership as b 			  
-where year(fin_incurred_dt) >= 2023			
- 	  and b.fin_brand = 'M&R'	
- 	  and b.fin_product_level_3 not in ('INSTITUTIONAL', 'DUAL')
+from fichsrv.tre_membership_pr			  
+where year(fin_incurred_dt) >= 2023	
+ 	  and fin_brand = 'M&R'	
+ 	  and fin_product_level_3 not in ('INSTITUTIONAL', 'DUAL')
+ 	  and sgr_source_name = 'COSMOS'
 group by 			
 	fin_mbi_hicn_fnl			
 	, fin_inc_month			
-	, fin_inc_qtr 		
+	, fin_inc_qtr 
 	, fin_market  		
 	, case when (fin_market in ('AR', 'GA', 'NJ', 'SC') and fin_g_i = 'I') then 'Pilot' else 'National' end
 	, fin_g_i  		
-    , case when b.migration_source = 'CIP' then 'CIP'				
-          when b.migration_source in ('PC', 'MEDICA') then 'SouthFlorida'					
-		  when b.fin_product_level_3 = 'DUAL' and b.tfm_include_flag = 1 then 'M&R DUALS'					
-		  when b.fin_product_level_3 = 'DUAL' and b.tfm_include_flag = 0 then 'C&S DUALS'					
-		  when b.migration_source = 'NA' and b.fin_g_i = 'I' then 'Legacy Individual'					
-		  when b.fin_g_i = 'G' then 'Group'					
+    , case when migration_source = 'CIP' then 'CIP'				
+          when migration_source in ('PC', 'MEDICA') then 'SouthFlorida'					
+		  when fin_product_level_3 = 'DUAL' and tfm_include_flag = 1 then 'M&R DUALS'					
+		  when fin_product_level_3 = 'DUAL' and tfm_include_flag = 0 then 'C&S DUALS'					
+		  when migration_source = 'NA' and fin_g_i = 'I' then 'Legacy Individual'					
+		  when fin_g_i = 'G' then 'Group'					
 		  else 'OTHERS' end  					
 	, iff(global_cap = 'NA', 1, 0)  		 
 	, iff(tfm_include_flag = '1', 1, 0)  	
@@ -52,9 +52,9 @@ group by
 	, iff(special_network in ('ERICKSON'), 1, 0) 			
 	, sgr_source_name
 ;		
-		
-select count(*) from tmp_7d.knd_mbm_dtl_202508; -- 231891712
-								
+
+
+select count(*) from tmp_7d.knd_mbm_dtl_202508; -- 231891712						
 /*==============================================================================
  * MEMBERSHIP SUMMARY CREATION
  * Aggregates membership data and creates summary tables for analysis
@@ -68,7 +68,7 @@ select
 	, substring(market_fnl, 0, 2) as market_fnl							
 	, mbm_deploy_dt							
 	, group_ind_fnl							
-	, population							
+	, mbm_population							
 	, global_cap							
 	, tfm_include							
 	, inst							
@@ -85,7 +85,7 @@ group by
 	, substring(market_fnl, 0, 2)  							
 	, mbm_deploy_dt							
 	, group_ind_fnl							
-	, population							
+	, mbm_population							
 	, global_cap							
 	, tfm_include							
 	, inst							
@@ -107,7 +107,7 @@ select
 	, 0 as allowed_amt
 	, sum(mm) as mms
 from mm_gc1
-where population not in ('M&R DUALS', 'C&S DUALS')
+where mbm_population not in ('M&R DUALS', 'C&S DUALS')
 group by 
 	ep_start_mo
 	, mbm_deploy_dt
@@ -116,14 +116,43 @@ group by
 select count(*) from tmp_1m.knd_mbm_mshp_sum1_202508; -- 64
 
 --_____________[ END OF MEMBERSHIP ]_____________________________________
-		
+	
 /*==============================================================================
  * PROFESSIONAL CLAIMS PROCESSING
  * Pull in PR claims
  *==============================================================================*/
 
+
+drop table if exists tmp_1m.kn_lopa_pr_1_202508;
+create table tmp_1m.kn_lopa_pr_1_202508 as
+select  
+	mbi_dos as total_mbi_dos
+	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 then mbi_dos end as still_lopa_mbi_dos
+	, case when final_lopa_ind != 1 or mbr_dos_latest_submission != 1 then mbi_dos end as overturn_lopa_mbi_dos
+	, *
+from tmp_1y.pa_trckng_pr_evnt_lopa_dtl
+;	
+
+select * from tmp_1y.pa_trckng_pr_evnt_lopa_dtl limit 100;
+
+
+select * from hce_ops_fnl.pa_trckng_pr_evnt_lopa_fnl2 limit 100;
+
+
+
+select count(*) from tmp_1m.kn_lopa_pr_1_202508; -- 3714719  3501938 3263702
+
+drop table if exists tmp_1m.kn_lopa_pr_202508;
+create table tmp_1m.kn_lopa_pr_202508 as
+select 
+	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
+	, *
+from tmp_1m.kn_lopa_pr_1_202508
+;
+
+
 drop table if exists tmp_1m.knd_mbm_pr_202508; 
-create or replace temporary table tmp_1m.knd_mbm_pr_202508 as 
+create table tmp_1m.knd_mbm_pr_202508 as 
 select			
 	a.gal_mbi_hicn_fnl as mbi		
 	, a.component		
@@ -159,6 +188,7 @@ select
 	, count(distinct a.eventkey) as visits                     		
 	, sum(a.adj_srvc_unit_cnt) as adj_srvc_units		
 from fichsrv.cosmos_pr as a
+left join 
 where a.tfm_include_flag = 1 
 	and a.fst_srvc_year >= '2023'
 	and a.global_cap in ('NA')			

@@ -1,30 +1,30 @@
 
 --Step 0.a: Update to the new date & if a monthly claims run; update tre copy cosmos tab 
 /*Every week*/
---Find and change date: _09172025
+--Find and change date: _09242025
 --IMPORTANT: MAKE SURE CLAIMS TABLES IN STEP 27 REFLECT OLD DATE IF NO CLAIMS UPDATE
 --MAKE SURE THERE IS NO SPACE AFTER DATE OR ELSE IT WILL NOT WORK
---9/3/25: done--
-
+--9/24/25: done--
+--9/5/2025: August Claims should be 09032025 until we recieve September claims (due a modeling change) then go back to normal update cadence
 
 --Step 0.b: check to see if current month membership is available
 select count(*) from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202509; --make sure this IS CURRENT MONTH-- 
 --"from tadm_tre_cpy.gl_rstd_gpsgalnce_f_[CURRENT MONTH ENROLLMENT] /**/ as a"
---9/3/25: done; it's September but there's no September enrollment table so it still says 202508--
+--9/24/25: done; it's September enrollment table now--
 --ONLY STEP 9 SHOULD BE CHANGING; CHECK CODE AT VERY BOTTOM TO MAKE SURE ENROLLMENT TABLE PULL NAMES ARE NOT CHANGING--
 
 --monthly ish
 --Step 0.c Uncomment out most recent roster month from Completion Step 8: tmp_1m.kn_ip_mm_2025 IF 0.B SHOWS NEXT MONTH MEMBERSHIP AVAILABLE
---Don't forget to update roster month in Notification Completion Model+
+--Don't forget to update roster month in Notification Completion Model
 --CHECK THAT STEP 0.B DID NOT OVERRIDE ANY CODE FOR ROSTER MONTH
---9/3/25: done; no new enrollment table--
+--9/24/25: done; no new enrollment table; uncommented September section last week--
 
 
 /*Monthly claims update*/
 --Step 0.d: change claims month
 --Find and change Tre Copy Table: tadm_tre_cpy.glxy_ip_admit_f_202508
 --check that step 27 is reflecting current claims table in union
---9/3/25: done; no new claims this week--
+--9/24/25: done; no new claims yet--
 
 
 
@@ -242,6 +242,10 @@ and a.fin_mbi_hicn_fnl = b.fin_mbi_hicn_fnl
 where b.fin_mbi_hicn_fnl is null and year(a.transplantdate)=2022
 ;
 
+
+
+select * from hce_proj_bd.hce_adr_avtar_like_2023_f
+
 --Step 2.2: Union non-notification TRS to rest of notifications
 drop table tmp_1m.kn_avtar_22_trs_combined;
 create table tmp_1m.kn_avtar_22_trs_combined stored as orc as
@@ -297,7 +301,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.kn_avtar_22_2_trs as a 
-left join tmp_2y.kn_loc_week_assign as c 
+left join tmp_2y.ec_loc_week_assign as c 
 on a.hcedt=c.`date` 
 ;
 
@@ -560,7 +564,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.kn_avtar_23_2_trs as a 
-left join tmp_2y.kn_loc_week_assign as c 
+left join tmp_2y.ec_loc_week_assign as c 
 on a.hcedt=c.`date` 
 ;
 
@@ -823,7 +827,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.kn_avtar_24_25_2 as a 
-left join tmp_2y.kn_loc_week_assign as c 
+left join tmp_2y.ec_loc_week_assign as c 
 on a.hcedt=c.`date` 
 ;
 
@@ -831,8 +835,8 @@ on a.hcedt=c.`date`
 
 --Step 5: union together all needed notifications from the AvTar Report after Pradeepa sends the weekly email - update date of run! 
 --Note: Respiratory AND leading indicator flags need to be based source of truth table tmp_1y.hce_resp_2024 and have periods in the ICDs unlike claims
-drop table tmp_1m.kn_ip_dataset_09172025_trs; 
-create table tmp_1m.kn_ip_dataset_09172025_trs stored as orc as 
+drop table tmp_1m.kn_ip_dataset_09242025_trs; 
+create table tmp_1m.kn_ip_dataset_09242025_trs stored as orc as 
 select 
 	admit_week
 	,hce_dt
@@ -890,14 +894,14 @@ select
 		then DATEDIFF(current_date(),admit_dt_act) 
 		when admit_dt_act is not null and dschg_dt_act is not null and year(dschg_dt_act)<>'9999' then datediff(dschg_dt_act,admit_dt_act)
 		end as los_act
-	,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+	,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
     		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end as respiratory_flag 
      ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
@@ -1005,14 +1009,14 @@ admit_week
 		end 
 --    ,ili_dx_ind 
 --    ,covid_dx_ind 
-	 ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+	 ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end 
-    ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end
+     ,case when ip_type = 'Transplant' then 'Transplant' 
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
@@ -1022,7 +1026,7 @@ admit_week
     	when admit_cat_cd in ('30 - Surgical')	then 'Surgical'	
     	when IP_type in ('LTAC') then 'LTAC'
     	when IP_type in ('SNF') then 'SNF' 
-    	when IP_type in ('AIR') then 'AIR' else 'Medical' end 
+    	when IP_type in ('AIR') then 'AIR' else 'Medical' end
     ,prim_diag_ahrq_genl_catgy_desc 
  --   ,prim_diag_ahrq_diag_dtl_catgy_desc 
  	,CASE WHEN fin_brand='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND fin_product_level_3 <>'INSTITUTIONAL' AND tfm_include_flag=1 THEN 1 else 0 end 
@@ -1104,19 +1108,19 @@ admit_week
 		then DATEDIFF(current_date(),admit_dt_act) 
 		when admit_dt_act is not null and dschg_dt_act is not null and year(dschg_dt_act)<>'9999' then datediff(dschg_dt_act,admit_dt_act)
 		end as los_act
-	,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+	,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end as respiratory_flag 
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI' else 'NA' end as respiratory_flag 
     ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI'
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI'
     	when admit_cat_cd in ('17 - Medical') then 'Medical'
     	when admit_cat_cd in ('30 - Surgical')	then 'Surgical'	
     	when IP_type in ('LTAC') then 'LTAC'
@@ -1220,19 +1224,19 @@ admit_week
 		end 
 --    ,ili_dx_ind 
 --    ,covid_dx_ind 
-    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end 
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI' else 'NA' end
     ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI'
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI'
     	when admit_cat_cd in ('17 - Medical') then 'Medical'
     	when admit_cat_cd in ('30 - Surgical')	then 'Surgical'	
     	when IP_type in ('LTAC') then 'LTAC'
@@ -1321,19 +1325,19 @@ admit_week
 		end as los_act
 --   ,ili_dx_ind 
 --    ,covid_dx_ind 
-    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end as respiratory_flag 
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI' else 'NA' end as respiratory_flag 
     ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI'
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI'
     	when admit_cat_cd in ('17 - Medical') then 'Medical'
     	when admit_cat_cd in ('30 - Surgical')	then 'Surgical'	
     	when IP_type in ('LTAC') then 'LTAC'
@@ -1437,24 +1441,24 @@ where
 		end 
 --    ,ili_dx_ind 
 --    ,covid_dx_ind 
-    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+    ,case when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI' else 'NA' end 
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83','A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI' else 'NA' end
     ,case when ip_type = 'Transplant' then 'Transplant' 
-     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82') then 'COVID-19'
+     	when prim_diag_cd in ('B97.29', 'J02.48', 'U07.1', 'J12.82','J12.81') then 'COVID-19'
     	when prim_diag_cd in ('079.99','382.9','460','461.9','465.8','465.9','466.0','466.19','486','487.0','487.1','487.8','488','488.0','488.01','488.02','488.09','488.1','488.11','488.12',
     		'488.19','490','780.6','780.60','786.2','B97.10','B97.89','H66.90','H66.91','H66.92','H66.93','J00','J01.90','J01.91','J06.9','J09','J09.X','J09.X1','J09.X2','J09.X3','J09.X9','J10',
     		'J10.0','J10.00','J10.01','J10.08','J10.1','J10.2','J10.8','J10.81','J10.82','J10.83','J10.89','J11','J11.0','J11.00','J11.08','J11.1','J11.2','J11.8','J11.81','J11.82','J11.83','J11.89',
     		'J12.2','J12.89','J12.9','J18.0','J18.1','J18.2','J18.8','J18.9','J20.0','J20.1','J20.2','J20.3','J20.4','J20.6','J20.7','J20.8','J20.9','J22','J40','J80','J98.8','R05','R05.1','R05.2',
-    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83') then 'ILI'
+    		'R05.3','R05.4','R05.8','R05.9','R50.2','R50.81','R50.9','R68.83''A37.00','A37.01','A37.10','A37.11','A37.80','A37.81','A37.90','J12.0','J41.0','J41.1','J41.8') then 'ILI'
     	when admit_cat_cd in ('17 - Medical') then 'Medical'
     	when admit_cat_cd in ('30 - Surgical')	then 'Surgical'	
     	when IP_type in ('LTAC') then 'LTAC'
     	when IP_type in ('SNF') then 'SNF' 
-    	when IP_type in ('AIR') then 'AIR' else 'Medical' end  
+    	when IP_type in ('AIR') then 'AIR' else 'Medical' end
     ,prim_diag_ahrq_genl_catgy_desc 
  -- ,prim_diag_ahrq_diag_dtl_catgy_desc 
  	,CASE WHEN fin_brand='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND fin_product_level_3 <>'INSTITUTIONAL' AND tfm_include_flag=1 THEN 1 else 0 end 
@@ -1481,8 +1485,8 @@ where
 
 
 --Step 6: Adding in Other Needed Variables & Swing Bed based on PAC Provider list 
-drop table tmp_1m.kn_ip_dataset_09172025_2_trs; 
-create table tmp_1m.kn_ip_dataset_09172025_2_trs stored as orc as 
+drop table tmp_1m.kn_ip_dataset_09242025_2_trs; 
+create table tmp_1m.kn_ip_dataset_09242025_2_trs stored as orc as 
 select 
 	a.*
 	,case when a.IP_type='SNF' and b.class='IP_SWGBED' then 1 
@@ -1490,15 +1494,15 @@ select
 	,case when a.fin_product_level_3<>'INSTITUTIONAL' AND a.TFM_INCLUDE_FLAG=1 AND a.CAPITATED=0 AND a.BUSINESS_SEGMENT='MnR' then 'M&R'
 		WHEN a.fin_product_level_3='DUAL' AND a.TFM_INCLUDE_FLAG=0 AND a.CAPITATED=0 AND (a.MIGRATION_SOURCE<>'OAH' or a.migration_source is null) AND a.BUSINESS_SEGMENT='CnS' 
 			then 'C&S' else 'Other' end as MR_CS_Other
-from tmp_1m.kn_ip_dataset_09172025_trs as a
+from tmp_1m.kn_ip_dataset_09242025_trs as a
 left join tmp_1y.hk_snf_swgbed_tins2 as b
 on a.prov_tin=b.prov_tin
 ;
 
 
 --Step 7: Adding in a IPA/PAC split now that SWGBED is split out 
-drop table tmp_1m.kn_ip_dataset_09172025_3_trs; 
-create table tmp_1m.kn_ip_dataset_09172025_3_trs stored as orc as 
+drop table tmp_1m.kn_ip_dataset_09242025_3_trs; 
+create table tmp_1m.kn_ip_dataset_09242025_3_trs stored as orc as 
 select 
 	*
 	,case when swgbed=1 then 'Swing Bed'
@@ -1506,13 +1510,13 @@ select
 	,case when swgbed=1 then 'PAC'
 		when IP_type in ('LTAC','SNF','AIR') then 'PAC'
 		when IP_type in ('Medical','Surgical','Transplant') then 'IPA' else 'NA' end as IPA_PAC_flag
-from  tmp_1m.kn_ip_dataset_09172025_2_trs
+from  tmp_1m.kn_ip_dataset_09242025_2_trs
 ;
 
 
 --Step 8: Roll up before join to MM 
-drop table tmp_1m.kn_ip_dataset_09172025_4_trs; 
-create table tmp_1m.kn_ip_dataset_09172025_4_trs stored as orc as 
+drop table tmp_1m.kn_ip_dataset_09242025_4_trs; 
+create table tmp_1m.kn_ip_dataset_09242025_4_trs stored as orc as 
 select 	
 	a.admit_week
 	,a.hce_admit_month
@@ -1596,7 +1600,7 @@ select
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as franky_allw
-from tmp_1m.kn_ip_dataset_09172025_3_trs as a
+from tmp_1m.kn_ip_dataset_09242025_3_trs as a
 left join tadm_proj_cosmos.tin_collection as d
 on a.prov_tin = d.tin 
 group by 
@@ -1658,8 +1662,8 @@ group by
 ;
 
 --Step 9: Pulling Member Months
-drop table tmp_1m.kn_ip_dataset_09172025_mm; 
-create table tmp_1m.kn_ip_dataset_09172025_mm stored as orc as 
+drop table tmp_1m.kn_ip_dataset_09242025_mm; 
+create table tmp_1m.kn_ip_dataset_09242025_mm stored as orc as 
 select 
 	000000 as fin_inc_week
 	,a.fin_inc_month
@@ -1756,7 +1760,7 @@ select
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as franky_allw
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202508 /**/ as a /*MAKE SURE THIS IS MOST RECENT ENROLLMENT TABLE*/
+from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202509 /**/ as a /*MAKE SURE THIS IS ENROLLMENT TABLE FOR CURRENT MONTH*/
 left join fichsrv.group_crosswalk as b
 		on a.tadm_group_nbr_consist = b.group_number  
 		and a.fin_inc_year = b.`year`
@@ -1808,1524 +1812,18 @@ group by
 
 
 --Step 10: Combine notifications and membership
-drop table tmp_1m.kn_ip_dataset_notif_09172025_trs;
-create table tmp_1m.kn_ip_dataset_notif_09172025_trs as				
+drop table tmp_1m.kn_ip_dataset_notif_09242025_trs;
+create table tmp_1m.kn_ip_dataset_notif_09242025_trs as				
 SELECT	
 	*
-	from tmp_1m.kn_ip_dataset_09172025_4_trs
+	from tmp_1m.kn_ip_dataset_09242025_4_trs
 union all select 
-	* from tmp_1m.kn_ip_dataset_09172025_mm
+	* from tmp_1m.kn_ip_dataset_09242025_mm
 	; 
-
-
-	
-/************************************************************************************************************************************************************/
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------If this is a weekly update, proceed to STEP 28----------------------------------------------------------------
-------------------------------------------------If this is a monthly claims update, proceed to STEP 11--------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-/************************************************************************************************************************************************************/
-/*
---Step 11.1: Grabbing archived 2021 
-drop table tmp_1y.kn_ip_dataset_claims_cosmos_2021;
-create table tmp_1y.kn_ip_dataset_claims_cosmos_2021 as				
-SELECT
-/*CLAIM-RELATED FIELDS
-	a.SITE_CLM_AUD_NBR
-	,a.COMPONENT
-	,a.ADMITID
-	,a.SUB_AUD_NBR
-	,a.DTL_LN_NBR
-	,a.CLM_REC_CD
-	,a.EVENTKEY
-	,a.TADM_ADMIT_TYPE
-	,a.TADM_MDC
-	,a.ADMIT_QTR
-	,a.ADMIT_YR_MONTH
-	,a.ADMIT_START_DT
-	,a.ADMIT_END_DT
-	,a.FST_SRVC_DT
-	,a.ERLY_SRVC_QTR
-	,a.ERLY_SRVC_DT
-	,a.fst_srvc_month
-	,a.DSCHRG_STS_CD
-	,a.CATGY_ROL_UP_2_DESC
-	,a.BRAND_FNL 
-	,a.CLM_DNL_F
-	,a.admit_rnk
-	,c.week as admit_week
-/*CLAIM ADJUDICATION FIELDS
-	,a.BIL_RECV_DT
-	,a.ADJD_QTR
-	,a.ADJD_DT
-	,a.CLM_PD_DT
-	,a.FNL_RSN_CD_SYS_ID
-	,a.CLM_LVL_RSN_CD_SYS_ID
-	,a.SRVC_LVL_RSN_CD_SYS_ID
-
-/*DEMOGRAPHIC FIELDS
-	,a.PLAN_LEVEL_1_FNL
-	,a.PLAN_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_1_FNL
-	,a.PRODUCT_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_3_FNL
-	,a.REGION_FNL
-	,a.MARKET_FNL
-	,a.FIN_SUBMARKET
-	,a.GLOBAL_CAP
-	,a.GROUP_IND_FNL
-	,a.TFM_INCLUDE_FLAG
-	,a.MIGRATION_SOURCE
-	,a.GROUPNUMBER
-	,a.SEGMENT_NAME_FNL
-	,a.CONTRACTPBP_FNL
-	,a.CONTRACT_FNL
-
-/*PATIENT FIELDS
-	,a.GAL_MBI_HICN_FNL
-	,a.BTH_DT
-	,a.GDR_CD
-
-/*PROVIDER FIELDS
-	,a.MPIN
-	,a.SRVC_PROV_ID
-	,a.PROV_TIN
-	,a.FULL_NM
-	,a.PROV_PRTCP_STS_CD
-	,a.CLM_PL_OF_SRVC_DESC
-	,a.COS_PROV_SPCL_CD
-
-/*SERVICE FIELDS
-	,a.FNL_DRG_CD
-	,a.CLM_ADMIT_TYPE
-	,a.FNL_ADMIT_TYP
-	,a.PROC_CD
-	,a.icd_2
-	,a.icd_3
-	,a.icd_4
-	,a.icd_5
-	,case when a.pd_dn_ol_tadm_admit_type  IN ('IP_HSP','IP_MATNB','IP_MEDSURGICU','IP_NICUEXTSTAY','IP_TRANS') then 'IPA'
-		when a.pd_dn_ol_tadm_admit_type  in ('IP_LTAC','IP_REHAB','IP_SNF','IP_REHAB','IP_SWGBED') then 'PAC'
-		else 'Other' end as ipa_pac_flag 
-
-	,a.denial_f
-	,case when b.drg_med_surg_txt in ('UNKNOWN','**','MED') then 'MEDICAL' 
-		when a.fnl_drg_cd is null then 'MEDICAL' 
-		when b.drg_med_surg_txt in ('SURG','SURGICAL') then 'SURGICAL' else b.drg_med_surg_txt end as med_surg
-	,case when primary_diag_cd in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 
-    	when icd_2 in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 else 0 end as ili_dx_ind 
-    ,case when primary_diag_cd in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when primary_diag_cd in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    	when icd_2 in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when icd_2 in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    		 else 'NA' end as respiratory_flag 
-    ,case when a.migration_source='OAH' then 'OAH' else 'Non-OAH' end as total_OAH_flag
-    ,case when a.product_level_3_fnl ='INSTITUTIONAL' then 'Institutional' else 'Non-Institutional' end as institutional_flag
-    ,datediff(a.pd_dn_ol_admit_end_dt ,a.pd_dn_ol_admit_start_dt ) as los 
-	,a.PRIMARY_DIAG_CD
-	,a.AHRQ_DIAG_GENL_CATGY_DESC
-	,a.AHRQ_DIAG_DTL_CATGY_DESC
-	,a.RVNU_CD
-	,a.ICD_VER_CD
-	,a.tfm_product_new_fnl
-/*COUNTING FIELDS
-	,a.ADMIT_IPRVUWGT
-	,a.SBMT_CHRG_AMT
-	,a.ALLW_AMT_FNL
-	,a.NET_PD_AMT_FNL
-	,a.TADM_ADMITS
-	,a.TADM_QTYDAYS
-	,a.pd_dn_ol_admitid 
-	,a.pd_dn_ol_admit_start_dt 
-	,a.pd_dn_ol_admit_end_dt 
-	,a.pd_dn_ol_tadm_admit_type 
-	,a.ip_status_code
-	,case when date_add(last_day(a.adjd_dt),-10)>=a.adjd_dt then date_format(a.adjd_dt,'yyyyMM') else date_format(add_months(a.adjd_dt,1),'yyyyMM') end as adjd_yrmonth
-	,date_format(a.pd_dn_ol_admit_start_dt,'yyyyMM') as pd_dn_ol_admit_yrmonth
-from tadm_tre_cpy.glxy_ip_admit_f_202504 as a
-left join tmp_2y.kn_glxy_drg_code as b
-	on a.fnl_drg_cd = b.drg_cd
-	and a.ADMIT_START_DT between b.drg_row_eff_dt and b.drg_row_end_dt
-left join tmp_2y.kn_loc_week_assign as c 
-	on a.pd_dn_ol_admit_start_dt =c.`date` 
-where year(a.pd_dn_ol_admit_start_dt)='2021'
-;
-
---QA Check that only 2021 is in the table above 
-select distinct year(pd_dn_ol_admit_start_dt) from tmp_1y.kn_ip_dataset_claims_cosmos_2021;
-*/
-
---Step 11: Inital COSMOS Pull that will go through Frankenstein runout process
-drop table tmp_1m.kn_ip_dataset_claims_cosmos_09172025;
-create table tmp_1m.kn_ip_dataset_claims_cosmos_09172025 as				
-SELECT
-/*CLAIM-RELATED FIELDS*/
-	a.SITE_CLM_AUD_NBR
-	,a.COMPONENT
-	,a.ADMITID
-	,a.SUB_AUD_NBR
-	,a.DTL_LN_NBR
-	,a.CLM_REC_CD
-	,a.EVENTKEY
-	,a.TADM_ADMIT_TYPE
-	,a.TADM_MDC
-	,a.ADMIT_QTR
-	,a.ADMIT_YR_MONTH
-	,a.ADMIT_START_DT
-	,a.ADMIT_END_DT
-	,a.FST_SRVC_DT
-	,a.ERLY_SRVC_QTR
-	,a.ERLY_SRVC_DT
-	,a.fst_srvc_month
-	,a.DSCHRG_STS_CD
-	,a.CATGY_ROL_UP_2_DESC
-	,a.BRAND_FNL 
-	,a.CLM_DNL_F
-	,a.admit_rnk
-	,c.week as admit_week
-/*CLAIM ADJUDICATION FIELDS*/
-	,a.BIL_RECV_DT
-	,a.ADJD_QTR
-	,a.ADJD_DT
-	,a.CLM_PD_DT
-	,a.FNL_RSN_CD_SYS_ID
-	,a.CLM_LVL_RSN_CD_SYS_ID
-	,a.SRVC_LVL_RSN_CD_SYS_ID
-
-/*DEMOGRAPHIC FIELDS*/
-	,a.PLAN_LEVEL_1_FNL
-	,a.PLAN_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_1_FNL
-	,a.PRODUCT_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_3_FNL
-	,a.REGION_FNL
-	,a.MARKET_FNL
-	,a.FIN_SUBMARKET
-	,a.GLOBAL_CAP
-	,a.GROUP_IND_FNL
-	,a.TFM_INCLUDE_FLAG
-	,a.MIGRATION_SOURCE
-	,a.GROUPNUMBER
-	,a.SEGMENT_NAME_FNL
-	,a.CONTRACTPBP_FNL
-	,a.CONTRACT_FNL
-
-/*PATIENT FIELDS*/
-	,a.GAL_MBI_HICN_FNL
-	,a.BTH_DT
-	,a.GDR_CD
-
-/*PROVIDER FIELDS*/
-	,a.MPIN
-	,a.SRVC_PROV_ID
-	,a.PROV_TIN
-	,a.FULL_NM
-	,a.PROV_PRTCP_STS_CD
-	,a.CLM_PL_OF_SRVC_DESC
-	,a.COS_PROV_SPCL_CD
-
-/*SERVICE FIELDS*/
-	,a.FNL_DRG_CD
-	,a.CLM_ADMIT_TYPE
-	,a.FNL_ADMIT_TYP
-	,a.PROC_CD
-	,a.icd_2
-	,a.icd_3
-	,a.icd_4
-	,a.icd_5
-	,case when a.pd_dn_ol_tadm_admit_type  IN ('IP_HSP','IP_MATNB','IP_MEDSURGICU','IP_NICUEXTSTAY','IP_TRANS') then 'IPA'
-		when a.pd_dn_ol_tadm_admit_type  in ('IP_LTAC','IP_REHAB','IP_SNF','IP_REHAB','IP_SWGBED') then 'PAC'
-		else 'Other' end as ipa_pac_flag 
-
-	,a.denial_f
-	,case when b.drg_med_surg_txt in ('UNKNOWN','**','MED') then 'MEDICAL' 
-		when a.fnl_drg_cd is null then 'MEDICAL' 
-		when b.drg_med_surg_txt in ('SURG','SURGICAL') then 'SURGICAL' else b.drg_med_surg_txt end as med_surg
-	,case when primary_diag_cd in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 
-    	when icd_2 in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 else 0 end as ili_dx_ind 
-    ,case when primary_diag_cd in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when primary_diag_cd in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    	when icd_2 in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when icd_2 in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    		 else 'NA' end as respiratory_flag 
-    ,case when a.migration_source='OAH' then 'OAH' else 'Non-OAH' end as total_OAH_flag
-    ,case when a.product_level_3_fnl ='INSTITUTIONAL' then 'Institutional' else 'Non-Institutional' end as institutional_flag
-    ,datediff(a.pd_dn_ol_admit_end_dt ,a.pd_dn_ol_admit_start_dt ) as los 
-	,a.PRIMARY_DIAG_CD
-	,a.AHRQ_DIAG_GENL_CATGY_DESC
-	,a.AHRQ_DIAG_DTL_CATGY_DESC
-	,a.RVNU_CD
-	,a.ICD_VER_CD
-	,a.tfm_product_new_fnl
-/*COUNTING FIELDS*/
-	,a.ADMIT_IPRVUWGT
-	,a.SBMT_CHRG_AMT
-	,a.ALLW_AMT_FNL
-	,a.NET_PD_AMT_FNL
-	,a.TADM_ADMITS
-	,a.TADM_QTYDAYS
-	,a.pd_dn_ol_admitid 
-	,a.pd_dn_ol_admit_start_dt 
-	,a.pd_dn_ol_admit_end_dt 
-	,a.pd_dn_ol_tadm_admit_type 
-	,a.ip_status_code
-	,case when date_add(last_day(a.adjd_dt),-10)>=a.adjd_dt then date_format(a.adjd_dt,'yyyyMM') else date_format(add_months(a.adjd_dt,1),'yyyyMM') end as adjd_yrmonth
-	,date_format(a.pd_dn_ol_admit_start_dt,'yyyyMM') as pd_dn_ol_admit_yrmonth
-from tadm_tre_cpy.glxy_ip_admit_f_202508 as a
-left join tmp_2y.kn_glxy_drg_code as b
-	on a.fnl_drg_cd = b.drg_cd
-	and a.ADMIT_START_DT between b.drg_row_eff_dt and b.drg_row_end_dt
-left join tmp_2y.kn_loc_week_assign as c 
-	on a.pd_dn_ol_admit_start_dt =c.`date` 
-where year(a.pd_dn_ol_admit_start_dt)>'2021'
-;
-
---QA Check that 2022 and on is in the table above 
-select distinct year(pd_dn_ol_admit_start_dt) from tmp_1m.kn_ip_dataset_claims_cosmos_09172025;
-
-
---Step 11.5: Stack 2021 table with current table before sending through Franky
-drop table tmp_1m.kn_ip_dataset_claims_cosmos_09172025_2;
-create table tmp_1m.kn_ip_dataset_claims_cosmos_09172025_2 as				
-SELECT
-	* 
-	from tmp_1m.kn_ip_dataset_claims_cosmos_09172025
-	union all 
-	select 
-	*
-	from tmp_1y.kn_ip_dataset_claims_cosmos_2021
-;
-
-
---Step 12: First step of Franky, rolling up and pulling a subset of inital pull 
-drop table tmp_1m.kn_ip_dataset_claims_franky;
-create table tmp_1m.kn_ip_dataset_claims_franky as
-select 
---	ADMIT_START_DT
---	,admit_end_dt 
-	admit_week
-	,gal_mbi_hicn_fnl
---	,eventkey
---	,primary_diag_cd 
---	,icd_2
---	,icd_3
---	,icd_4
---	,icd_5
---	,fnl_drg_cd
---	,tadm_admit_type
---	,admit_yr_month 
---	,admit_qtr 
-	,'Claims' as entity 
-	,migration_source
-	,product_level_3_fnl 
-	,tfm_product_new_fnl 
-	,tfm_include_flag
-	,global_cap
-	,'COSMOS' as sgr_source_name
-	,'COMSOS' as nce_tadm_dec_risk_type 
-	,group_ind_fnl 
-	,PROV_TIN
-	,market_fnl 
-	,GROUPNUMBER
-	,plan_level_2_fnl
-	,brand_fnl
-	,adjd_dt 
---	,admitid
-	,max(case when prov_prtcp_sts_cd='P' then 'Par'
-		when prov_prtcp_sts_cd='N' then 'Non-Par'
-		when prov_prtcp_sts_cd ='D' then 'Non-Par' else prov_prtcp_sts_cd end) as prov_prtcp_sts_cd
-	,CONTRACTPBP_FNL
-	,ipa_pac_flag
---	,denial_f
-	,max(case when total_oah_flag ='OAH' then 'OAH'
-		else 'Non-OAH' end) as total_oah_flag
-	,institutional_flag
---	,los
-	,pd_dn_ol_admitid 
-	,pd_dn_ol_admit_start_dt 
-	,pd_dn_ol_admit_end_dt 
-	,pd_dn_ol_tadm_admit_type 
---	,ip_status_code
-	,adjd_yrmonth
-	,pd_dn_ol_admit_yrmonth
-	,max(case when med_surg in ('SURGICAL') then 'SURGICAL' else 'MEDICAL' end) med_surg
-    ,min(case when respiratory_flag='COVID-19' then 'COVID-19' 
-    		when respiratory_flag='ILI' then 'ILI' else 'NA' end) respiratory_flag
-    ,sum(ALLW_AMT_FNL) as ALLW_AMT_FNL
-	,sum(NET_PD_AMT_FNL) as NET_PD_AMT_FNL
-	,sum(TADM_ADMITS) as TADM_ADMITS
-	,sum(TADM_QTYDAYS) as TADM_QTYDAYS
-from tmp_1m.kn_ip_dataset_claims_cosmos_09172025_2 as a
-group by 
---	ADMIT_START_DT
---	,admit_end_dt 
-	admit_week
-	,gal_mbi_hicn_fnl
---	,eventkey
---	,primary_diag_cd 
---	,icd_2
---	,icd_3
---	,icd_4
---	,icd_5
---	,fnl_drg_cd
---	,tadm_admit_type
---	,admit_yr_month 
---	,admit_qtr 
-	,'Claims'
-	,migration_source
-	,product_level_3_fnl 
-	,tfm_product_new_fnl 
-	,tfm_include_flag
-	,global_cap
-	,'COSMOS'
-	,'COMSOS'
-	,group_ind_fnl 
-	,PROV_TIN
-	,market_fnl 
-	,GROUPNUMBER
-	,plan_level_2_fnl
-	,brand_fnl
-	,adjd_dt 
---	,admitid
-	,CONTRACTPBP_FNL
-	,ipa_pac_flag
---	,denial_f
-	,institutional_flag
---	,los
-	,pd_dn_ol_admitid 
-	,pd_dn_ol_admit_start_dt 
-	,pd_dn_ol_admit_end_dt 
-	,pd_dn_ol_tadm_admit_type 
---	,ip_status_code
-	,adjd_yrmonth
-	,pd_dn_ol_admit_yrmonth
-;
-
-
-
---Step 13: pull paid/denied needed fields to pull Franky net paid
-drop table tmp_1m.kn_ip_dataset_claims_franky1;
-create table tmp_1m.kn_ip_dataset_claims_franky1 as
-select 
---	admitid
---	,admit_start_dt
---	,admit_end_dt
-	pd_dn_ol_admitid 
-	,pd_dn_ol_admit_start_dt 
-	,pd_dn_ol_admit_end_dt 
-	,pd_dn_ol_tadm_admit_type 
---	,ip_status_code 
-	,adjd_dt 
-	,adjd_yrmonth
-	,pd_dn_ol_admit_yrmonth
-	,gal_mbi_hicn_fnl 
---	,sum(net_pd_amt_fnl) as net_pd_amt_fnl 
-	,sum(ALLW_AMT_FNL) as ALLW_AMT_FNL
---	,sum(TADM_QTYDAYS) as TADM_QTYDAYS
- from tmp_1m.kn_ip_dataset_claims_franky
- group by 
- --	 admitid
---	,admit_start_dt
---	,admit_end_dt
-	pd_dn_ol_admitid 
-	,pd_dn_ol_admit_start_dt 
-	,pd_dn_ol_admit_end_dt 
-	,pd_dn_ol_tadm_admit_type 
---	,ip_status_code 
-	,adjd_dt 
-	,adjd_yrmonth
-	,pd_dn_ol_admit_yrmonth
-	,gal_mbi_hicn_fnl 
- ;
-
---Step 14:Creating runout adjust snapshot
-drop table tmp_1m.kn_ip_dataset_claims_franky2 ;
-create table tmp_1m.kn_ip_dataset_claims_franky2 as
-select *
-	,sum(ALLW_AMT_FNL) OVER (partition by gal_mbi_hicn_fnl,pd_dn_ol_admitid,pd_dn_ol_admit_yrmonth order by adjd_dt  ROWS BETWEEN UNBOUNDED PRECEDING AND Current row  )  as runout_snapshot_allw
-from tmp_1m.kn_ip_dataset_claims_franky1
-;
-
---Step 15: If the running total of paid dollars is >0, then we count give it a 1
-drop table tmp_1m.kn_ip_dataset_claims_franky3 ;
-create table tmp_1m.kn_ip_dataset_claims_franky3 as
-select gal_mbi_hicn_fnl
-	,pd_dn_ol_admitid	
-	,pd_dn_ol_admit_yrmonth	
-	,pd_dn_ol_admit_start_dt	
-	,pd_dn_ol_admit_end_dt	
-	,pd_dn_ol_tadm_admit_type	
-	,adjd_dt	
-	,adjd_yrmonth	
-	,allw_amt_fnl
-	,runout_snapshot_allw
-	,case when runout_snapshot_allw>0 then 1 else 0 end as runout_snapshot_units
-from tmp_1m.kn_ip_dataset_claims_franky2
-;                   
-
---Step 16: Create lag unit count of ruse in final franky logic
-drop table tmp_1m.kn_ip_dataset_claims_franky4 ;
-CREATE TABLE tmp_1m.kn_ip_dataset_claims_franky4 as
-SELECT *
-	,lag(runout_snapshot_units) over (partition by gal_mbi_hicn_fnl,pd_dn_ol_admitid,pd_dn_ol_admit_yrmonth order by adjd_dt) AS lag_units
-FROM tmp_1m.kn_ip_dataset_claims_franky3
-;
-
---Step 17:Final Franky Logic - getting in-the-moment unit count
-drop table tmp_1m.kn_ip_dataset_claims_franky5 ;
-CREATE TABLE tmp_1m.kn_ip_dataset_claims_franky5 as
-select gal_mbi_hicn_fnl
-	,pd_dn_ol_admitid	
-	,pd_dn_ol_admit_yrmonth	
-	,pd_dn_ol_admit_start_dt	
-	,pd_dn_ol_admit_end_dt	
-	,pd_dn_ol_tadm_admit_type	
-	,adjd_dt	
-	,adjd_yrmonth	
-	,allw_amt_fnl
-	,runout_snapshot_allw
-	,dense_rank() over ( partition by gal_mbi_hicn_fnl,pd_dn_ol_admitid,adjd_yrmonth order by adjd_dt desc ) mem_admit_latest
-	,case when lag_units is not null and runout_snapshot_units < lag_units then -1
-			when runout_snapshot_units + lag_units =2 then 0
-			else runout_snapshot_units end as new_runout_snapshot_units
---	,case when lag_units_allw is not null and runout_snapshot_units_allw < lag_units_allw then -1
---			when runout_snapshot_units_allw + lag_units_allw =2 then 0
---			else runout_snapshot_units_allw end as new_runout_snapshot_units_allw
-	,lag_units as lag_units_for_qa
-from tmp_1m.kn_ip_dataset_claims_franky4
-;
-
-
-
---Step 18:Roll Franky Logic up
-drop table tmp_1m.kn_ip_dataset_claims_franky6 ;
-CREATE TABLE tmp_1m.kn_ip_dataset_claims_franky6 as
-select gal_mbi_hicn_fnl
-	,pd_dn_ol_admitid
-	,pd_dn_ol_admit_start_dt	
-	,pd_dn_ol_admit_end_dt
-	,adjd_dt
-	,adjd_yrmonth
-	,sum(new_runout_snapshot_units) as units_franky
-	,sum(allw_amt_fnl) as allw_franky
-	,0 as days_franky
-from tmp_1m.kn_ip_dataset_claims_franky5
-group by gal_mbi_hicn_fnl
-	,pd_dn_ol_admitid
-	,pd_dn_ol_admit_start_dt	
-	,pd_dn_ol_admit_end_dt
-	,adjd_dt
-	,adjd_yrmonth
-;
-
-
---Step 19: Join Back to Big Claims Table from first step of Franky
-drop table tmp_1m.kn_ip_dataset_claims_franky7 ;
-CREATE TABLE tmp_1m.kn_ip_dataset_claims_franky7 as
-select a.*
-	,b.units_franky
-	,b.allw_franky
-	,b.days_franky
-from tmp_1m.kn_ip_dataset_claims_franky as a
-left join tmp_1m.kn_ip_dataset_claims_franky6 as b
-	on a.gal_mbi_hicn_fnl = b.gal_mbi_hicn_fnl
-	and a.pd_dn_ol_admitid = b.pd_dn_ol_admitid --696264.62	73
-	and a.pd_dn_ol_admit_start_dt = b.pd_dn_ol_admit_start_dt
-	and a.pd_dn_ol_admit_end_dt = b.pd_dn_ol_admit_end_dt
-	and a.adjd_dt = b.adjd_dt
-;
-
-
---Step 20: Cutting off admits with no admitID 
-drop table tmp_1m.kn_ip_dataset_claims_franky8_09172025 ;
-CREATE TABLE tmp_1m.kn_ip_dataset_claims_franky8_09172025 as
-select 
-	*
-	,d.collection as Hospital_Group
-from tmp_1m.kn_ip_dataset_claims_franky7  as a 
-left join tadm_proj_cosmos.tin_collection as d 
-	on a.prov_tin = d.tin
-where a.pd_dn_ol_admitid is not null
-;
-
---QA for frankie:  
---Test Volumes (Want these to match to ensure that rejoining to detailed admit table doesn't dupe:
-select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky from tmp_1m.kn_ip_dataset_claims_franky6;
---NOVEMBER
--- Paid: 68,716,656,301.25
--- Units: 4,995,767
---DECEMBER
--- Paid: 70,624,690,826.05
--- Units: 5,122,903
---JANUARY
--- Paid: 72,267,482,661.31
--- Units: 5,238,959
---FEBRUARY
--- Paid: 73,640,186,893.02
--- Units: 5,338,064
---MARCH
--- Paid: 80,337,165,615.57
--- Units: 5,555,249
---APRIL
--- Paid: 82,354,587,077.30
--- Units: 5,685,626
---MAY
--- Paid: 84,739,473,072.09
--- Units: 5,843,965
---JUNE
--- Paid: 87,050,010,546.60
--- Units: 5,990,785
---JULY
--- Paid: 88,906,947,782.00	
--- Units: 6,114,204
---AUGUST
--- Paid: 91,560,740,248.71
--- Units: 6,285,956
-	
-
-select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky from tmp_1m.kn_ip_dataset_claims_franky7;
---NOVEMBER
--- Paid: 68,718,031,259.42
--- Units: 4,995,792
---DECEMBER
--- Paid: 70,630,111,492.91
--- Units: 5,123,027
---JANUARY
--- Paid: 72,272,920,314.23
--- Units: 5,239,087
---FEBRUARY
--- Paid: 73,646,184,533.03
--- Units: 5,338,202
---MARCH
--- Paid: 80,343,792,969.62
--- Units: 5,555,398
---APRIL
--- Paid: 82,361,403,576.27
--- Units: 5,685,783
---MAY
--- Paid: 84,745,964,215.87
--- Units: 5,844,101
---JUNE
--- Paid: 87,057,043,087.29
--- Units: 5,990,932
---JULY
--- Paid: 88,913,865,737.46	
--- Units: 6,114,352
---AUGUST
--- Paid: 91,568,402,113.13
--- Units: 6,286,103
-	
-
---Step 21: COSMOS After Franky adjustment
-drop table tmp_1m.kn_ip_dataset_claims_cosmos_franky; 
-create table tmp_1m.kn_ip_dataset_claims_cosmos_franky stored as orc as 
-select
-	a.admit_week
-	,a.pd_dn_ol_tadm_admit_type as tadm_admit_type
-	,a.pd_dn_ol_admit_yrmonth as admit_yr_month
-	,a.migration_source
-	,a.product_level_3_fnl
-	,a.tfm_product_new_fnl
-	,a.tfm_include_flag
-	,a.sgr_source_name
-	,a.nce_tadm_dec_risk_type
-	,a.group_ind_fnl
-	,a.market_fnl
-	,a.groupnumber
-	,b.group_name
-	,a.plan_level_2_fnl
-	,a.BRAND_FNL
-	,a.global_cap
-	,a.adjd_dt
---	,a.perc_offset
-	,case when date_add(last_day(a.adjd_dt),-10)>=a.adjd_dt then date_format(a.adjd_dt,'yyyyMM') else date_format(add_months(a.adjd_dt,1),'yyyyMM') end as adjd_yrmonth
-	,a.pd_dn_ol_admitid as admitid
-	,a.prov_prtcp_sts_cd	
-	,a.PROV_TIN
-	,a.Hospital_Group
-	,a.contractpbp_fnl
-	,a.ipa_pac_flag
-	,a.med_surg
-	,a.respiratory_flag
-	,case when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('ILI') then 'ILI'
-    	when a.ipa_pac_flag ='IPA' and a.pd_dn_ol_tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'MEDICAL' then 'Medical'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'SURGICAL' then 'Surgical' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_REHAB' then 'AIR' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_LTAC' then 'LTAC' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_SNF' then 'SNF'
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_SWGBED' then 'Swing Bed' 
-    	when a.pd_dn_ol_tadm_admit_type='MHCDIP' then 'Other' else 'Other' end as ipa_li_split 
-	,a.total_oah_flag
-	,a.institutional_flag 
-	,datediff(a.pd_dn_ol_admit_end_dt ,a.pd_dn_ol_admit_start_dt)+1 as los_clms 
-	,case when a.global_cap='NA' then 0 else 1 end as capitated
-	,CASE WHEN a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND a.tfm_include_flag=1 THEN 1 else 0 end as MnR_COSMOS_FFS_Flag
- 	,CASE WHEN a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND a.tfm_include_flag=1 
- 		AND a.tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end as leading_ind_pop
- 	,CASE WHEN a.BRAND_FNL='M&R' AND a.sgr_source_name='NICE' AND a.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') THEN 1 else 0 end as MnR_NICE_FFS_Flag
- 	,case when (a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1) 
- 		OR (a.BRAND_FNL='M&R' AND sgr_source_name='NICE' AND a.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end as MnR_TOTAL_FFS_FLAG
- 	,case when a.BRAND_FNL='M&R' and a.migration_source='OAH' then 1 else 0 end as MnR_OAH_flag 
- 	,case when a.BRAND_FNL='C&S' and a.migration_source='OAH' then 1 else 0 end as CnS_OAH_flag
- 	,case when a.BRAND_FNL='M&R' and a.product_level_3_fnl='DUAL' then 1 else 0 end as MnR_Dual_flag
- 	,case when (a.BRAND_FNL='C&S' and a.global_cap = 'NA' and a.product_level_3_fnl='DUAL' AND a.SGR_SOURCE_NAME in('COSMOS','NICE','CSP') ) then 1 else 0 end as CnS_Dual_flag
---	,count(distinct concat(a.dt,a.pd_dn_ol_admitid)) as length_of_stay
-	,0 as frank_netpaid
-	,sum(a.units_franky) as frank_admits
-	,sum(a.allw_franky) as frank_allowed
-	,sum(a.days_franky) as frank_days
-	,sum(a.allw_amt_fnl) as allowed
-	,sum(a.net_pd_amt_fnl) as netpaid
-	,sum(a.tadm_admits) as admits
-	,sum(a.tadm_qtydays) as days
-from tmp_1m.kn_ip_dataset_claims_franky8_09172025 as a 
-left join fichsrv.group_crosswalk as b
-		on a.groupnumber = b.group_number  
-		and substr(a.pd_dn_ol_admit_yrmonth,1,4)=b.`year`
-group by 
-	a.admit_week
-	,a.pd_dn_ol_tadm_admit_type
-	,a.pd_dn_ol_admit_yrmonth--	,a.fst_srvc_month
-	,a.migration_source
-	,a.product_level_3_fnl
-	,a.tfm_product_new_fnl
-	,a.tfm_include_flag
-	,a.sgr_source_name
-	,a.nce_tadm_dec_risk_type
-	,a.group_ind_fnl
-	,a.market_fnl
-	,a.groupnumber
-	,b.group_name
-	,a.plan_level_2_fnl
-	,a.BRAND_FNL
-	,a.global_cap
-	,a.adjd_dt
---	,a.perc_offset
-	,case when date_add(last_day(a.adjd_dt),-10)>=a.adjd_dt then date_format(a.adjd_dt,'yyyyMM') else date_format(add_months(a.adjd_dt,1),'yyyyMM') end 
-	,a.pd_dn_ol_admitid
-	,a.prov_prtcp_sts_cd
-	,a.PROV_TIN
-	,a.Hospital_Group
-	,a.contractpbp_fnl
-	,a.ipa_pac_flag
-	,a.med_surg
-	,a.respiratory_flag
-	,case when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('ILI') then 'ILI'
-    	when a.ipa_pac_flag ='IPA' and a.pd_dn_ol_tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'MEDICAL' then 'Medical'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'SURGICAL' then 'Surgical' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_REHAB' then 'AIR' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_LTAC' then 'LTAC' 
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_SNF' then 'SNF'
-    	when a.ipa_pac_flag ='PAC' and a.pd_dn_ol_tadm_admit_type='IP_SWGBED' then 'Swing Bed' 
-    	when a.pd_dn_ol_tadm_admit_type='MHCDIP' then 'Other' else 'Other' end
-	,a.total_oah_flag
-	,a.institutional_flag
-	,datediff(a.pd_dn_ol_admit_end_dt ,a.pd_dn_ol_admit_start_dt)+1 
-	,case when a.global_cap='NA' then 0 else 1 end 
-	,CASE WHEN a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND a.tfm_include_flag=1 THEN 1 else 0 end 
- 	,CASE WHEN a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND a.tfm_include_flag=1 
- 		AND a.tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end 
- 	,CASE WHEN a.BRAND_FNL='M&R' AND a.sgr_source_name='NICE' AND a.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') THEN 1 else 0 end 
- 	,case when (a.BRAND_FNL='M&R' AND a.global_cap='NA' AND a.sgr_source_name='COSMOS' AND a.product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1) 
- 		OR (a.BRAND_FNL='M&R' AND sgr_source_name='NICE' AND a.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end 
- 	,case when a.BRAND_FNL='M&R' and a.migration_source='OAH' then 1 else 0 end
- 	,case when a.BRAND_FNL='C&S' and a.migration_source='OAH' then 1 else 0 end 
- 	,case when a.BRAND_FNL='M&R' and a.product_level_3_fnl='DUAL' then 1 else 0 end 
- 	,case when (a.BRAND_FNL='C&S' and a.global_cap = 'NA' and a.product_level_3_fnl='DUAL' AND a.SGR_SOURCE_NAME in('COSMOS','NICE','CSP') ) then 1 else 0 end 
-	;
-
---Step 22: Create claims dataset for service month conversion
-drop table tmp_1m.kn_ip_dataset_claims_triangle_09172025; 
-create table tmp_1m.kn_ip_dataset_claims_triangle_09172025 stored as orc as 
-SELECT
-	000000 as admit_week
-	,admit_yr_month
-	,'0000' as admit_year
-	,fst_srvc_month -- rename in notification
-	,'Triangle' as adjd_yrmonth
-	,'Triangle' as component
-	,'Triangle' as entity
-	,'Triangle' as tadm_admit_type
-	,0 as loc_flag
-	,'Triangle' as svc_setting
-	,'Triangle' as case_cur_svc_cat_dtl_cd
-	,'Triangle' as migration_source
-	,'Triangle' as total_oah_flag
-	,'Triangle' as institutional_flag
-	,tfm_product_new_fnl
-	,0 as tfm_include_flag
-	,'Triangle' as global_cap
-	,'Triangle' as sgr_source_name
-	,'Triangle' as nce_tadm_dec_risk_type
-	,'Triangle' as BRAND_FNL
-	,'Triangle' as group_ind_fnl
-	,'Triangle' as product_level_3_fnl
-	,'Triangle' as plan_level_2_fnl
-	,'Triangle' as market_fnl
-	,'Triangle' as contractpbp_fnl
-	,'Triangle' as groupnumber
-	,'Triangle' as group_name
-	,'Triangle' as do_ind
-	,'Triangle' as prov_prtcp_sts_cd
-	,'Triangle' as prov_tin -- not needed for claims anywhere so placeholder for union
-	,'Triangle' as hospital_group
-	,0 as capitated
-	,'Triangle' as los_categories
-	,0 as los_clms
-	,0 as length_of_stay
---	,0 as ili_dx_ind
---	,0 as covid_dx_ind -- both these ind not needed
-	,'Triangle' as respiratory_flag
-	,'Triangle' as ipa_li_split
-	,0 as MnR_COSMOS_FFS_Flag
- 	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 
- 		AND tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end as leading_ind_pop
- 	,0 as MnR_NICE_FFS_Flag
- 	,0 as MnR_TOTAL_FFS_FLAG
- 	,0 as MnR_OAH_flag 
- 	,0 as CnS_OAH_flag
- 	,0 as MnR_Dual_flag
- 	,0 as CnS_Dual_flag 
-	,'Triangle' as ocm_migration
-	,0 as swgbed
- 	,'Triangle' as mr_cs_other
-	,case when ipa_pac_flag ='IPA' and respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when ipa_pac_flag ='IPA' and respiratory_flag in ('ILI') then 'ILI'
-    	when ipa_pac_flag ='IPA' and tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when ipa_pac_flag ='IPA' and med_surg = 'MEDICAL' then 'Medical'
-    	when ipa_pac_flag ='IPA' and med_surg = 'SURGICAL' then 'Surgical' 
-		when tadm_admit_type='IP_REHAB' then 'AIR'
-		when tadm_admit_type='IP_LTAC' then 'LTAC' 
-		when tadm_admit_type='IP_SNF' then 'SNF'
-		when tadm_admit_type='IP_SWGBED' then 'Swing Bed'
-		when tadm_admit_type='MHCDIP' then 'Other' else 'Other' end as admit_type
-	,ipa_pac_flag
-	,0 as first_adverse
-	,0 as first_not_approved_srvc
-	,0 as first_not_approved_case
-	,0 as md_review_overturn
-	,0 as appealed_cases
-	,0 as overturned_cases
-	,0 as md_rev_appeals
-	,0 as pre_auth_cases
-	,0 as case_count
-	,0 as intital_adr_cnt
-	,0 as persistent_adr_cnt
-	,0 as md_reviewed_cnt
-	,0 as appeal_case_cnt
-	,0 as appeal_ovrtn_case_cnt
-	,0 as mcr_reconsideration_case_cnt
-	,0 as mcr_ovrtn_case_cnt
-	,0 as p2p_case_cnt
-	,0 as p2p_ovrtn_case_cnt
-	,0 as other_ovtrns
-	,0 as membership
-	,0 as days
-	,0 as frank_days
-	,0 as admits
-	,sum(allw_amt_fnl) as allowed
-	,0 as netpaid
-	,0 as franky_paid
-	,0 as franky_admits
-	,0 as frank_allowed
-from tmp_1m.kn_ip_dataset_claims_cosmos_09172025_2 
-group by 
-	admit_yr_month
-	,fst_srvc_month -- rename in notification
-	,adjd_yrmonth
-	,tfm_product_new_fnl
-	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND  product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 
- 		AND tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end
-	,ipa_pac_flag
-	,case when ipa_pac_flag ='IPA' and respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when ipa_pac_flag ='IPA' and respiratory_flag in ('ILI') then 'ILI'
-    	when ipa_pac_flag ='IPA' and tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when ipa_pac_flag ='IPA' and med_surg = 'MEDICAL' then 'Medical'
-    	when ipa_pac_flag ='IPA' and med_surg = 'SURGICAL' then 'Surgical' 
-		when tadm_admit_type='IP_REHAB' then 'AIR'
-		when tadm_admit_type='IP_LTAC' then 'LTAC' 
-		when tadm_admit_type='IP_SNF' then 'SNF'
-		when tadm_admit_type='IP_SWGBED' then 'Swing Bed'
-		when tadm_admit_type='MHCDIP' then 'Other' else 'Other' end
-;
-	
-
---Step 23: NICE pull
-drop table tmp_1m.kn_ip_dataset_claims_nice; 
-create table tmp_1m.kn_ip_dataset_claims_nice stored as orc as 
-SELECT
-/*CLAIM-RELATED FIELDS*/
-	a.CLM_AUD_NBR
-	,a.COMPONENT
-	,a.ADMITID
-	,a.DTL_LN_NBR
-	,a.EVENTKEY
-	,a.TADM_ADMIT_TYPE
-	,a.TADM_MDC
-	,a.ADMIT_QTR
-	,a.ADMIT_YR_MONTH
-	,a.ADMIT_START_DT
-	,a.ADMIT_END_DT
-	,a.FST_SRVC_DT
-	,a.fst_srvc_month
-	,a.ERLY_SRVC_QTR
-	,a.ERLY_SRVC_DT
-	,a.DSCHRG_STS_CD
-	,a.BRAND_FNL 
-	,c.week as admit_week
-/*CLAIM ADJUDICATION FIELDS*/
-	,a.BIL_RECV_DT
-	,a.ADJD_QTR
-	,a.ADJD_DT
-	,a.CLM_PD_DT
-/*DEMOGRAPHIC FIELDS*/
-	,a.PLAN_LEVEL_1_FNL
-	,a.PLAN_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_1_FNL
-	,a.PRODUCT_LEVEL_2_FNL
-	,a.PRODUCT_LEVEL_3_FNL
-	,a.REGION_FNL
-	,a.MARKET_FNL
-	,a.FIN_SUBMARKET_FNL
-	,a.PMGDEC_FNL
-	,a.DEC_RISK_TYPE_FNL
-	,a.GROUP_IND_FNL
-	,a.TFM_INCLUDE_FLAG
-	,a.GROUPNUMBER
-	,a.SEGMENT_NAME_FNL
-	,a.CONTRACTPBP_FNL
-	,a.CONTRACT_FNL
-/*PATIENT FIELDS*/
-	,a.MBI_HICN_FNL
-	,a.BTH_DT
-	,a.GDR_CD
-/*PROVIDER FIELDS*/
-	,a.MPIN
-	,a.SRVC_PROV_ID
-	,a.PROV_TIN
-	,a.FULL_NM
-	,a.PROV_PRTCP_STS_CD
-/*SERVICE FIELDS*/
-	,a.FNL_DRG_CD
-	,a.CLM_ADMIT_TYPE
-	,a.FNL_ADMIT_TYP
-	,a.PROC_CD
-	,a.icd_2
-	,a.icd_3
-	,a.icd_4
-	,a.icd_5
-	,a.PRIMARY_DIAG_CD
-	,a.AHRQ_DIAG_GENL_CATGY_DESC
-	,a.AHRQ_DIAG_DTL_CATGY_DESC
-	,case when a.tadm_admit_type IN ('IP_HSP','IP_MATNB','IP_MEDSURGICU','IP_NICUEXTSTAY','IP_TRANS') then 'IPA'
-		when a.tadm_admit_type in ('IP_LTAC','IP_REHAB','IP_SNF','IP_REHAB','IP_SWGBED') then 'PAC'
-		else 'Other' end as ipa_pac_flag 
-	,a.denial_f
-	,case when b.servicecatg = 'UNKNOWN' then 'MEDICAL' 
-		when a.fnl_drg_cd is null then 'MEDICAL' else b.servicecatg end as med_surg
-	,case when primary_diag_cd in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when primary_diag_cd in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    	when icd_2 in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-    	when icd_2 in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-	    	'78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-	    	'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-	    	'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-    		 else 'NA' end as respiratory_flag 
-    	,case when primary_diag_cd in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 
-    	when icd_2 in ('B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09X1','J09X2','J09X3','J09X9','J1000','J1001','J1008','J101','J102','J1081','J1082',
-	    	'J1083','J1089','J1100','J1108','J111','J112','J1181','J1182','J1183','J1189','J122','J129','J188','J189','J200','J201','J202','J203','J204','J205','J206','J207','J208','J209','J40','R05',
-	    	'R502','R509','R5081','R6883','J181','R052','R053','R054','R058','R059') then 1 else 0 end as ili_dx_ind 
-    ,case when a.product_level_3_fnl ='INSTITUTIONAL' then 'Institutional' else 'Non-Institutional' end as institutional_flag
-    ,datediff(a.ADMIT_END_DT,a.ADMIT_START_DT)+1 as los_clms 
-	,a.tfm_product_fnl
-	,a.RVNU_CD
-	,a.ICD_VER_CD
-/*COUNTING FIELDS*/
-	,a.FNL_IPRVUWGT
-	,a.SBMT_CHRG_AMT
-	,a.ALLW_AMT_FNL
-	,a.NET_PD_AMT_FNL
-	,a.TADM_ADMITS
-	,a.TADM_QTYDAYS
-from fichsrv.nice_ip as a
-left join fichsrv.tadm_glxy_drg_code as b
-	on a.fnl_drg_cd = b.drg_cd
-left join tmp_2y.kn_loc_week_assign as c 
-on a.admit_start_dt =c.`date` 
-;
-
---Step 24: Facets pull for C&S Duals 
-drop table tmp_1m.kn_ip_dataset_claims_facet;
-create table tmp_1m.kn_ip_dataset_claims_facet stored as orc as
-select 
-	a.admit_start_dt
-    ,a.admit_end_dt
-    ,d.week as admit_week
-    ,a.gal_mbi_hicn_fnl
-    ,a.eventkey
-    ,a.primary_diag_cd
-    ,a.icd_2
-    ,a.icd_3
-    ,a.icd_4
-    ,a.icd_5
-    ,a.fnl_drg_cd
-    ,a.tadm_admit_type
-    ,a.admit_yr_month
-    ,a.fst_srvc_month
-    ,a.admit_qtr
-    ,'Claims' as entity
-    ,b.migration_source
-    ,b.fin_product_level_3 as product_level_3_fnl
-    ,b.fin_tfm_product_new as tfm_product_new_fnl
-    ,b.tfm_include_flag
-    ,b.global_cap
-    ,'CSP' as sgr_source_name
-    ,'CSP' as nce_tadm_dec_risk_type
-    ,b.fin_g_i as group_ind_fnl
-    ,b.fin_market as market_fnl
-    ,b.tadm_group_nbr_consist as groupnumber
-    ,b.fin_plan_level_2 as plan_level_2_fnl
-    ,b.fin_brand as brand_fnl
-    ,a.adjd_dt
-    ,a.admitid
-    ,a.prov_prtcp_sts_cd
-    ,b.fin_contractpbp as contractpbp_fnl
-    ,case when a.tadm_admit_type IN ('IP_HSP','IP_MATNB','IP_MEDSURGICU','IP_NICUEXTSTAY','IP_TRANS') then 'IPA'
-          when a.tadm_admit_type in ('IP_LTAC','IP_REHAB','IP_SNF','IP_REHAB','IP_SWGBED') then 'PAC'
-          else 'Other' end as ipa_pac_flag
-    ,a.denial_f
-    ,case when c.servicecatg = 'UNKNOWN' then 'MEDICAL' 
-          when a.fnl_drg_cd is null then 'MEDICAL' else c.servicecatg end as med_surg
-    ,case when a.primary_diag_cd in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-          when a.primary_diag_cd in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-               '78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-               'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-               'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-          when a.icd_2 in ('B9729', 'J0248', 'U071', 'J1282') then 'COVID-19'
-          when a.icd_2 in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
-                '78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
-                'J108','J1081','J1082','J1083','J1089','J11','J110','J1100','J1108','J111','J112','J118','J1181','J1182','J1183','J1189','J122','J1289','J129','J180','J181','J182','J188','J189','J200',
-                'J201','J202','J203','J204','J206','J207','J208','J209','J22','J40','J80','J988','R05','R051','R052','R053','R054','R058','R059','R502','R5081','R509','R6883') then 'ILI'
-          else 'NA' end as respiratory_flag
-    ,case when b.fin_product_level_3 ='INSTITUTIONAL' then 'Institutional' else 'Non-Institutional' end as institutional_flag
-    ,case when b.migration_source='OAH' then 'OAH' else 'Non-OAH' end as total_OAH_flag
-    ,datediff(a.ADMIT_END_DT,a.ADMIT_START_DT)+1 as los_clms
-    ,case when b.global_cap='NA' then 0 else 1 end as capitated
-    ,AHRQ_DIAG_GENL_CATGY_DESC
-  ,AHRQ_DIAG_DTL_CATGY_DESC
-    ,tadm_admits 
-    ,net_pd_amt_fnl 
-    ,allw_amt_fnl 
-    ,tadm_qtydays
-    
-from FICHSRV.SMART_IP as a
-left join fichsrv.tre_membership as b
-    on a.gal_mbi_hicn_fnl = b.fin_mbi_hicn_fnl
-    and a.admit_yr_month = b.fin_inc_month
-left join fichsrv.tadm_glxy_drg_code as c
-    on a.fnl_drg_cd = c.drg_cd
-left join tmp_2y.kn_loc_week_assign as d 
-	on a.admit_start_dt =d.`date` 
-;
-
---Step 25: Union of Franky COSMOS & NICE & SMART pulls 
-drop table tmp_1m.kn_ip_dataset_claims_trs; 
-create table tmp_1m.kn_ip_dataset_claims_trs stored as orc as 
-select
-	a.admit_week
-	,a.tadm_admit_type
-	,a.admit_yr_month 
-	,'000000' as service_month
-	,a.adjd_yrmonth
-	,'Claims' as entity 
-	,a.migration_source
-	,a.product_level_3_fnl 
-	,a.tfm_product_new_fnl 
-	,a.tfm_include_flag
-	,a.sgr_source_name
-	,a.nce_tadm_dec_risk_type 
-	,a.group_ind_fnl 
-	,a.market_fnl 
-	,a.GROUPNUMBER
-	,b.group_name
-	,a.plan_level_2_fnl
-	,a.BRAND_FNL
-	,a.adjd_dt 
-	,a.admitid
-	,a.prov_prtcp_sts_cd 
-	,a.PROV_TIN
-	,a.Hospital_group
-	,a.CONTRACTPBP_FNL
-	,a.ipa_pac_flag
-	,a.med_surg
-	,a.respiratory_flag
-	,a.ipa_li_split 
-	,a.total_oah_flag
-	,a.institutional_flag
-	,a.los_clms
-	,0 as length_of_stay
-	,a.capitated
-	,a.global_cap
-	,a.admits
-	,a.netpaid
-	,a.allowed
-	,a.days
-	,a.frank_days
-	,a.frank_netpaid
-	,a.frank_admits
-	,a.frank_allowed
-from tmp_1m.kn_ip_dataset_claims_cosmos_franky as a 
-left join fichsrv.group_crosswalk as b
-		on a.GROUPNUMBER = b.group_number  
-		and substring(a.admit_yr_month,1,4) = b.`year`
-union all 
-select 
-	a.admit_week
-	,a.tadm_admit_type
-	,a.admit_yr_month 
-	,'000000' as service_month
---	,a.fst_srvc_month
-	,'000000' as adjd_yrmonth
-	,'Claims' as entity 
-	,'NICE' as migration_source
-	,a.product_level_3_fnl 
-	,a.tfm_product_fnl as tfm_product_new_fnl 
-	,a.tfm_include_flag
-	,'NICE' as sgr_source_name
-	,a.dec_risk_type_fnl as nce_tadm_dec_risk_type
-	,a.group_ind_fnl 
-	,a.market_fnl 
-	,a.GROUPNUMBER
-	,b.group_name
-	,a.plan_level_2_fnl
-	,a.BRAND_FNL
-	,a.adjd_dt 
-	,a.admitid
-	,case when a.prov_prtcp_sts_cd='P' then 'Par'
-		when a.prov_prtcp_sts_cd='N' then 'Non-Par'
-		when a.prov_prtcp_sts_cd ='D' then 'Non-Par' else prov_prtcp_sts_cd end
-		,a.PROV_TIN
-	,'NICE' as hospital_group
-	,a.CONTRACTPBP_FNL
-	,a.ipa_pac_flag
-	,a.med_surg
-	,a.respiratory_flag
-	,case when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('ILI') then 'ILI'
-    	when a.ipa_pac_flag ='IPA' and a.tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'MEDICAL' then 'Medical'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'SURGICAL' then 'Surgical' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_REHAB' then 'AIR' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_LTAC' then 'LTAC' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_SNF' then 'SNF'
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_SWGBED' then 'Swing Bed' 
-    	when a.tadm_admit_type='MHCDIP' then 'Other' else 'Other' end as ipa_li_split 
-	,'Non-OAH' as total_oah_flag
-	,a.institutional_flag
-	,datediff(a.admit_end_dt,a.admit_start_dt)+1 as los_clms
-	,0 as length_of_stay
-	,case when a.dec_risk_type_fnl in ('FFS','PHYSICIAN') then 0 else 1 end as capitated
-	,'NICE' as global_cap
-	,a.tadm_admits 
-	,a.net_pd_amt_fnl 
-	,a.allw_amt_fnl 
-	,a.tadm_qtydays
-	,0 as frank_days
-	,0 as frank_netpaid
-	,0 as frank_admits
-	,0 as frank_allowed
-from tmp_1m.kn_ip_dataset_claims_nice as a
-left join fichsrv.group_crosswalk as b
-		on a.GROUPNUMBER = b.group_number  
-		and substring(a.admit_yr_month,1,4) = b.`year`
-union all 
-select 
-	a.admit_week
-	,a.tadm_admit_type
-	,a.admit_yr_month 
-	,'000000' as service_month
---	,a.fst_srvc_month
-	,'000000' as adjd_yrmonth
-	,a.entity 
-	,a.migration_source
-	,a.product_level_3_fnl 
-	,a.tfm_product_new_fnl 
-	,a.tfm_include_flag
-	,a.sgr_source_name
-	,a.nce_tadm_dec_risk_type
-	,a.group_ind_fnl 
-	,a.market_fnl 
-	,a.GROUPNUMBER
-	,b.group_name
-	,a.plan_level_2_fnl
-	,a.BRAND_FNL
-	,a.adjd_dt 
-	,a.admitid
-	,case when a.prov_prtcp_sts_cd='P' then 'Par'
-		when a.prov_prtcp_sts_cd='N' then 'Non-Par'
-		when a.prov_prtcp_sts_cd ='D' then 'Non-Par' else a.prov_prtcp_sts_cd end
-	,'' as PROV_TIN
-	,'' as hospital_group
-	,a.CONTRACTPBP_FNL
-	,a.ipa_pac_flag
-	,a.med_surg
-	,a.respiratory_flag
-	,case when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('COVID-19') then 'COVID-19'
-    	when a.ipa_pac_flag ='IPA' and a.respiratory_flag in ('ILI') then 'ILI'
-    	when a.ipa_pac_flag ='IPA' and a.tadm_admit_type='IP_TRANS' then 'Transplant'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'MEDICAL' then 'Medical'
-    	when a.ipa_pac_flag ='IPA' and a.med_surg = 'SURGICAL' then 'Surgical' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_REHAB' then 'AIR' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_LTAC' then 'LTAC' 
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_SNF' then 'SNF'
-    	when a.ipa_pac_flag ='PAC' and a.tadm_admit_type='IP_SWGBED' then 'Swing Bed' 
-    	when a.tadm_admit_type='MHCDIP' then 'Other' else 'Other' end as ipa_li_split 
-	,a.total_oah_flag
-	,a.institutional_flag
-	,datediff(a.admit_end_dt,a.admit_start_dt)+1 as los_clms
-	,0 as length_of_stay
-	,a.capitated
-	,a.global_cap
-	,a.tadm_admits 
-	,a.net_pd_amt_fnl 
-	,a.allw_amt_fnl 
-	,a.tadm_qtydays
-	,0 as frank_days
-	,0 as frank_netpaid
-	,0 as frank_admits
-	,0 as frank_allowed
-from tmp_1m.kn_ip_dataset_claims_facet as a
-left join fichsrv.group_crosswalk as b
-		on a.groupnumber = b.group_number  
-		and substring(a.admit_yr_month,1,4) = b.`year`
-;
-
-
---Step 26: Claims Roll Up to union with notification for leading indicator dataset 
-drop table tmp_1m.kn_ip_dataset_claims_fnl_trs_09172025; 
-create table tmp_1m.kn_ip_dataset_claims_fnl_trs_09172025 stored as orc as 
-select	
-	admit_week
-	,admit_yr_month
-	,'0000' as admit_year
-	,service_month
---	,fst_srvc_month
-	,adjd_yrmonth
-	,'Claims' as component
-	,'Claims' as entity
-	,tadm_admit_type
-	,0 as loc_flag
-	,'Claims' as svc_setting
-	,'Claims' as case_cur_svc_cat_dtl_cd
-	,migration_source
-	,total_oah_flag
-	,institutional_flag
-	,tfm_product_new_fnl
-	,tfm_include_flag
-	,global_cap
-	,sgr_source_name
-	,nce_tadm_dec_risk_type
-	,BRAND_FNL
-	,group_ind_fnl
-	,product_level_3_fnl
-	,plan_level_2_fnl
-	,market_fnl
-	,contractpbp_fnl
-	,groupnumber
-	,group_name
-	,'Claims' as do_ind
-	,prov_prtcp_sts_cd
-	,prov_tin
-	,hospital_group
-	,capitated
-	,'NA' as los_categories
-	,los_clms
-	,sum(length_of_stay) as length_of_stay
---	,0 as ili_dx_ind
---	,0 as covid_dx_ind -- both these ind not needed
-	,respiratory_flag
-	,ipa_li_split
-	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 THEN 1 else 0 end as MnR_COSMOS_FFS_Flag
- 	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 
- 		AND tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end as leading_ind_pop
- 	,CASE WHEN BRAND_FNL='M&R' AND sgr_source_name='NICE' AND nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') THEN 1 else 0 end as MnR_NICE_FFS_Flag
- 	,case when (BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1) 
- 		OR (BRAND_FNL='M&R' AND sgr_source_name='NICE' AND nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end as MnR_TOTAL_FFS_FLAG
- 	,case when BRAND_FNL='M&R' and migration_source='OAH' then 1 else 0 end as MnR_OAH_flag 
- 	,case when BRAND_FNL='C&S' and migration_source='OAH' then 1 else 0 end as CnS_OAH_flag
- 	,case when BRAND_FNL='M&R' and product_level_3_fnl='DUAL' then 1 else 0 end as MnR_Dual_flag
- 	,case when BRAND_FNL='C&S' and global_cap = 'NA' and product_level_3_fnl='DUAL' AND SGR_SOURCE_NAME in('COSMOS','NICE','CSP') then 1 else 0 end as CnS_Dual_flag
-	,'NA' as ocm_migration
-	,0 as swgbed
- 	,case when BRAND_FNL='M&R' then 'M&R' else 'C&S' end as mr_cs_other
-	,case when ipa_pac_flag='IPA' then ipa_li_split
-		when tadm_admit_type='IP_REHAB' then 'AIR'
-		when tadm_admit_type='IP_LTAC' then 'LTAC' 
-		when tadm_admit_type='IP_SNF' then 'SNF'
-		when tadm_admit_type='IP_SWGBED' then 'Swing Bed'
-		when tadm_admit_type='MHCDIP' then 'Other' else 'Other' end as admit_type
-	,ipa_pac_flag
-	,0 as first_adverse
-	,0 as first_not_approved_srvc
-	,0 as first_not_approved_case
-	,0 as md_review_overturn
-	,0 as appealed_cases
-	,0 as overturned_cases
-	,0 as md_rev_appeals
-	,0 as pre_auth_cases
-	,0 as case_count
-	,0 as intital_adr_cnt
-	,0 as persistent_adr_cnt
-	,0 as md_reviewed_cnt
-	,0 as appeal_case_cnt
-	,0 as appeal_ovrtn_case_cnt
-	,0 as mcr_reconsideration_case_cnt
-	,0 as mcr_ovrtn_case_cnt
-	,0 as p2p_case_cnt
-	,0 as p2p_ovrtn_case_cnt
-	,0 as other_ovtrns
-	,0 as membership
-	,sum(days) as days
-	,sum(frank_days) as frank_days
-	,sum(admits) as admits
-	,sum(allowed) as allowed
-	,sum(netpaid) as netpaid
-	,sum(frank_netpaid) as franky_paid
-	,sum(frank_admits) as franky_admits
-	,sum(frank_allowed) as frank_allowed
-from  tmp_1m.kn_ip_dataset_claims_trs
-group by 
-	admit_week
-	,admit_yr_month
---	,admit_qtr
-	,service_month
---	,fst_srvc_month
---	,perc_offset
-	,adjd_yrmonth
-	,tadm_admit_type
-	,migration_source
-	,total_oah_flag
-	,institutional_flag
-	,tfm_product_new_fnl
-	,tfm_include_flag
-	,sgr_source_name
-	,nce_tadm_dec_risk_type
-	,global_cap
-	,BRAND_FNL 
-	,group_ind_fnl
-	,product_level_3_fnl
-	,plan_level_2_fnl
-	,market_fnl
-	,contractpbp_fnl
-	,groupnumber
-	,group_name
-	,prov_prtcp_sts_cd
-	,prov_tin
-	,hospital_group
-	,capitated
-	,los_clms
-	,respiratory_flag
-	,ipa_li_split
-	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 THEN 1 else 0 end 
- 	,CASE WHEN BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1 
- 		AND tfm_product_new_fnl in ('HMO','PPO','NPPO','DUAL_CHRONIC') then 1 else 0 end
- 	,CASE WHEN BRAND_FNL='M&R' AND sgr_source_name='NICE' AND nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') THEN 1 else 0 end 
- 	,case when (BRAND_FNL='M&R' AND global_cap='NA' AND sgr_source_name='COSMOS' AND product_level_3_fnl <>'INSTITUTIONAL' AND tfm_include_flag=1) 
- 		OR (BRAND_FNL='M&R' AND sgr_source_name='NICE' AND nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end 
- 	,case when BRAND_FNL='M&R' and migration_source='OAH' then 1 else 0 end 
- 	,case when BRAND_FNL='C&S' and migration_source='OAH' then 1 else 0 end
- 	,case when BRAND_FNL='M&R' and product_level_3_fnl='DUAL' then 1 else 0 end 
- 	,case when BRAND_FNL='C&S' and global_cap = 'NA' and product_level_3_fnl='DUAL' AND SGR_SOURCE_NAME in('COSMOS','NICE','CSP') then 1 else 0 end 
- 	 ,case when BRAND_FNL='M&R' then 'M&R' else 'C&S' end 
-	,case when ipa_pac_flag='IPA' then ipa_li_split
-		when tadm_admit_type='IP_REHAB' then 'AIR'
-		when tadm_admit_type='IP_LTAC' then 'LTAC' 
-		when tadm_admit_type='IP_SNF' then 'SNF'
-		when tadm_admit_type='IP_SWGBED' then 'Swing Bed'
-		when tadm_admit_type='MHCDIP' then 'Other' else 'Other' end
-	,ipa_pac_flag
-	;
-
-
-
---Step 27: Union of claims & notifications/membership 
-drop table tmp_1m.kn_ip_dataset_all_09172025_trs;
-create table tmp_1m.kn_ip_dataset_all_09172025_trs as				
-SELECT	
-	*
-	from tmp_1m.kn_ip_dataset_notif_09172025_trs
-union all select 
-	* 
-	from tmp_1m.kn_ip_dataset_claims_fnl_trs_08272025 /*REFLECT OLD DATE UNLESS CLAIMS UPDATE; last claims update 8/27/25: should be *08272025*/
-union all select 
-	* 
-	from tmp_1m.kn_ip_dataset_claims_triangle_08272025 /*REFLECT OLD DATE UNLESS CLAIMS UPDATE; last claims update 8/27/25: should be *08272025*/
-	; 
-
-
---QA check for newest week (should be one higher than what is written below, also make sure to change and save the code when you are checking this)
-select max(admit_week) from tmp_1m.kn_ip_dataset_all_09172025_TRS where ipa_pac_flag ='IPA' and loc_flag=1;
---6/18/25: 202525
---6/25/25: 202526
---7/2/25: 202527
---7/9/25: 202528
---7/16/25: 202529
---7/23/25: 202530
---7/30/25: 202531
---8/6/25: 202532
---8/20/25: 202534
---8/27/25: 202535
---9/3/25: 202536
-
-/************************************************************************************************************************************************************/
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------End of Model Build ---------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-/************************************************************************************************************************************************************/
-
---SKIPPED PAC TABLE 3/5/25 UPDATE; WILL REVISIT BECAUSE ERROR SAYS CREATE_MTH COLUMN NOT FOUND--
-/*
---Step 28: Add in Navi Contracts from tmp_1y.hk_navi_contracts to PAC Pull for Valuation 
-drop table tmp_1m.kn_ip_dataset_pac_navi ;
-create table tmp_1m.kn_ip_dataset_pac_navi stored as orc as
-select 
-	a.*
-	,b.contract
-	,b.market
-	,case when replace(b.contract,' ','') is not null and substr(a.fin_market,1,2)=replace(b.market,' ','') then 1 
-		when fin_plan_level_2='NPPO' and fin_market<>'VI' then 1
-		end as navi_risk
-from tmp_1m.kn_ip_dataset_all_09172025_trs as a
-left join  tmp_1y.hk_navi_contracts  as b
-	on a.fin_contractpbp=replace(b.contract,' ','')
-	and substr(a.fst_srvc_month,1,4)=replace(b.yr,' ','')
-	and substr(a.fin_market,1,2)=replace(b.market,' ','')
-where b.contract is not null AND b.contract<>'' AND b.MARKET<>'-'
-and a.ipa_pac_flag='PAC'
-;
-
-drop table tmp_1m.kn_ip_dataset_pac_navi_2 ;
-create table tmp_1m.kn_ip_dataset_pac_navi_2 stored as orc as
-select 	
-	a.*
-	,b.contract as contract2
-	,case when a.contract is null and b.contract is not null then 1
-		end as navi_risk2
-from tmp_1m.kn_ip_dataset_pac_navi as a
-left join tmp_1y.hk_navi_contracts as b
-	on a.fin_contractpbp=replace(b.contract,' ','')
-	and substr(a.fst_srvc_month,1,4)=replace(b.yr,' ','')
-where b.MARKET<>'-'
-;
-
-
---Step 29: Final PAC Valuation Table 
-drop table tmp_1m.kn_ip_dataset_pac_fnl_09172025 ;
-create table tmp_1m.kn_ip_dataset_pac_fnl_09172025 stored as orc as
-select 
-	admit_type
-	,fst_srvc_month as create_mth
-	,hce_admit_month
-	,fin_market
-	,sum(case_count) as case_count 
-	,sum(intital_adr_cnt) as intital_adr_cnt
-	,sum(appealed_cases) as appealed_cases
-	,sum(overturned_cases) as overturned_cases
-	,sum(md_rev_appeals) as md_rev_appeals
-	,sum(pre_auth_cases) as pre_auth_cases
-	,sum(length_of_stay) as length_of_stay
-	,days 
-	,sum(los_exp) as los_exp
-	,group_name
-	,sum(md_review_overturn) as md_review_overturn
-	,case when fin_product_level_3<>'INSTITUTIONAL' AND TFM_INCLUDE_FLAG=1 AND CAPITATED=0 AND business_segment='MnR' then 'M&R'
-		WHEN fin_product_level_3='DUAL' AND TFM_INCLUDE_FLAG=0 AND CAPITATED=0 AND (MIGRATION_SOURCE<>'OAH' or migration_source is null) AND business_segment='CnS' then 'C&S'
-		else 'Other' end as MR_CS_Other
-	,fin_product_level_3 
-	,capitated
-	,business_segment
-	,migration_source
-	,fin_g_i
-	,sum(membership) as membership
-	,sgr_source_name
-	,tfm_include_flag
-	,fin_contractpbp
-	,component 
-	,sum(Persistent_ADR_cnt) as Persistent_ADR_cnt
-	,fin_plan_level_2
-	,do_ind
-	,admit_week
-	,case when navi_risk is null and navi_risk2 is not null then navi_risk2
-		when navi_risk2 is null and navi_risk is not null then navi_risk
-		else 0 end as navi
-	,sum(netpaid) as netpaid
-	,sum(admits) as admits
-	,fin_tfm_product_new
-	,swgbed
-from tmp_1m.kn_ip_dataset_pac_navi_2
-where ipa_pac_flag in ('PAC','MM')  and hce_admit_month > '202112'
-group by 	
-	admit_type
-	,fst_srvc_month
-	,hce_admit_month
-	,fin_market
-	,days 
-	,group_name
-	,case when fin_product_level_3<>'INSTITUTIONAL' AND TFM_INCLUDE_FLAG=1 AND CAPITATED=0 AND business_segment='MnR' then 'M&R'
-		WHEN fin_product_level_3='DUAL' AND TFM_INCLUDE_FLAG=0 AND CAPITATED=0 AND (MIGRATION_SOURCE<>'OAH' or migration_source is null) AND business_segment='CnS' then 'C&S'
-		else 'Other' end 
-	,fin_product_level_3 
-	,capitated
-	,business_segment
-	,migration_source
-	,fin_g_i
-	,sgr_source_name
-	,tfm_include_flag
-	,fin_contractpbp
-	,component 
-	,fin_plan_level_2
-	,do_ind
-	,admit_week
-	,case when navi_risk is null and navi_risk2 is not null then navi_risk2
-		when navi_risk2 is null and navi_risk is not null then navi_risk
-		else 0 end 
-	,fin_tfm_product_new
-	,swgbed
-;
-*/
 
 --Step 30: LOC Valuation Pull & export 
-drop table tmp_1m.kn_ip_dataset_loc_09172025 ;
-create table tmp_1m.kn_ip_dataset_loc_09172025 stored as orc as
+drop table tmp_1m.kn_ip_dataset_loc_09242025 ;
+create table tmp_1m.kn_ip_dataset_loc_09242025 stored as orc as
 select 
 	admit_week
 	,hce_admit_month as admit_act_month
@@ -3362,7 +1860,7 @@ select
 	,sum(p2p_ovrtn_case_cnt) as p2p_ovrtn_case_cnt
 	,sum(other_ovtrns) as other_ovtrns
 	,sum(membership) as membership
-from tmp_1m.kn_ip_dataset_notif_09172025_trs
+from tmp_1m.kn_ip_dataset_notif_09242025_trs
 where ipa_pac_flag in ('IPA','MM') 
 	and hce_admit_month > '202112'
 	and loc_flag=1
@@ -3393,859 +1891,23 @@ group by
 ;
 
 
-
---Step 31: Leading Indicator Export
-drop table tmp_1m.kn_ip_dataset_LI_09172025_trs ;
-create table tmp_1m.kn_ip_dataset_LI_09172025_trs stored as orc as
-select 	
-	admit_week
-	,hce_admit_month
-	,adjd_yrmonth
---	,admit_act_qtr
-	,fst_srvc_month AS service_month
---	,perc_offset
---	,total_oah_flag
---	,institutional_flag
-	,fin_tfm_product_new
---	,sgr_source_name
---	,nce_tadm_dec_risk_type
---	,fin_market
---	,group_name
---	,los_categories
---	,respiratory_flag
-	,case when admit_type in ('Transplant') then 'Surgical'
-		else admit_type end as admit_type
-	,ipa_pac_flag
---	,mnr_cosmos_ffs_flag
---	,leading_ind_pop
---	,mnr_nice_ffs_flag
---	,mnr_total_ffs_flag
---	,mnr_oah_flag
---	,cns_oah_flag
---	,mnr_dual_flag
---	,cns_dual_flag
---	,ocm_migration
-	,component
-	,sum(case_count) as case_count
-	,sum(intital_adr_cnt) as intital_adr_cnt
-	,sum(persistent_adr_cnt) as persistent_adr_cnt
---	,sum(md_reviewed_cnt) as md_reviewed_cnt
---	,sum(appeal_case_cnt) as appeal_case_cnt
---	,sum(appeal_ovrtn_case_cnt) as appeal_ovrtn_case_cnt
---	,sum(mcr_reconsideration_case_cnt) as mcr_reconsideration_case_cnt
---	,sum(mcr_ovrtn_case_cnt) as mcr_ovrtn_case_cnt
---	,sum(p2p_case_cnt) as p2p_case_cnt
---	,sum(p2p_ovrtn_case_cnt) as p2p_ovrtn_case_cnt
---	,sum(other_ovtrns) as other_ovtrns
-	,sum(membership) as membership
-	,sum(allowed) as allowed
---	,sum(netpaid) as netpaid
-	,sum(admits) as admits
-	,sum(days) as days
-	,sum(frank_days) as franky_days
-	,sum(franky_paid) as franky_paid
-	,sum(franky_admits) as franky_admits
-	,sum(franky_allw) as franky_allowed
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-where leading_ind_pop =1 
-	and admit_type not in ('Other')
-	and hce_admit_month > '202012'
-	and ipa_pac_flag in ('IPA','PAC','MM')
-group by 
-	admit_week
-	,hce_admit_month
-	,adjd_yrmonth
---	,admit_act_qtr
-	,fst_srvc_month
---	,perc_offset
---	,total_oah_flag
---	,institutional_flag
-	,fin_tfm_product_new
---	,sgr_source_name
---	,nce_tadm_dec_risk_type
---	,fin_market
---	,group_name
---	,los_categories
---	,respiratory_flag
-	,case when admit_type in ('Transplant') then 'Surgical'
-		else admit_type end
-	,ipa_pac_flag
---	,mnr_cosmos_ffs_flag
---	,leading_ind_pop
---	,mnr_nice_ffs_flag
---	,mnr_total_ffs_flag
---	,mnr_oah_flag
---	,cns_oah_flag
---	,mnr_dual_flag
---	,cns_dual_flag
---	,ocm_migration
-	,component
-	;
-
-
---Step 32: Getting all combos of admit month, service month with adjd month
-drop table tmp_1m.kn_ip_dataset_LI_09172025_1_trs ;
-create table tmp_1m.kn_ip_dataset_LI_09172025_1_trs stored as orc as
-select DISTINCT 	
-	a.fin_tfm_product_new
-	,a.admit_type
-	,a.component
-	,a.ipa_pac_flag
-	,a.hce_admit_month
-	,a.service_month
-	,b.ADJD_Month as adjd_yrmonth
-from tmp_1m.kn_ip_dataset_LI_09172025_trs as a 
-left join tmp_1y.kn_franky_extrap as b
-on a.hce_admit_month=b.hce_month
-;
-
---Step 33: Uninoning on  current adjdmonth onto final export 
-drop table tmp_1m.kn_ip_dataset_LI_09172025_2_trs ;
-create table tmp_1m.kn_ip_dataset_LI_09172025_2_trs stored as orc as
-select 
-	admit_week
-	,hce_admit_month
-	,adjd_yrmonth
-	,service_month
-	,fin_tfm_product_new
-	,admit_type
-	,ipa_pac_flag
-	,component
-	,case_count
-	,intital_adr_cnt
-	,persistent_adr_cnt
-	,membership
-	,allowed
-	,admits
-	,days
-	,franky_days
-	,franky_paid
-	,franky_admits
-	,franky_allowed
-from tmp_1m.kn_ip_dataset_LI_09172025_trs
-union all select 
-	000000 as admit_week
-	,hce_admit_month
-	,cast(adjd_yrmonth as string) as adjd_yrmonth
-	,service_month
-	,fin_tfm_product_new
-	,admit_type
-	,ipa_pac_flag
-	,component
-	,0 as case_count
-	,0 as intital_adr_cnt
-	,0 as persistent_adr_cnt
-	,0 as membership
-	,0 as allowed
-	,0 as admits
-	,0 as days
-	,0 as franky_days
-	,0 as franky_paid
-	,0 as franky_admits
-	,0 as franky_allowed
-from tmp_1m.kn_ip_dataset_LI_09172025_1_trs
-;
-
---Step 34: final Roll up for export 
-drop table tmp_1m.kn_ip_dataset_LI_09172025_3_trs ;
-create table tmp_1m.kn_ip_dataset_LI_09172025_3_trs stored as orc as
-select 
-	admit_week
-	,hce_admit_month
-	,cast(adjd_yrmonth as int) as adjd_yrmonth
-	,service_month
-	,fin_tfm_product_new
-	,admit_type
-	,ipa_pac_flag
-	,component
-	,sum(case_count) as case_count
-	,sum(intital_adr_cnt) as intital_adr_cnt
-	,sum(persistent_adr_cnt) as persistent_adr_cnt
-	,sum(membership) as membership
-	,sum(allowed) as allowed
-	,sum(admits) as admits
-	,sum(days) as days
-	,sum(franky_days) as franky_days
-	,sum(franky_paid) as franky_paid
-	,sum(franky_admits) as franky_admits
-	,sum(franky_allowed) as franky_allowed
-from tmp_1m.kn_ip_dataset_LI_09172025_2_trs
-group by 
-	admit_week
-	,hce_admit_month
-	,adjd_yrmonth
-	,service_month
-	,fin_tfm_product_new
-	,admit_type
-	,ipa_pac_flag
-	,component
-	;
-
-
----------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------------------------
---Completion Dataset
-
---Completion Step 1: Weekly IPA Notifications, for LOC Valuation and LI
-drop table tmp_1m.kn_ip_dataset_comp_09172025_1;
-create table tmp_1m.kn_ip_dataset_comp_09172025_1 as
-select 
-	'Weekly Notifs' as comp_type
-	,admit_week
-    ,'' as hce_admit_month
-    ,'' AS service_month
-    ,'' as adjd_yrmonth
-    ,'' as tfm_product_new_fnl
-    ,ipa_pac_flag
-    ,'' as admit_type
-    ,'' as cap_status
-    ,sum(case_count) as case_count
-    ,sum(intital_adr_cnt) as intital_adr_cnt
-    ,sum(p2p_ovrtn_case_cnt) as p2p_ovrtn_case_cnt
-    ,sum(persistent_adr_cnt) as persistent_adr_cnt
-    ,0 as membership
-    ,0 as franky_admits
-    ,0 as franky_allowed
-    ,0 as days
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-where ipa_pac_flag in ('IPA','PAC')
-     and component = 'Auths'
--- Will need to make sure transplants don't get included into this when we add them in .... But don't we need that for the LI piece....
-group by 
-	admit_week
-    ,ipa_pac_flag
-;
-
---Completion Step 2: MM for Weekly IPA Notifications
-drop table tmp_1m.kn_ip_dataset_comp_09172025_2a;
-create table tmp_1m.kn_ip_dataset_comp_09172025_2a as
-select distinct 
-	admit_week
-    ,hce_admit_month
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-;
-
-drop table tmp_1m.kn_ip_dataset_comp_09172025_2b;
-create table tmp_1m.kn_ip_dataset_comp_09172025_2b as
-select 
-	hce_admit_month
-    ,sum(membership) as membership
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-where component = 'Membership'
-group by hce_admit_month
-;
-
-drop table tmp_1m.kn_ip_dataset_comp_09172025_2;
-create table tmp_1m.kn_ip_dataset_comp_09172025_2 as
-select 
-	'Week MM' as comp_type
-    ,b.admit_week
-    ,a.hce_admit_month
-    ,'' AS service_month
-    ,'' as adjd_yrmonth
-    ,'' as tfm_product_new_fnl
-    ,'' as ipa_pac_flag
-    ,'' as admit_type
-    ,'' as cap_status
-    ,0 as case_count
-    ,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,a.membership
-    ,0 as franky_admits
-    ,0 as franky_allowed
-    ,0 as days
-from tmp_1m.kn_ip_dataset_comp_09172025_2b as a
-left join tmp_1m.kn_ip_dataset_comp_09172025_2a as b
-     on a.hce_admit_month = b.hce_admit_month
-where b.admit_week > 0
-;
-
---Completion Step 3: Monthly Membership
-drop table tmp_1m.kn_ip_dataset_comp_09172025_3;
-create table tmp_1m.kn_ip_dataset_comp_09172025_3 as
-select 'Month MM'
-	,0 as admit_week
-	,hce_admit_month
-	,'' AS service_month
-    ,'' as adjd_yrmonth
-	,fin_tfm_product_new
-	,'' as ipa_pac_flag
-    ,'' as admit_type
-    ,'' as cap_status
-    ,0 as case_count
-    ,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,sum(membership) as membership
-    ,0 as franky_admits
-    ,0 as franky_allowed
-    ,0 as days
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-where component = 'Membership'
-	and leading_ind_pop =1
-group by hce_admit_month
-	,fin_tfm_product_new
-;
-
---Completion Step 4: Claims Completion Factors --
-drop table tmp_1m.kn_ip_dataset_comp_09172025_4;
-create table tmp_1m.kn_ip_dataset_comp_09172025_4 as
-select 'Claims' as comp_type
-    ,0 as admit_week
-    ,hce_admit_month
-    ,'' AS service_month
-    ,adjd_yrmonth
-    ,fin_tfm_product_new
-    ,ipa_pac_flag
-    ,case when admit_type in ('Transplant') then 'Surgical'
-		else admit_type end as admit_type
-    ,'' as cap_status
-    ,0 as case_count
-    ,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,0 as membership
-    ,sum(franky_admits) as franky_admits
-    ,sum(franky_allw) as franky_allowed
-    ,sum(days) as days
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-where leading_ind_pop =1 
-    and admit_type not in ('Other')
-	and hce_admit_month > '202012'
-	and adjd_yrmonth not in ('','MM')
-	and component = 'Claims'
-group by 
-	hce_admit_month
-    ,adjd_yrmonth
-    ,fin_tfm_product_new
-    ,ipa_pac_flag
-    ,admit_type
-;
-
-----Completion Step 5: Reserve Adjustments - % Cap
-drop table tmp_1m.kn_ip_dataset_comp_09172025_5;
-create table tmp_1m.kn_ip_dataset_comp_09172025_5 AS
-select 'Non-Cap' as comp_type
-	,0 as admit_week
-	,hce_admit_month
-	,fst_srvc_month as service_month
-	,adjd_yrmonth
-	,fin_tfm_product_new
-	,'' as ipa_pac_flag
-	,'' as admit_type
-	,case when global_cap = 'NA' then 'N' else 'Y' end as cap_status
-	,0 as case_count
-    ,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,0 as membership
-    ,0 as franky_admits
-	,sum(franky_allw) as franky_allowed
-	,0 as days
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-	where component = 'Claims' 
-	--Leading Indicator Pop without the Cap Filter--
-		and fin_brand='M&R'
-		and sgr_source_name='COSMOS'
-		and fin_product_level_3 <>'INSTITUTIONAL'
-		AND tfm_include_flag=1
-		AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-		and admit_type <> 'Other'
-		and (hce_admit_month > '202206')-- OR fst_srvc_month > '202206')
-group by hce_admit_month
-	,fst_srvc_month
-	,adjd_yrmonth
-	,fin_tfm_product_new
-	,case when global_cap = 'NA' then 'N' else 'Y' end
-;
-
-----Completion Step 6: Reserve Adjustments - % MH
-drop table tmp_1m.kn_ip_dataset_comp_09172025_6;
-create table tmp_1m.kn_ip_dataset_comp_09172025_6 AS
-select 'MH' as comp_type
-	,0 as admit_week
-	,hce_admit_month
-	,fst_srvc_month as service_month
-	,adjd_yrmonth
-	,fin_tfm_product_new
-	,ipa_pac_flag
-	,'' as admit_type
-	,'' as cap_status
-	,0 as case_count
-    ,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,0 as membership
-    ,0 as franky_admits
-	,sum(franky_allw) as franky_allowed
-	,0 as days
-from tmp_1m.kn_ip_dataset_all_09172025_trs
-	where component = 'Claims' 
-	--Leading Indicator Pop without the Cap Filter--
-		and fin_brand='M&R'
-		and sgr_source_name='COSMOS'
-		and fin_product_level_3 <>'INSTITUTIONAL'
-		AND tfm_include_flag=1
-		AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-		and (hce_admit_month > '202206') -- OR fst_srvc_month > '202206')
-group by hce_admit_month
-	,fst_srvc_month
-	,adjd_yrmonth
-	,fin_tfm_product_new
-	,ipa_pac_flag
-;
-
-----Completion Step 7: 2024 Roster Table (ARCHIVED)
---drop table tmp_2y.kn_ip_mm_2024;
---create table tmp_2y.kn_ip_mm_2024 as
---select distinct fin_mbi_hicn_fnl
---	,'202401' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202401 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
---	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202402' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202402 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202403' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202403 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
---union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202404' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202404 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202405' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202405 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202406' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202406 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202407' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202407 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202408' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202408 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202409' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202409 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202410' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202410 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
---	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202411' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202411 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202412' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202412 as a
---where fin_inc_year in ('2024')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
---;
-
----Completion Step 8: 2025 Roster Table
-	--Uncomment out most recent roster month
-drop table tmp_1m.kn_ip_mm_2025;
-create table tmp_1m.kn_ip_mm_2025 as
-select distinct fin_mbi_hicn_fnl
-	,'202501' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202501 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- union all	
- select distinct fin_mbi_hicn_fnl
-	,'202502' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202502 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- union all	
- select distinct fin_mbi_hicn_fnl
-	,'202503' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202503 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- union all	
- select distinct fin_mbi_hicn_fnl
-	,'202504' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202504 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-union all	
-select distinct fin_mbi_hicn_fnl
-	,'202505' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202505 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
-	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-union all	
-select distinct fin_mbi_hicn_fnl
-	,'202506' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202506 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
-	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- union all	
- select distinct fin_mbi_hicn_fnl
-	,'202507' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202507 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
-	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- union all	
- select distinct fin_mbi_hicn_fnl
-	,'202508' as roster_month
-	,fin_inc_month as enroll_month
-	,fin_tfm_product_new
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202508 as a
-where fin_inc_year in ('2024','2025')
-	and fin_brand='M&R'
-	AND global_cap='NA'
-	AND sgr_source_name='COSMOS'
-	AND fin_product_level_3 <>'INSTITUTIONAL'
-	AND tfm_include_flag=1 
-	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202509' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202509 as a
---where fin_inc_year in ('2024','2025')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202510' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202510 as a
---where fin_inc_year in ('2024','2025')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202511' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202511 as a
---where fin_inc_year in ('2024','2025')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202512' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202512 as a
---where fin_inc_year in ('2024','2025')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-;
-
-drop table tmp_1m.kn_ip_mm_stack;
-create table tmp_1m.kn_ip_mm_stack as
-select * from tmp_2y.kn_ip_mm_2024
-union all
-select * from tmp_1m.kn_ip_mm_2025
-;
-
-drop table tmp_1m.kn_ip_mm_joiner;
-create table tmp_1m.kn_ip_mm_joiner as
-select fin_mbi_hicn_fnl
-	,enroll_month
-	,fin_tfm_product_new
-	,min(roster_month) as roster_month_joiner
-from tmp_1m.kn_ip_mm_stack
-group by fin_mbi_hicn_fnl
-	,enroll_month
-	,fin_tfm_product_new
-;
-
-drop table tmp_1m.kn_ip_mm_leaver;
-create table tmp_1m.kn_ip_mm_leaver as
-select fin_mbi_hicn_fnl
-	,enroll_month
-	,fin_tfm_product_new
-	,max(roster_month) as roster_month_leaver
-from tmp_1m.kn_ip_mm_stack
-group by fin_mbi_hicn_fnl
-	,enroll_month
-	,fin_tfm_product_new
-;
-
-
-drop table tmp_1m.kn_ip_mm_joiner2;
-create table tmp_1m.kn_ip_mm_joiner2 as
-select 'Roster Joiner' as comp_type
-	,0 as admit_week
-	,enroll_month as hce_admit_month
-	,roster_month_joiner as service_month
-	,'' as adjd_yr_month
-	,fin_tfm_product_new
-	,'' as ipa_pac_flag
-	,'' as admit_type
-	,'' as cap_status
-	,0 as case_count
-   	,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,count(distinct fin_mbi_hicn_fnl) as membership
-    ,0 as franky_admits
-	,0 as franky_allowed
-	,0 as days
-from tmp_1m.kn_ip_mm_joiner
-group by enroll_month
-	,roster_month_joiner
-	,fin_tfm_product_new
-;
-
-drop table tmp_1m.kn_ip_mm_leaver2;
-create table tmp_1m.kn_ip_mm_leaver2 as
-select 'Roster Leaver' as comp_type
-	,0 as admit_week
-	,enroll_month as hce_admit_month
-	,roster_month_leaver as service_month
-	,'' as adjd_yr_month
-	,fin_tfm_product_new
-	,'' as ipa_pac_flag
-	,'' as admit_type
-	,'' as cap_status
-	,0 as case_count
-   	,0 as intital_adr_cnt
-    ,0 as p2p_ovrtn_case_cnt
-    ,0 as persistent_adr_cnt
-    ,count(distinct fin_mbi_hicn_fnl) as membership
-    ,0 as franky_admits
-	,0 as franky_allowed
-	,0 as days
-from tmp_1m.kn_ip_mm_leaver
-group by enroll_month
-	,roster_month_leaver
-	,fin_tfm_product_new
-;
-
-drop table tmp_1m.kn_ip_dataset_comp_09172025_fnl;
-create table tmp_1m.kn_ip_dataset_comp_09172025_fnl as
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_1
-union all
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_2
-union all
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_3
-union all
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_4
-union all
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_5
-union all
-	select * from tmp_1m.kn_ip_dataset_comp_09172025_6
-union all
-	select * from tmp_1m.kn_ip_mm_joiner2
-union all
-	select * from tmp_1m.kn_ip_mm_leaver2
-;
-
-
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
 --EXPORT DATA TABLES:
 
 --IN SAS BELOW
 
---tmp_1m.kn_ip_dataset_loc_09172025
---tmp_1m.kn_ip_dataset_LI_09172025_2_trs
---tmp_1m.kn_ip_dataset_comp_09172025_fnl
+--tmp_1m.kn_ip_dataset_loc_09242025
 
 --
 --libname HCX_EC "/hpsasfin/int/projects/hcemrn/ec/prod/data/";
 
 --/*LOC valuation*/
---data hcx_ec.LOC_IP_9_3_25 (compress=yes); /*CHANGE TO CURRENT DATE*/
---set tmp_1m.kn_ip_dataset_loc_09172025
+--data LOC_IP_9_24_25 (compress=yes); /*CHANGE TO CURRENT DATE*/
+--set tmp_1m.kn_ip_dataset_loc_09242025
 --;run;
 
---/*leading indicator*/
---data hcx_ec.kn_ip_dataset_9_3_2025 (compress=yes); /*CHANGE TO CURRENT DATE*/ 
---set tmp_1m.kn_ip_dataset_LI_09172025_3_trs
---;run;
 
---/*completion dataset*/
---data hcx_ec.kn_ip_dataset_comp_09172025_fnl (compress=yes); 
---set tmp_1m.kn_ip_dataset_comp_09172025_fnl 
---;run;
 
 
 
