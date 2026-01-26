@@ -4293,5 +4293,8 @@ union all
 
 
 
+select * from tmp_1m.ec_ip_dataset_comp_11122025_fnl
+
+select 
 
 

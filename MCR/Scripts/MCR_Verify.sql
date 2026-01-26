@@ -672,4 +672,5 @@ select count(distinct clm_aud_nbr) from tmp_1m.kn_mcr_joined
 -- 6,823
 
 
-
+select * from 
+tmp_2y.ec_loc_week_assign

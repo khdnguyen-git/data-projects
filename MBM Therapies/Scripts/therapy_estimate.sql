@@ -344,3 +344,4 @@ select
     , (select count(*) from mm_both) as both_2023_2024
 ;
 
+                                                      

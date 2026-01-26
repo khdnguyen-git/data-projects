@@ -139,7 +139,7 @@ select
 	end as entity1
 	, allw_amt_fnl as allw
 	, net_pd_amt_fnl as pd
-from tadm_tre_cpy.dcsp_pr_f_202506
+from tadm_tre_cpy.dcsp_pr_f_202511
 where (proc_1_cd in ('C2596', '0421T') 
 	or proc_2_cd in ('C2596', '0421T')
 	or proc_3_cd in ('C2596', '0421T') 
@@ -181,7 +181,7 @@ select
 	end as entity1
 	, allw_amt_fnl as allw
 	, net_pd_amt_fnl as pd
-from tadm_tre_cpy.dcsp_op_f_202506
+from tadm_tre_cpy.dcsp_op_f_202511
 where (proc_1_cd in ('C2596', '0421T') 
 	or proc_2_cd in ('C2596', '0421T')
 	or proc_3_cd in ('C2596', '0421T') 
@@ -303,7 +303,6 @@ select
     , allw
     , pd
 from tmp_1m.kn_waterjet_cosmos_claims_check
-
 union all
 select 
 	entity
@@ -421,4 +420,8 @@ group by
 select * from tmp_1m.kn_waterjet_cosmos_csp_nice_claims_check_summary;
 
 select prov_parstatus from tmp_1m.kn_waterjet_cosmos_csp_nice_claims_check_summary group by prov_parstatus;  
+
+
+
+select 
 

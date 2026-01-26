@@ -9,10 +9,10 @@ limit 100;
 --select * from fichsrv.cosmos_pr
 limit 100;
 
---select * from tadm_tre_cpy.dcsp_op_f_202508
+--select * from tadm_tre_cpy.dcsp_op_f_202510
 limit 100;
 
---select * from tadm_tre_cpy.dcsp_pr_f_202508
+--select * from tadm_tre_cpy.dcsp_pr_f_202510
 limit 100;
 
 
@@ -64,7 +64,6 @@ select
 	,a.clm_pd_dt, a.clm_dnl_f
 	,a.primary_diag_cd
 	--,fnl_rsn_cd_sys_id
-	
 from fichsrv.cosmos_op   a  --fichsrv.cosmos_op   tadm_tre_cpy.glxy_op_f_202502  
 join tmp_1y.cl_ss_codelist_20250827 b  --tmp_1y.cl_ss_codelist_20241028   cl_ss_codelist_20240901
 on	trim(a.proc_cd) = trim(b.hcpcs_code)
@@ -108,7 +107,6 @@ select
 	,a.clm_pd_dt, a.clm_dnl_f
 	,a.primary_diag_cd
 	--,fnl_rsn_cd_sys_id
-
 from fichsrv.cosmos_pr a  --fichsrv.cosmos_pr    tadm_tre_cpy.glxy_pr_f_202502
 join tmp_1y.cl_ss_codelist_20250827 b
 on	trim(a.proc_cd) = trim(b.hcpcs_code)
@@ -140,8 +138,7 @@ select
 	,a.product_level_3_fnl 
 	,a.tfm_product_fnl
 	,a.migration_source 
-	,a.global_cap 
-	
+	,a.global_cap
 	,b.covered_unproven
 	,a.sbmt_chrg_amt
 	,a.allw_amt_fnl
@@ -153,14 +150,13 @@ select
 	,a.fst_srvc_year as years 
 	,a.clm_pd_dt, a.clm_dnl_f
 	,a.primary_diag_cd
-
-from tadm_tre_cpy.dcsp_op_f_202508 a
+from tadm_tre_cpy.dcsp_op_f_202510 a
 join tmp_1y.cl_ss_codelist_20250827 b
 on	trim(a.proc_cd) = trim(b.hcpcs_code)
 WHERE 	
 	a.brand_fnl ='C&S'
 	and a.hce_month >= '202201'
-	and	a.CLM_DNL_F = 'N'     -- select distinct CLM_DNL_F FROM tadm_tre_cpy.dcsp_op_f_202501 --this field has 3 values: Y, D, N
+	--and	a.CLM_DNL_F = 'N'     -- select distinct CLM_DNL_F FROM tadm_tre_cpy.dcsp_op_f_202501 --this field has 3 values: Y, D, N
 	and a.GLOBAL_CAP = 'NA'   -- select distinct GLOBAL_CAP FROM tadm_tre_cpy.dcsp_op_f_202501 --this field has 2 values: NA, WM
 union all
 select 
@@ -173,7 +169,7 @@ select
 	,a.ahrq_diag_dtl_catgy_desc 
 	--,case when brand_fnl = 'C&S' then a.st_abbr_cd else a.market_fnl end as market  
 	,a.group_ind_fnl 
-	,a.sbscr_nbr 
+	,a._nbr 
 	,a.tin 
 	,a.full_nm
 	,a.st_abbr_cd 
@@ -185,7 +181,6 @@ select
 	,a.tfm_product_fnl
 	,a.migration_source
 	,a.global_cap 
-	
 	,b.covered_unproven
 	,a.sbmt_chrg_amt
 	,a.allw_amt_fnl
@@ -197,8 +192,7 @@ select
 	,a.fst_srvc_year as years 
 	,a.clm_pd_dt, a.clm_dnl_f
 	,a.primary_diag_cd
-
-from tadm_tre_cpy.dcsp_pr_f_202508 a      ----select * FROM tadm_tre_cpy.dcsp_pr_f_202502 LIMIT 2;
+from tadm_tre_cpy.dcsp_pr_f_202510 a      ----select * FROM tadm_tre_cpy.dcsp_pr_f_202502 LIMIT 2;
 join tmp_1y.cl_ss_codelist_20250827 b
 on	trim(a.proc_cd) = trim(b.hcpcs_code)
 WHERE 
@@ -231,7 +225,6 @@ select
 	,'NA' as migration_source 
 	,a.clm_cap_flag as global_cap --different 
 	--,'M&R FFS' as entity
-	
 	,b.covered_unproven
 	,a.sbmt_chrg_amt
 	,a.allw_amt_fnl
@@ -277,7 +270,6 @@ select
 	,'NA' as migration_source
 	,a.clm_cap_flag as global_cap 
 	--,'M&R FFS' as entity
-	
 	,b.covered_unproven
 	,a.sbmt_chrg_amt
 	,a.allw_amt_fnl
@@ -300,6 +292,10 @@ WHERE
 	--and a.clm_dnl_f = 'P'
 	and a.clm_cap_flag = 'FFS'   --this field has 2 values: 'FFS' or 'ENC'
 ;
+
+
+
+
 
 --select distinct clm_dnl_f from fichsrv.nice_pr
 --SELECT Entity_Source, count(*) FROM tmp_1y.cl_ss_claims_op_pr_cosmos_smart_nice_202codes GROUP BY entity_source

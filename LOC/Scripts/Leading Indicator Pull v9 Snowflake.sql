@@ -1,29 +1,28 @@
 
 --Step 0.a: Update to the new date & if a monthly claims run; update tre copy cosmos tab 
 /*Every week*/
---Find and change date: _10292025
---IMPORTANT: MAKE SURE CLAIMS TABLES IN STEP 27 REFLECT OLD DATE IF NO CLAIMS UPDATE
---MAKE SURE THERE IS NO SPACE AFTER DATE OR ELSE IT WILL NOT WORK
---10/29/25: done--
+--Find and change date for notifications + claims
+@set notifications_date = 12102025
+@set claims_date = 11262025
+--12/3/25: done--
 
 --Step 0.b: check to see if current month membership is available
-select count(*) from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202510; --make sure this IS CURRENT MONTH-- 
---"from tadm_tre_cpy.gl_rstd_gpsgalnce_f_[CURRENT MONTH ENROLLMENT] /**/ as a"
---10/29/25: done; still October enrollment table--
---ONLY STEP 9 SHOULD BE CHANGING; CHECK CODE AT VERY BOTTOM TO MAKE SURE ENROLLMENT TABLE PULL NAMES ARE NOT CHANGING--
+--select count(*) from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202512; --make sure this IS CURRENT MONTH-- 
+@set membership_month = 202511
+--12/3/25: done; no new enrollment month--
 
 --monthly ish
 --Step 0.c Uncomment out most recent roster month from Completion Step 8: tmp_1m.ec_ip_mm_2025 IF 0.B SHOWS NEXT MONTH MEMBERSHIP AVAILABLE
 --Don't forget to update roster month in Notification Completion Model
---CHECK THAT STEP 0.B DID NOT OVERRIDE ANY CODE FOR ROSTER MONTH
---10/29/25: done; no new enrollment table--
-
+--12/3/25: done; no new enrollment month--
 
 /*Monthly claims update*/
 --Step 0.d: change claims month
---Find and change Tre Copy Table: tadm_tre_cpy.glxy_ip_admit_f_202509
---check that step 27 is reflecting current claims table in union
---10/29/25: done; no new claims yet--
+--Change Tre Copy Table: tadm_tre_cpy.glxy_ip_admit_f_202511
+@set claims_month = 202511
+--12/3/25: done; no new claims table--
+
+
 
 --Step 1: Check that AvTar was Updated with this query to check latest date (should be day of or day before run)
 select max(admit_dt_act) from HCE_OPS_FNL.HCE_ADR_AVTAR_Like_24_25_F 
@@ -246,9 +245,6 @@ select
 union all select
 	* from tmp_1m.ec_avtar_22_trs
 	;
-
-DESCRIBE TABLE HCE_OPS_ARCHV.hce_adr_avtar_like_2022_f;
-DESCRIBE TABLE tmp_1m.ec_avtar_22_trs;
 
 --Step 2.3: Adding variable to split PAC from IPA 
 drop table if exists tmp_1m.ec_avtar_22_1_trs;
@@ -831,8 +827,8 @@ on a.hcedt=c.date
 
 --Step 5: union together all needed notifications from the AvTar Report after Pradeepa sends the weekly email - update date of run! 
 --Note: Respiratory AND leading indicator flags need to be based source of truth table tmp_1y.hce_resp_2025 and have periods in the ICDs unlike claims
-drop table if exists tmp_1m.ec_ip_dataset_10292025_trs; 
-create table tmp_1m.ec_ip_dataset_10292025_trs as 
+drop table if exists tmp_1m.ec_ip_dataset_${notifications_date}_trs; 
+create table tmp_1m.ec_ip_dataset_${notifications_date}_trs as 
 select 
 	admit_week
 	,hce_dt
@@ -923,7 +919,7 @@ select
  	,case when fin_brand='M&R' and fin_product_level_3='DUAL' then 1 else 0 end as MnR_Dual_flag
 	,CASE WHEN ((business_segment = 'CnS' and fin_brand in('C&S') and migration_source <> 'OAH' and global_cap = 'NA' and fin_product_level_3='DUAL' AND
 		SGR_SOURCE_NAME in('COSMOS','CSP') AND fin_state NOT IN ('OK','NC','NM','NV','OH','TX')) OR (YEAR(hce_dt)='2024' AND business_segment = 'CnS' AND fin_brand in ('C&S')
-		AND GLOBAL_CAP = 'NA' AND SGR_SOURCE_NAME IN ('COSMOS','CSP') AND MIGRATION_SOURCE = 'OAH' AND FIN_STATE = 'MD')) then 1 else 0 end as CnS_Dual_Flag 
+		AND GLOBAL_CAP = 'NA' AND SGR_SOURCE_NAME IN ('COSMOS','CSP') AND MIGRATION_SOURCE = 'OAH' AND FIN_STATE = 'MD')) then 1 else 0 end as CnS_Dual_Flag
 	,ocm_migration 
 	,case when appeal_ind=1 and initialfulladr_cases=1 then 1 else 0 end as appealed_cases
 	,case when appeal_ovrtn_ind=1 then 1 else 0 end as overturned_cases
@@ -1481,8 +1477,8 @@ where
 
 
 --Step 6: Adding in Other Needed Variables & Swing Bed based on PAC Provider list 
-drop table if exists tmp_1m.ec_ip_dataset_10292025_2_trs; 
-create table tmp_1m.ec_ip_dataset_10292025_2_trs as 
+drop table if exists tmp_1m.ec_ip_dataset_${notifications_date}_2_trs; 
+create table tmp_1m.ec_ip_dataset_${notifications_date}_2_trs as 
 select 
 	a.*
 	,case when a.IP_type='SNF' and b.class='IP_SWGBED' then 1 
@@ -1490,15 +1486,15 @@ select
 	,case when a.fin_product_level_3<>'INSTITUTIONAL' AND a.TFM_INCLUDE_FLAG=1 AND a.CAPITATED=0 AND a.BUSINESS_SEGMENT='MnR' then 'M&R'
 		WHEN a.fin_product_level_3='DUAL' AND a.TFM_INCLUDE_FLAG=0 AND a.CAPITATED=0 AND (a.MIGRATION_SOURCE<>'OAH' or a.migration_source is null) AND a.BUSINESS_SEGMENT='CnS' 
 			then 'C&S' else 'Other' end as MR_CS_Other
-from tmp_1m.ec_ip_dataset_10292025_trs as a
+from tmp_1m.ec_ip_dataset_${notifications_date}_trs as a
 left join tmp_1y.hk_snf_swgbed_tins2 as b
 on a.prov_tin=b.prov_tin
 ;
 
 
 --Step 7: Adding in a IPA/PAC split now that SWGBED is split out 
-drop table if exists tmp_1m.ec_ip_dataset_10292025_3_trs; 
-create table tmp_1m.ec_ip_dataset_10292025_3_trs as 
+drop table if exists tmp_1m.ec_ip_dataset_${notifications_date}_3_trs; 
+create table tmp_1m.ec_ip_dataset_${notifications_date}_3_trs as 
 select 
 	*
 	,case when swgbed=1 then 'Swing Bed'
@@ -1506,13 +1502,13 @@ select
 	,case when swgbed=1 then 'PAC'
 		when IP_type in ('LTAC','SNF','AIR') then 'PAC'
 		when IP_type in ('Medical','Surgical','Transplant') then 'IPA' else 'NA' end as IPA_PAC_flag
-from  tmp_1m.ec_ip_dataset_10292025_2_trs
+from  tmp_1m.ec_ip_dataset_${notifications_date}_2_trs
 ;
 
 
 --Step 8: Roll up before join to MM 
-drop table if exists tmp_1m.ec_ip_dataset_10292025_4_trs; 
-create table tmp_1m.ec_ip_dataset_10292025_4_trs as 
+drop table if exists tmp_1m.ec_ip_dataset_${notifications_date}_4_trs; 
+create table tmp_1m.ec_ip_dataset_${notifications_date}_4_trs as 
 select 	
 	a.admit_week
 	,a.hce_admit_month
@@ -1596,7 +1592,7 @@ select
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as franky_allw
-from tmp_1m.ec_ip_dataset_10292025_3_trs as a
+from tmp_1m.ec_ip_dataset_${notifications_date}_3_trs as a
 left join tmp_1y.tin_collection as d
 on a.prov_tin = d.tin 
 group by 
@@ -1658,8 +1654,8 @@ group by
 ;
 
 --Step 9: Pulling Member Months
-drop table if exists tmp_1m.ec_ip_dataset_10292025_mm; 
-create table tmp_1m.ec_ip_dataset_10292025_mm as 
+drop table if exists tmp_1m.ec_ip_dataset_${notifications_date}_mm; 
+create table tmp_1m.ec_ip_dataset_${notifications_date}_mm as 
 select 
 	000000 as fin_inc_week
 	,a.fin_inc_month
@@ -1756,7 +1752,7 @@ select
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as franky_allw
-from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202510 /**/ as a /*MAKE SURE THIS IS ENROLLMENT TABLE FOR CURRENT MONTH*/
+from tadm_tre_cpy.gl_rstd_gpsgalnce_f_${membership_month} as a
 left join fichsrv.group_crosswalk as b
 		on a.tadm_group_nbr_consist = b.group_number  
 		and a.fin_inc_year = b.year
@@ -1808,13 +1804,13 @@ group by
 
 
 --Step 10: Combine notifications and membership
-drop table if exists tmp_1m.ec_ip_dataset_notif_10292025_trs;
-create table tmp_1m.ec_ip_dataset_notif_10292025_trs as				
+drop table if exists tmp_1m.ec_ip_dataset_notif_${notifications_date}_trs;
+create table tmp_1m.ec_ip_dataset_notif_${notifications_date}_trs as				
 SELECT	
 	*
-	from tmp_1m.ec_ip_dataset_10292025_4_trs
+	from tmp_1m.ec_ip_dataset_${notifications_date}_4_trs
 union all select 
-	* from tmp_1m.ec_ip_dataset_10292025_mm
+	* from tmp_1m.ec_ip_dataset_${notifications_date}_mm
 	; 
 
 
@@ -1972,8 +1968,8 @@ select distinct year(pd_dn_ol_admit_start_dt) from tmp_1y.ec_ip_dataset_claims_c
 */
 
 --Step 11: Inital COSMOS Pull that will go through Frankenstein runout process
-drop table if exists tmp_1m.ec_ip_dataset_claims_cosmos_10292025;
-create table tmp_1m.ec_ip_dataset_claims_cosmos_10292025 as				
+drop table if exists tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date};
+create table tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date} as				
 SELECT
 /*CLAIM-RELATED FIELDS*/
 	a.SITE_CLM_AUD_NBR
@@ -2101,7 +2097,7 @@ SELECT
 	,a.ip_status_code
 	,case when dateadd(day,-10, last_day(a.adjd_dt))>=a.adjd_dt then TO_VARCHAR(a.adjd_dt,'yyyyMM') else TO_VARCHAR(add_months(a.adjd_dt,1),'yyyyMM') end as adjd_yrmonth
 	,TO_VARCHAR(a.pd_dn_ol_admit_start_dt,'yyyyMM') as pd_dn_ol_admit_yrmonth
-from tadm_tre_cpy.glxy_ip_admit_f_202510 as a
+from tadm_tre_cpy.glxy_ip_admit_f_${claims_month} as a
 left join tmp_2y.ec_glxy_drg_code as b
 	on a.fnl_drg_cd = b.drg_cd
 	and a.ADMIT_START_DT between b.drg_row_eff_dt and b.drg_row_end_dt
@@ -2113,16 +2109,16 @@ where year(a.pd_dn_ol_admit_start_dt)>'2021'
 
 
 --QA Check that 2022 and on is in the table above 
-select distinct year(pd_dn_ol_admit_start_dt) from tmp_1m.ec_ip_dataset_claims_cosmos_10292025;
+select distinct year(pd_dn_ol_admit_start_dt) from tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date};
 
 
 
 --Step 11.5: Stack 2021 table with current table before sending through Franky
-drop table if exists tmp_1m.ec_ip_dataset_claims_cosmos_10292025_2;
-create table tmp_1m.ec_ip_dataset_claims_cosmos_10292025_2 as				
+drop table if exists tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date}_2;
+create table tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date}_2 as				
 SELECT
 	* 
-	from tmp_1m.ec_ip_dataset_claims_cosmos_10292025
+	from tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date}
 	union all 
 	select 
 	*
@@ -2188,7 +2184,7 @@ select
 	,sum(NET_PD_AMT_FNL) as NET_PD_AMT_FNL
 	,sum(TADM_ADMITS) as TADM_ADMITS
 --	,sum(days) as days
-from tmp_1m.ec_ip_dataset_claims_cosmos_10292025_2 as a
+from tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date}_2 as a
 group by 
 --	ADMIT_START_DT
 --	,admit_end_dt 
@@ -2381,8 +2377,8 @@ left join tmp_1m.ec_ip_dataset_claims_franky6 as b
 
 
 --Step 20: Cutting off admits with no admitID 
-drop table if exists tmp_1m.ec_ip_dataset_claims_franky8_10292025 ;
-CREATE TABLE tmp_1m.ec_ip_dataset_claims_franky8_10292025 as
+drop table if exists tmp_1m.ec_ip_dataset_claims_franky8_${claims_date} ;
+CREATE TABLE tmp_1m.ec_ip_dataset_claims_franky8_${claims_date} as
 select 
 	*
 	,d.collection as Hospital_Group
@@ -2434,7 +2430,10 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 95,970,964,466.46
 -- Units: 6,572,434
 -- Days: 57,216,203
-		
+-- NOVEMBER
+-- Paid: 95,970,964,466.46
+-- Units: 6,572,434
+-- Days: 57,216,198		
 
 
 select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , sum(days_franky) as days_franky from tmp_1m.ec_ip_dataset_claims_franky7;
@@ -2477,7 +2476,10 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 95,977,733,957.69
 -- Units: 6,572,497
 -- Days: 57,221,737
-
+-- NOVEMBER
+-- Paid: 95,977,733,957.69
+-- Units: 6,572,497
+-- Days: 57,221,727
 
 --Step 21: COSMOS After Franky adjustment
 drop table if exists tmp_1m.ec_ip_dataset_claims_cosmos_franky; 
@@ -2543,7 +2545,7 @@ select
 	,sum(a.net_pd_amt_fnl) as netpaid
 	,sum(a.tadm_admits) as admits
 	,0 as days
-from tmp_1m.ec_ip_dataset_claims_franky8_10292025 as a 
+from tmp_1m.ec_ip_dataset_claims_franky8_${claims_date} as a 
 left join fichsrv.group_crosswalk as b
 		on a.groupnumber = b.group_number  
 		and substr(a.pd_dn_ol_admit_yrmonth,1,4)=b.year
@@ -2604,8 +2606,8 @@ group by
 
 
 --Step 22: Create claims dataset for service month conversion
-drop table if exists tmp_1m.ec_ip_dataset_claims_triangle_10292025; 
-create table tmp_1m.ec_ip_dataset_claims_triangle_10292025 as 
+drop table if exists tmp_1m.ec_ip_dataset_claims_triangle_${claims_date}; 
+create table tmp_1m.ec_ip_dataset_claims_triangle_${claims_date} as 
 SELECT
 	000000 as admit_week
 	,admit_yr_month
@@ -2697,7 +2699,7 @@ SELECT
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as frank_allowed
-from tmp_1m.ec_ip_dataset_claims_cosmos_10292025_2 
+from tmp_1m.ec_ip_dataset_claims_cosmos_${claims_date}_2 
 group by 
 	admit_yr_month
 	,fst_srvc_month -- rename in notification
@@ -2831,7 +2833,7 @@ left join fichsrv.tadm_glxy_drg_code as b
 left join tmp_2y.ec_loc_week_assign as c 
 on a.admit_start_dt =c.date
 ;
-SELECT DISTINCT servicecatg FROM fichsrv.tadm_glxy_drg_code
+
 
 --Step 24: Facets pull for C&S Duals 
 drop table if exists tmp_1m.ec_ip_dataset_claims_facet;
@@ -2873,10 +2875,10 @@ select
           when a.tadm_admit_type in ('IP_LTAC','IP_REHAB','IP_SNF','IP_REHAB','IP_SWGBED') then 'PAC'
           else 'Other' end as ipa_pac_flag
     ,a.denial_f
-	,case when b.servicecatg IN ('UNKNOWN','**') then 'MEDICAL'
-		WHEN b.servicecatg IN ('MED','MEDICAL') THEN 'MEDICAL'
-		WHEN b.servicecatg IN ('SURG','SURGICAL') THEN 'SURGICAL'
-		when a.fnl_drg_cd is null then 'MEDICAL' else b.servicecatg end as med_surg
+	,case when c.servicecatg IN ('UNKNOWN','**') then 'MEDICAL'
+		WHEN c.servicecatg IN ('MED','MEDICAL') THEN 'MEDICAL'
+		WHEN c.servicecatg IN ('SURG','SURGICAL') THEN 'SURGICAL'
+		when a.fnl_drg_cd is null then 'MEDICAL' else c.servicecatg end as med_surg
     ,case when a.primary_diag_cd in ('B9729', 'J0248', 'U071', 'J1282','J1281') then 'COVID-19'
           when a.primary_diag_cd in ('07999','3829','460','4619','4658','4659','4660','46619','486','4870','4871','4878','488','4880','48801','48802','48809','4881','48811','48812','48819','490','7806',
                '78060','7862','B9710','B9789','H6690','H6691','H6692','H6693','J00','J0190','J0191','J069','J09','J09X','J09X1','J09X2','J09X3','J09X9','J10','J100','J1000','J1001','J1008','J101','J102',
@@ -3085,8 +3087,8 @@ left join fichsrv.group_crosswalk as b
 
 
 --Step 26: Claims Roll Up to union with notification for leading indicator dataset 
-drop table if exists tmp_1m.ec_ip_dataset_claims_fnl_trs_10292025; 
-create table tmp_1m.ec_ip_dataset_claims_fnl_trs_10292025 as 
+drop table if exists tmp_1m.ec_ip_dataset_claims_fnl_trs_${claims_date}; 
+create table tmp_1m.ec_ip_dataset_claims_fnl_trs_${claims_date} as 
 select	
 	admit_week
 	,admit_yr_month
@@ -3232,21 +3234,24 @@ group by
 
 
 --Step 27: Union of claims & notifications/membership 
-drop table if exists tmp_1m.ec_ip_dataset_all_10292025_trs;
-create table tmp_1m.ec_ip_dataset_all_10292025_trs as				
+drop table if exists tmp_1m.ec_ip_dataset_all_${notifications_date}_trs;
+create table tmp_1m.ec_ip_dataset_all_${notifications_date}_trs as				
 SELECT	
 	*
-	from tmp_1m.ec_ip_dataset_notif_10292025_trs
+	from tmp_1m.ec_ip_dataset_notif_${notifications_date}_trs
 union all select 
 	* 
-	from tmp_1m.ec_ip_dataset_claims_fnl_trs_10292025 /*REFLECT OLD DATE UNLESS CLAIMS UPDATE; last claims update: 10/29/2025*/
+	from tmp_1m.ec_ip_dataset_claims_fnl_trs_${claims_date} 
 union all select 
 	* 
-	from tmp_1m.ec_ip_dataset_claims_triangle_10292025 /*REFLECT OLD DATE UNLESS CLAIMS UPDATE; last claims update: 10/29/2025*/ 
+	from tmp_1m.ec_ip_dataset_claims_triangle_${claims_date} 
 	; 
 
+SELECT sum(franky_allw), hce_admit_month FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_trs GROUP BY hce_admit_month ORDER BY hce_admit_month asc;
+--checking that most recent claims month is populating--
+
 --QA check for newest week (should be one higher than what is written below, also make sure to change and save the code when you are checking this)
-select max(admit_week) from tmp_1m.ec_ip_dataset_all_10292025_TRS where ipa_pac_flag ='IPA' and loc_flag=1;
+select max(admit_week) from tmp_1m.ec_ip_dataset_all_${notifications_date}_TRS where ipa_pac_flag ='IPA' and loc_flag=1;
 --6/18/25: 202525
 --6/25/25: 202526
 --7/2/25: 202527
@@ -3266,6 +3271,12 @@ select max(admit_week) from tmp_1m.ec_ip_dataset_all_10292025_TRS where ipa_pac_
 --10/15/25: 202542
 --10/22/25: 202543
 --10/29/25: 202544
+--11/5/25: 202545
+--11/12/25: 202546
+--11/19/25: 202547
+--11/26/25: 202548
+--12/3/25: 202549
+--12/10/25: 202550
 
 /************************************************************************************************************************************************************/
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3285,7 +3296,7 @@ select
 	,case when replace(b.contract,' ','') is not null and substr(a.fin_market,1,2)=replace(b.market,' ','') then 1 
 		when fin_plan_level_2='NPPO' and fin_market<>'VI' then 1
 		end as navi_risk
-from tmp_1m.ec_ip_dataset_all_10292025_trs as a
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs as a
 left join  tmp_1y.hk_navi_contracts  as b
 	on a.fin_contractpbp=replace(b.contract,' ','')
 	and substr(a.fst_srvc_month,1,4)=replace(b.yr,' ','')
@@ -3310,8 +3321,8 @@ where b.MARKET<>'-'
 
 
 --Step 29: Final PAC Valuation Table 
-drop table if exists tmp_1m.ec_ip_dataset_pac_fnl_10292025 ;
-create table tmp_1m.ec_ip_dataset_pac_fnl_10292025 as
+drop table if exists tmp_1m.ec_ip_dataset_pac_fnl_${notifications_date} ;
+create table tmp_1m.ec_ip_dataset_pac_fnl_${notifications_date} as
 select 
 	admit_type
 	,fst_srvc_month as create_mth
@@ -3385,8 +3396,8 @@ group by
 */
 
 --Step 30: LOC Valuation Pull & export 
-drop table if exists tmp_1m.ec_ip_dataset_loc_10292025 ;
-create table tmp_1m.ec_ip_dataset_loc_10292025 as
+drop table if exists tmp_1m.ec_ip_dataset_loc_${notifications_date} ;
+create table tmp_1m.ec_ip_dataset_loc_${notifications_date} as
 select 
 	admit_week
 	,hce_admit_month as admit_act_month
@@ -3423,7 +3434,7 @@ select
 	,sum(p2p_ovrtn_case_cnt) as p2p_ovrtn_case_cnt
 	,sum(other_ovtrns) as other_ovtrns
 	,sum(membership) as membership
-from tmp_1m.ec_ip_dataset_notif_10292025_trs
+from tmp_1m.ec_ip_dataset_notif_${notifications_date}_trs
 where ipa_pac_flag in ('IPA','MM') 
 	and hce_admit_month > '202112'
 	and loc_flag=1
@@ -3456,8 +3467,8 @@ group by
 
 
 --Step 31: Leading Indicator Export
-drop table if exists tmp_1m.ec_ip_dataset_LI_10292025_trs ;
-create table tmp_1m.ec_ip_dataset_LI_10292025_trs as
+drop table if exists tmp_1m.ec_ip_dataset_LI_${notifications_date}_trs ;
+create table tmp_1m.ec_ip_dataset_LI_${notifications_date}_trs as
 select 	
 	admit_week
 	,hce_admit_month
@@ -3507,7 +3518,7 @@ select
 	,sum(franky_paid) as franky_paid
 	,sum(franky_admits) as franky_admits
 	,sum(franky_allw) as franky_allowed
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 where leading_ind_pop =1 
 	and admit_type not in ('Other')
 	and hce_admit_month > '202012'
@@ -3544,8 +3555,8 @@ group by
 	;
 
 --Step 32: Getting all combos of admit month, service month with adjd month
-drop table if exists tmp_1m.ec_ip_dataset_LI_10292025_1_trs ;
-create table tmp_1m.ec_ip_dataset_LI_10292025_1_trs as
+drop table if exists tmp_1m.ec_ip_dataset_LI_${notifications_date}_1_trs ;
+create table tmp_1m.ec_ip_dataset_LI_${notifications_date}_1_trs as
 select DISTINCT 	
 	a.fin_tfm_product_new
 	,a.admit_type
@@ -3554,7 +3565,7 @@ select DISTINCT
 	,a.hce_admit_month
 	,a.service_month
 	,b.ADJD_Month as adjd_yrmonth
-from tmp_1m.ec_ip_dataset_LI_10292025_trs as a 
+from tmp_1m.ec_ip_dataset_LI_${notifications_date}_trs as a 
 left join tmp_1y.ec_franky_extrap as b
 on a.hce_admit_month=b.hce_month
 ;
@@ -3562,8 +3573,8 @@ on a.hce_admit_month=b.hce_month
 
 
 --Step 33: Uninoning on  current adjdmonth onto final export 
-drop table if exists tmp_1m.ec_ip_dataset_LI_10292025_2_trs ;
-create table tmp_1m.ec_ip_dataset_LI_10292025_2_trs as
+drop table if exists tmp_1m.ec_ip_dataset_LI_${notifications_date}_2_trs ;
+create table tmp_1m.ec_ip_dataset_LI_${notifications_date}_2_trs as
 select 
 	admit_week
 	,hce_admit_month
@@ -3584,7 +3595,7 @@ select
 	,franky_paid
 	,franky_admits
 	,franky_allowed
-from tmp_1m.ec_ip_dataset_LI_10292025_trs
+from tmp_1m.ec_ip_dataset_LI_${notifications_date}_trs
 union all select 
 	000000 as admit_week
 	,hce_admit_month
@@ -3605,12 +3616,12 @@ union all select
 	,0 as franky_paid
 	,0 as franky_admits
 	,0 as franky_allowed
-from tmp_1m.ec_ip_dataset_LI_10292025_1_trs
+from tmp_1m.ec_ip_dataset_LI_${notifications_date}_1_trs
 ;
 
 --Step 34: final Roll up for export 
-drop table if exists tmp_1m.ec_ip_dataset_LI_10292025_3_trs ;
-create table tmp_1m.ec_ip_dataset_LI_10292025_3_trs as
+drop table if exists tmp_1m.ec_ip_dataset_LI_${notifications_date}_3_trs ;
+create table tmp_1m.ec_ip_dataset_LI_${notifications_date}_3_trs as
 select 
 	admit_week
 	,hce_admit_month
@@ -3631,7 +3642,7 @@ select
 	,sum(franky_paid) as franky_paid
 	,sum(franky_admits) as franky_admits
 	,sum(franky_allowed) as franky_allowed
-from tmp_1m.ec_ip_dataset_LI_10292025_2_trs
+from tmp_1m.ec_ip_dataset_LI_${notifications_date}_2_trs
 group by 
 	admit_week
 	,hce_admit_month
@@ -3648,8 +3659,8 @@ group by
 --Completion Dataset
 
 --Completion Step 1: Weekly IPA Notifications, for LOC Valuation and LI
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_1;
-create table tmp_1m.ec_ip_dataset_comp_10292025_1 as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_1;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_1 as
 select 
 	'Weekly Notifs' as comp_type
 	,admit_week
@@ -3668,7 +3679,7 @@ select
     ,0 as franky_admits
     ,0 as franky_allowed
     ,0 as franky_days
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 where ipa_pac_flag in ('IPA','PAC')
      and component = 'Auths'
 -- Will need to make sure transplants don't get included into this when we add them in .... But don't we need that for the LI piece....
@@ -3677,27 +3688,29 @@ group by
     ,ipa_pac_flag
 ;
 
+
+
 --Completion Step 2: MM for Weekly IPA Notifications
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_2a;
-create table tmp_1m.ec_ip_dataset_comp_10292025_2a as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_2a;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_2a as
 select distinct 
 	admit_week
     ,hce_admit_month
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 ;
 
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_2b;
-create table tmp_1m.ec_ip_dataset_comp_10292025_2b as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_2b;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_2b as
 select 
 	hce_admit_month
     ,sum(membership) as membership
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 where component = 'Membership'
 group by hce_admit_month
 ;
 
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_2;
-create table tmp_1m.ec_ip_dataset_comp_10292025_2 as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_2;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_2 as
 select 
 	'Week MM' as comp_type
     ,b.admit_week
@@ -3716,15 +3729,16 @@ select
     ,0 as franky_admits
     ,0 as franky_allowed
     ,0 as franky_days
-from tmp_1m.ec_ip_dataset_comp_10292025_2b as a
-left join tmp_1m.ec_ip_dataset_comp_10292025_2a as b
+from tmp_1m.ec_ip_dataset_comp_${notifications_date}_2b as a
+left join tmp_1m.ec_ip_dataset_comp_${notifications_date}_2a as b
      on a.hce_admit_month = b.hce_admit_month
 where b.admit_week > 0
 ;
 
+
 --Completion Step 3: Monthly Membership
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_3;
-create table tmp_1m.ec_ip_dataset_comp_10292025_3 as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_3;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_3 as
 select 'Month MM' as comp_type
 	,0 as admit_week
 	,hce_admit_month
@@ -3742,7 +3756,7 @@ select 'Month MM' as comp_type
     ,0 as franky_admits
     ,0 as franky_allowed
     ,0 as franky_days
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 where component = 'Membership'
 	and leading_ind_pop =1
 group by hce_admit_month
@@ -3750,8 +3764,8 @@ group by hce_admit_month
 ;
 
 --Completion Step 4: Claims Completion Factors --
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_4;
-create table tmp_1m.ec_ip_dataset_comp_10292025_4 as
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_4;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_4 as
 select 'Claims' as comp_type
     ,0 as admit_week
     ,hce_admit_month
@@ -3770,7 +3784,7 @@ select 'Claims' as comp_type
     ,sum(franky_admits) as franky_admits
     ,sum(franky_allw) as franky_allowed
     ,sum(frank_days) as franky_days
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 where leading_ind_pop =1 
     and admit_type not in ('Other')
 	and hce_admit_month > '202012'
@@ -3785,8 +3799,8 @@ group by
 ;
 
 ----Completion Step 5: Reserve Adjustments - % Cap
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_5;
-create table tmp_1m.ec_ip_dataset_comp_10292025_5 AS
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_5;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_5 AS
 select 'Non-Cap' as comp_type
 	,0 as admit_week
 	,hce_admit_month
@@ -3804,7 +3818,7 @@ select 'Non-Cap' as comp_type
     ,0 as franky_admits
 	,sum(franky_allw) as franky_allowed
 	,0 as franky_days
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 	where component = 'Claims' 
 	--Leading Indicator Pop without the Cap Filter--
 		and fin_brand='M&R'
@@ -3823,8 +3837,8 @@ group by hce_admit_month
 ;
 
 ----Completion Step 6: Reserve Adjustments - % MH
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_6;
-create table tmp_1m.ec_ip_dataset_comp_10292025_6 AS
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_6;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_6 AS
 select 'MH' as comp_type
 	,0 as admit_week
 	,hce_admit_month
@@ -3842,7 +3856,7 @@ select 'MH' as comp_type
     ,0 as franky_admits
 	,sum(franky_allw) as franky_allowed
 	,0 as franky_days
-from tmp_1m.ec_ip_dataset_all_10292025_trs
+from tmp_1m.ec_ip_dataset_all_${notifications_date}_trs
 	where component = 'Claims' 
 	--Leading Indicator Pop without the Cap Filter--
 		and fin_brand='M&R'
@@ -4151,19 +4165,19 @@ where fin_inc_year in ('2024','2025')
 	AND fin_product_level_3 <>'INSTITUTIONAL'
 	AND tfm_include_flag=1 
  	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
--- union all	
--- select distinct fin_mbi_hicn_fnl
---	,'202511' as roster_month
---	,fin_inc_month as enroll_month
---	,fin_tfm_product_new
---from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202511 as a
---where fin_inc_year in ('2024','2025')
---	and fin_brand='M&R'
---	AND global_cap='NA'
---	AND sgr_source_name='COSMOS'
---	AND fin_product_level_3 <>'INSTITUTIONAL'
---	AND tfm_include_flag=1 
--- 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
+ union all	
+ select distinct fin_mbi_hicn_fnl
+	,'202511' as roster_month
+	,fin_inc_month as enroll_month
+	,fin_tfm_product_new
+from tadm_tre_cpy.gl_rstd_gpsgalnce_f_202511 as a
+where fin_inc_year in ('2024','2025')
+	and fin_brand='M&R'
+	AND global_cap='NA'
+	AND sgr_source_name='COSMOS'
+	AND fin_product_level_3 <>'INSTITUTIONAL'
+	AND tfm_include_flag=1 
+ 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
 -- union all	
 -- select distinct fin_mbi_hicn_fnl
 --	,'202512' as roster_month
@@ -4261,25 +4275,24 @@ group by enroll_month
 	,fin_tfm_product_new
 ;
 
-drop table if exists tmp_1m.ec_ip_dataset_comp_10292025_fnl;
-create table tmp_1m.ec_ip_dataset_comp_10292025_fnl as
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_1
+drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_fnl;
+create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_fnl as
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_1
 union all
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_2
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_2
 union all
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_3
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_3
 union all
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_4
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_4
 union all
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_5
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_5
 union all
-	select * from tmp_1m.ec_ip_dataset_comp_10292025_6
+	select * from tmp_1m.ec_ip_dataset_comp_${notifications_date}_6
 union all
 	select * from tmp_1m.ec_ip_mm_joiner2
 union all
 	select * from tmp_1m.ec_ip_mm_leaver2
 ;
-
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -4287,32 +4300,21 @@ union all
 
 --IN SAS BELOW
 
---tmp_1m.ec_ip_dataset_loc_10292025
---tmp_1m.ec_ip_dataset_LI_10292025_2_trs
---tmp_1m.ec_ip_dataset_comp_10292025_fnl
-
---
 --libname HCX_EC "/hpsasfin/int/projects/hcemrn/ec/prod/data/";
+/*
+data hcx_ec.LOC_IP_11_26_25 (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LOC_11262025
+;run;
 
---/*LOC valuation*/
---data hcx_ec.LOC_IP_10_29_25 (compress=yes); /*CHANGE TO CURRENT DATE*/
---set ving.ec_ip_dataset_loc_10292025
---;run;
+data hcx_ec.ec_ip_dataset_11_26_2025 (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LI_11262025_3_TRS
+;run;
 
---/*leading indicator*/
---data hcx_ec.ec_ip_dataset_10_29_2025 (compress=yes); /*CHANGE TO CURRENT DATE*/ 
---set ving.ec_ip_dataset_LI_10292025_3_trs
---;run;
-
---/*completion dataset*/
---data hcx_ec.ec_ip_dataset_comp_10292025_fnl (compress=yes); 
---set ving.ec_ip_dataset_comp_10292025_fnl 
---;run;
-
+data hcx_ec.ec_ip_dataset_comp_11262025_fnl (compress=yes); 
+set TMP_1M.EC_IP_DATASET_COMP_11262025_FNL 
+;run;
+*/
  
-
-
-
 
 
 

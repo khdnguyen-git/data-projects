@@ -176,27 +176,6 @@ where to_timestamp_ntz(uhg_received_date) >= '2024-07-01'
 ;
 
 
-
-
-select max(routing_date) from cdw_prd_call_db.cdw_ewdo_mcr_base_view_sc.owr_x_uhgen_ewr_work
-
-select routing_date from cdw_prd_call_db.cdw_ewdo_mcr_base_view_sc.owr_x_uhgen_ewr_work
-where routing_date is not null
-order by routing_date desc
-
-
-use secondary role all;
-select count(*) from cdw_prd_call_db.cdw_ewdo_mcr_base_view_sc.owr_x_uhgen_ewr_work
-;
-select count(*) from ving_prd_trend_db.tmp_1m.kn_mcr_202409_2025 -- 4358628 3583378
-;
-
-
-
-select * from tmp_1y.cl_ss_claims_op_pr_cosmos_smart_nice_202codes_2a
-limit 200;
-
-
 /*==============================================================================
  * Subsetting SS data and making matching variables
  *==============================================================================*/
@@ -281,6 +260,7 @@ from cte_subset
 
 select count(*) from ving_prd_trend_db.tmp_1m.kn_ss_claims_202409_2025
 -- 70,277
+-- 85,113
 
 select mnr_clm_dnl_status, count(*) from tmp_1m.kn_ss_claims_202409_2025
 group by mnr_clm_dnl_status
@@ -289,6 +269,10 @@ group by mnr_clm_dnl_status
 --N/A	2,653
 --Paid	30,281
 --Denied	37,343
+
+--Paid	30343
+--Denied	51373
+--N/A	3397
 
 
 -- Check count for data source
@@ -316,9 +300,9 @@ select distinct
 	a.*
 	, b.*
     , case when b.mcr_work_item_id_cleaned is null then 'N' else 'Y' end as mcr_routed
-    , case when a.mnr_month between '202409' and '202504' then 1
-    	else 0
-    end as mnr_ss_compare
+--    , case when a.mnr_month between '202409' and '202504' then 1
+--    	else 0
+--    end as mnr_ss_compare
 from ving_prd_trend_db.tmp_1m.kn_ss_claims_202409_2025 as a
 left join ving_prd_trend_db.tmp_1m.kn_mcr_202409_2025 as b
 	on 
@@ -330,8 +314,9 @@ left join ving_prd_trend_db.tmp_1m.kn_mcr_202409_2025 as b
 where a.mnr_entity_source = 'COSMOS'
 ;
 
-select count(*) from tmp_1m.kn_mcr_ss_join_cosmos
+select count(*) from tmp_1m.kn_mcr_ss_join_cosmos;
 -- 68,170
+-- 73,591
 
 
 select * from tmp_1m.kn_mcr_ss_join_cosmos
@@ -339,6 +324,140 @@ where mnr_SBSCR_NBR = '937975211'
 
 
 -- Dedup
+create or replace table tmp_1m.kn_mcr_verify as 
+select
+    a.sbscr_nbr
+	, a.clm_aud_nbr
+	, a.gal_mbi_hicn_fnl
+ 	, a.site_clm_aud_nbr
+ 	, a.site_cd
+ 	, a.entity
+ 	, a.component
+ 	, a.lcd_status
+ 	, a.locationtype
+ 	, a.proc_cd
+ 	, a.mnr_prov_tin as prov_tin
+ 	, a.fst_srvc_month
+ 	, b.mcr_routed as MnR_Routed
+ 	, b.mnr_covered_unproven
+ 	, a.hcemi_mcr_routed as MI_Routed
+ 	, a.hcemi_mcr_lstdecisioned
+ 	, a.hcemi_mcr_lstdecisionoutcome
+ 	, iff(sum_allowed > 0.01, 'Paid', 'Denied') as clm_status
+    , a.max_clm_pd_dt
+	, a.sum_allowed
+	, a.sum_paid
+	, a.sum_billed
+	, count(distinct concat(mnr_sbscr_nbr, mnr_prov_tin, mnr_month, mnr_proc_cd)) as n_distinct
+group by
+    a.sbscr_nbr
+	, a.clm_aud_nbr
+	, a.gal_mbi_hicn_fnl
+ 	, a.site_clm_aud_nbr
+ 	, a.site_cd
+ 	, a.entity
+ 	, a.component
+ 	, a.lcd_status
+ 	, a.locationtype
+ 	, a.proc_cd
+ 	, b.mnr_prov_tin 
+ 	, a.fst_srvc_month
+ 	, b.mcr_routed
+ 	, b.mnr_covered_unproven
+ 	, a.hcemi_mcr_routed 
+ 	, a.hcemi_mcr_lstdecisioned
+ 	, a.hcemi_mcr_lstdecisionoutcome
+ 	, iff(sum_allowed > 0.01, 'Paid', 'Denied')
+    , a.max_clm_pd_dt
+	, a.sum_allowed
+	, a.sum_paid
+	, a.sum_billed
+;
+
+-- Export send to MCR team for verification
+create or replace table tmp_1m.kn_mcr_ss_join_cosmos_export as
+select
+	mnr_sbscr_nbr as sbscr_nbr
+    , mnr_clm_aud_nbr as clm_aud_nbr
+    , mnr_gal_mbi_hicn_fnl as gal_mbi_hicn_fnl
+    , mnr_site_clm_aud_nbr as site_clm_aud_nbr
+    , mnr_site_cd as site_cd
+    , mnr_entity as entity
+    , mnr_component as component
+    , mnr_lcd_status as lcd_status
+    , mnr_locationtype as locationtype
+    , mnr_proc_cd as proc_cd
+    , mnr_prov_tin as prov_tin
+    , mnr_month as fst_srvc_month
+    , mcr_routed as mnr_routed
+    , mnr_covered_unproven as covered_unproven 
+    , mnr_brand_fnl as brand_fnl
+    , mnr_product_level_3_fnl as product_level_3_fnl
+    , mnr_market as market
+    , mnr_migration_source as migration_source
+    , mnr_prov_prtcp_sts_cd as prov_prtcp_sts_cd
+    , iff(sum(mnr_allw_amt_fnl) > 0.01, 'Paid', 'Denied') as clm_status
+    , max(mnr_clm_pd_dt) as max_clm_pd_dt
+    , sum(mnr_allw_amt_fnl) as sum_allowed
+    , sum(mnr_net_pd_amt_fnl) as sum_paid
+    , sum(mnr_sbmt_chrg_amt) as sum_billed
+    , count(distinct concat(mnr_sbscr_nbr, mnr_prov_tin, mnr_month, mnr_proc_cd)) as n_distinct
+from tmp_1m.kn_mcr_ss_join_cosmos
+group by
+    mnr_sbscr_nbr
+    , mnr_clm_aud_nbr
+    , mnr_gal_mbi_hicn_fnl
+    , mnr_site_clm_aud_nbr
+    , mnr_site_cd
+    , mnr_entity
+    , mnr_component
+    , mnr_lcd_status
+    , mnr_locationtype
+    , mnr_proc_cd
+    , mnr_prov_tin
+    , mnr_month
+    , mcr_routed
+    , mnr_covered_unproven
+    , mnr_brand_fnl
+    , mnr_product_level_3_fnl
+    , mnr_market
+    , mnr_migration_source
+    , mnr_prov_prtcp_sts_cd
+;
+
+
+select count(*) from tmp_1m.kn_mcr_ss_join_cosmos_export
+-- 44,170
+
+
+select mth, site_clm_aud_nbr, clm_dnl_f, component, sum(allw_amt_fnl)
+from tmp_1y.cl_ss_claims_op_pr_cosmos_smart_nice_202codes_2a
+where gal_mbi_hicn_fnl = '6TR7XF3FH78'
+group by 1,2,3,4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 create or replace table ving_prd_trend_db.tmp_1m.kn_mcr_ss_join_cosmos_dedup as
 with rn as (
 select 

@@ -21,6 +21,7 @@ group by
 
 select count(*) from tmp_1m.ec_avtar_24_25_3;
 
+select * from tmp_1m.EC_AVTAR_24_25_3 limit 100
 
 
 -- ip_dataset_07302025_4_trs + ip_dataset_07302025_mm -> ip_dataset_notif_07302025_trs -> ip_dataset_loc_07302025
