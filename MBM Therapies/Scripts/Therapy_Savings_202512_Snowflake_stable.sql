@@ -2,8 +2,8 @@
  * MEMBERSHIP DETAIL PROCESSING
  * Creates base membership table with pilot/national deployment flags
  *==============================================================================*/
-drop table if exists tmp_1q.kn_mbm_dtl_202511;					
-create table tmp_1q.kn_mbm_dtl_202511 as 					
+drop table if exists tmp_1q.kn_mbm_dtl_202512;					
+create table tmp_1q.kn_mbm_dtl_202512 as 					
 select 			
 	fin_mbi_hicn_fnl			
 	, fin_inc_month			
@@ -50,14 +50,8 @@ group by
 	, iff(special_network in ('ERICKSON'), 1, 0) 			
 	, sgr_source_name
 ;
-
-
-select count(*) from fichsrv.tre_membership
-where fin_inc_year > 2018			
- 	  and fin_brand = 'M&R'
- 	  and fin_product_level_3 not in ('INSTITUTIONAL', 'DUAL')
-
--- select count(*) from tmp_1q.kn_mbm_dtl_202511;  -- 469046914 430370488 415060257  407463331 399836379   392256742 (removed 2019) 442855070  435558291  428264965  450161568
+-- select count(*) from tmp_1q.kn_mbm_dtl_202512;  
+-- 476794132 469046914 430370488 415060257  407463331 399836379   392256742 (removed 2019) 442855070  435558291  428264965  450161568
 								
 
 /*==============================================================================
@@ -65,8 +59,8 @@ where fin_inc_year > 2018
  * Aggregates membership data and creates summary tables for analysis
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_mshp_202511;
-create temporary table tmp_1q.kn_mbm_mshp_202511 as
+drop table if exists tmp_1q.kn_mbm_mshp_202512;
+create temporary table tmp_1q.kn_mbm_mshp_202512 as
 select
     fin_inc_month as ep_start_mo
     , substring(market_fnl, 1, 2) as market_fnl
@@ -82,7 +76,7 @@ select
     , sum(mm) as mm
     , substring(fin_inc_month, 1, 4) as ep_yr
     , substring(fin_inc_month, 5, 2) as ep_mnth
-from tmp_1q.kn_mbm_dtl_202511 as a
+from tmp_1q.kn_mbm_dtl_202512 as a
 where global_cap = 1
 group by
     fin_inc_month
@@ -98,10 +92,10 @@ group by
     , sgr_source_name
 ;
 
--- select count(*) from tmp_1q.kn_mbm_mshp_202511; -- 10291 9743  9606
+-- select count(*) from tmp_1q.kn_mbm_mshp_202512; -- 10428 10291 9743  9606
 
-drop table if exists tmp_1q.kn_mbm_mshp_sum1_202511;
-create table tmp_1q.kn_mbm_mshp_sum1_202511 as
+drop table if exists tmp_1q.kn_mbm_mshp_sum1_202512;
+create table tmp_1q.kn_mbm_mshp_sum1_202512 as
 select 
 	'MM' as data_type
 	, ep_start_mo
@@ -115,16 +109,16 @@ select
 	, 0 as visit_cnt
 	, 0 as allowed_amt
 	, sum(mm) as mms
-from tmp_1q.kn_mbm_mshp_202511
+from tmp_1q.kn_mbm_mshp_202512
 where population not in ('M&R DUALS', 'C&S DUALS')
 group by 
 	ep_start_mo
 	, mbm_deploy_dt
 ;
 
---select count(*) from tmp_1q.kn_mbm_mshp_sum1_202511; -- 142 134 132 128 126 124  144 142
+--select count(*) from tmp_1q.kn_mbm_mshp_sum1_202512; -- 144 142 134 132 128 126 124  144 142
 
---select * from tmp_1q.kn_mbm_mshp_sum1_202511;
+--select * from tmp_1q.kn_mbm_mshp_sum1_202512;
 --_____________[ END OF MEMBERSHIP ]_____________________________________
 
 
@@ -134,8 +128,8 @@ group by
  *==============================================================================*/
 
 --describe formatted tmp_1y.pa_trckng_op_evnt_lopa_dtl;
-drop table if exists tmp_1q.kn_lopa_op_1_202511;
-create table tmp_1q.kn_lopa_op_1_202511 as
+drop table if exists tmp_1q.kn_lopa_op_1_202512;
+create table tmp_1q.kn_lopa_op_1_202512 as
 select  
 	case when include_non_sug_event = 1 then mbi_dos end as total_mbi_dos
 	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 and include_non_sug_event = 1 
@@ -147,23 +141,21 @@ select
 from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
 ;	
 
+--select count(*) from tmp_1q.kn_lopa_op_1_202512; -- 2981365 2909228 2484707 2417275  2306199  2164101  1729931 1526791   1338831
+;
 
-select * from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
-
---select count(*) from tmp_1q.kn_lopa_op_1_202511; -- 2909228 2484707 2417275  2306199  2164101  1729931 1526791   1338831
-
-drop table if exists tmp_1q.kn_lopa_op_202511;
-create table tmp_1q.kn_lopa_op_202511 as
+drop table if exists tmp_1q.kn_lopa_op_202512;
+create table tmp_1q.kn_lopa_op_202512 as
 select 
 	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
 	, *
-from tmp_1q.kn_lopa_op_1_202511
+from tmp_1q.kn_lopa_op_1_202512
 ; 
 
---select count(*) from tmp_1q.kn_lopa_op_202511; -- 2909228 2417275  2306199 2164101
+--select count(*) from tmp_1q.kn_lopa_op_202512; -- 2981365 2909228 2417275  2306199 2164101
 
-drop table if exists tmp_1q.kn_lopa_pr_1_202511;
-create table tmp_1q.kn_lopa_pr_1_202511 as
+drop table if exists tmp_1q.kn_lopa_pr_1_202512;
+create table tmp_1q.kn_lopa_pr_1_202512 as
 select  
 	mbi_dos as total_mbi_dos
 	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 then mbi_dos end as still_lopa_mbi_dos
@@ -172,38 +164,26 @@ select
 from hce_ops_stage.pa_trckng_pr_evnt_lopa_dtl
 ;	
 
---select count(*) from tmp_1q.kn_lopa_pr_1_202511; -- 4659061 3714719  3501938 3263702
+--select count(*) from tmp_1q.kn_lopa_pr_1_202512; -- 4790609 4659061 3714719  3501938 3263702
 
-drop table if exists tmp_1q.kn_lopa_pr_202511;
-create table tmp_1q.kn_lopa_pr_202511 as
+drop table if exists tmp_1q.kn_lopa_pr_202512;
+create table tmp_1q.kn_lopa_pr_202512 as
 select 
 	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
 	, *
-from tmp_1q.kn_lopa_pr_1_202511
+from tmp_1q.kn_lopa_pr_1_202512
 ;
 
---select count(*) from tmp_1q.kn_lopa_pr_202511; -- 4659061 3714719  3501938 3263702
+--select count(*) from tmp_1q.kn_lopa_pr_202512; -- 4790609 4659061 3714719  3501938 3263702
 		
-
-select * from fichsrv.cosmos_op
-
-
-select * from fichsrv.cosmos_pr
-
-select distinct clm_pl_of_srvc_desc from fichsrv.cosmos_pr
-
-select distinct hce_service_code from fichsrv.cosmos_op
-
-select distinct service_code from fichsrv.cosmos_pr
-
 
 
 /*==============================================================================
  * PROFESSIONAL CLAIMS PROCESSING
  * Pull in PR claims, combine with LOPA flags
  *==============================================================================*/
-drop table if exists tmp_1q.kn_mbm_episode_pr_202511;
-create table tmp_1q.kn_mbm_episode_pr_202511 as
+drop table if exists tmp_1q.kn_mbm_episode_pr_202512;
+create table tmp_1q.kn_mbm_episode_pr_202512 as
 select
     a.gal_mbi_hicn_fnl as mbi
     , a.component
@@ -239,7 +219,7 @@ select
     , count(distinct a.eventkey) as visits
     , sum(a.adj_srvc_unit_cnt) as adj_srvc_units
 from fichsrv.cosmos_pr as a
-left join tmp_1q.kn_lopa_pr_202511 as b
+left join tmp_1q.kn_lopa_pr_202512 as b
     on concat(a.gal_mbi_hicn_fnl, '_', a.fst_srvc_dt) = b.total_mbi_dos
     and a.proc_cd = b.proc_cd
     and a.prov_tin = b.prov_tin
@@ -298,11 +278,12 @@ group by
 
 
 
---select count(*) from tmp_1q.kn_mbm_episode_pr_202511; -- 68110261 66530074 64354173  62711063  60990327
+--select count(*) from tmp_1q.kn_mbm_episode_pr_202512; -- 69597958 68110261 66530074 64354173  62711063  60990327
 
-select sum(allowed) from tmp_1q.kn_mbm_episode_pr_202511
+select sum(allowed) from tmp_1q.kn_mbm_episode_pr_202512
 where serv_month = '202406'
 -- 40768591.31
+-- 40796038.61
 	
 /*==============================================================================
  * OUTPATIENT CLAIMS APC PROCESSING
@@ -333,9 +314,9 @@ from (
 	) as e;
 
 
---select count(*) from tmp_1q.kn_mbm_op_claims; -- 77536654  75713104  73889849     72274650
-drop table if exists tmp_1q.kn_mbm_episode_op_202511;
-create table tmp_1q.kn_mbm_episode_op_202511 as
+--select count(*) from tmp_1q.kn_mbm_op_claims; -- 82571364 77536654  75713104  73889849     72274650
+drop table if exists tmp_1q.kn_mbm_episode_op_202512;
+create table tmp_1q.kn_mbm_episode_op_202512 as
 select
     a.gal_mbi_hicn_fnl as mbi
     , a.component
@@ -371,7 +352,7 @@ select
     , count(distinct a.eventkey) as visits
     , sum(a.adj_srvc_unit_cnt) as adj_srvc_units
 from tmp_1q.kn_mbm_op_claims as a
-left join tmp_1q.kn_lopa_op_202511 as b
+left join tmp_1q.kn_lopa_op_202512 as b
     on concat_ws('_', a.gal_mbi_hicn_fnl, a.fst_srvc_dt) = b.total_mbi_dos
     and a.proc_cd = b.proc_cd
     and a.prov_tin = b.prov_tin
@@ -432,7 +413,7 @@ group by
 ;
 
 
---select count(*) from tmp_1q.kn_mbm_episode_op_202511; -- 40620968 39607841 40613266 38657890  37706450  36737912  35885437
+--select count(*) from tmp_1q.kn_mbm_episode_op_202512; -- 41551071 40620968 39607841 40613266 38657890  37706450  36737912  35885437
 
 /*==============================================================================
  * CLAIMS UNION AND CATEGORIZATION
@@ -448,6 +429,13 @@ select
 from tmp_1y.kn_mbm_episode_1_2018_2020
 ;
 
+-- select count(*) from tmp_1y.kn_mbm_episode_1_2018_2020; 
+-- 21694518
+
+-- select count(*) from tmp_1y.kn_mbm_episode_pr_2018_2020; 
+-- 21694518
+
+
 drop table if exists tmp_1y.kn_mbm_episode_op_2018_2020;
 create table tmp_1y.kn_mbm_episode_op_2018_2020 as
 select
@@ -455,39 +443,44 @@ select
 from tmp_1y.kn_mbm_episode_1b_2018_2020
 ;
 
+-- select count(*) from tmp_1y.kn_mbm_episode_1b_2018_2020; 
+-- 16546489
 
-drop table if exists tmp_1q.kn_mbm_episode_1c_202511;
-create table tmp_1q.kn_mbm_episode_1c_202511 as
-select * from tmp_1q.kn_mbm_episode_pr_202511
+-- select count(*) from tmp_1y.kn_mbm_episode_op_2018_2020; 
+-- 16546489
+
+
+
+drop table if exists tmp_1q.kn_mbm_episode_1c_202512;
+create table tmp_1q.kn_mbm_episode_1c_202512 as
+select * from tmp_1q.kn_mbm_episode_pr_202512
 union all
 select * from tmp_1y.kn_mbm_episode_pr_2018_2020
 union all
-select * from tmp_1q.kn_mbm_episode_op_202511
+select * from tmp_1q.kn_mbm_episode_op_202512
 union all
 select * from tmp_1y.kn_mbm_episode_op_2018_2020
 ;
 
 
-select count(*) from tmp_1m.kn_mbm_episode_1c_202510;
+--select count(*) from tmp_1q.kn_mbm_episode_1c_202512; 
+-- 149390036 146972236 146949829 144378922 146949829 136759944 134268620 141253070  138658520  135969246
 
---select count(*) from tmp_1q.kn_mbm_episode_1c_202511; -- 146972236 146949829 144378922 146949829 136759944 134268620 141253070  138658520  135969246
---
---select * from tmp_1q.kn_mbm_episode_1c_202511 limit 2;
 select serv_month, sum(allowed) as allowedamt 
-from tmp_1q.kn_mbm_episode_1c_202511
+from tmp_1q.kn_mbm_episode_1c_202512
 where serv_month = '202407'
 group by serv_month;
 
-
 -- 81177919.11
+-- 81205032.56
 
-drop table if exists tmp_1q.kn_mbm_episode_2_202511;
-create table tmp_1q.kn_mbm_episode_2_202511 as
+drop table if exists tmp_1q.kn_mbm_episode_2_202512;
+create table tmp_1q.kn_mbm_episode_2_202512 as
 with episode_base as (
     select *
         , sum(allowed) over (partition by id, start_dt, category) as dnl_allowed
         , max(lopa_flg) over (partition by id, start_dt, category) as max_lopa_flg
-    from tmp_1q.kn_mbm_episode_1c_202511
+    from tmp_1q.kn_mbm_episode_1c_202512
 ),
 joined as (
     select a.*, b.tin_num
@@ -511,20 +504,13 @@ select *
            else 'National' end as mbm_deploy_dt
 from joined;
 
+--select count(*) from tmp_1q.kn_mbm_episode_2_202512; -- 149390036 146972236 146949829 144378922 134268620 141253070  138658520  135969246
 
-
-
-
-
-
---select count(*) from tmp_1q.kn_mbm_episode_2_202511; -- 146972236 146949829 144378922 134268620 141253070  138658520  135969246
---
---describe formatted tmp_1q.kn_mbm_episode_2_202511;
 
 select serv_month, sum(allowed) as allowedamt 
-from tmp_1q.kn_mbm_episode_2_202511
+from tmp_1q.kn_mbm_episode_2_202512
 where serv_month = '202406'  
-group by serv_month; -- 73560084.49 73,520,205.78 73,491,717.81 73432103.42  73635236.05  73,514,079.66 (shorter proc_cd list)  76,561,115.88 (original proc_cd list)
+group by serv_month; -- 73580481.79 73560084.49 73,520,205.78 73,491,717.81 73432103.42  73635236.05  73,514,079.66 (shorter proc_cd list)  76,561,115.88 (original proc_cd list)
 
 
 /*==============================================================================
@@ -532,8 +518,8 @@ group by serv_month; -- 73560084.49 73,520,205.78 73,491,717.81 73432103.42  736
  * Creates episode aggregation and visit ranking structure
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_3_202511;  
-create table tmp_1q.kn_mbm_episode_3_202511 as 
+drop table if exists tmp_1q.kn_mbm_episode_3_202512;  
+create table tmp_1q.kn_mbm_episode_3_202512 as 
 select			
 	concat(mbi,'-',category) as mbi		
 	, component		
@@ -553,7 +539,7 @@ select
 	, count(distinct concat(id,start_dt)) as visits 
 	, count(visits) as vsts                     		
 	, sum(adj_srvc_units) as adj_srvc_units		
-from tmp_1q.kn_mbm_episode_2_202511
+from tmp_1q.kn_mbm_episode_2_202512
 where prov_prtcp_sts_cd = 'P'	
 group by			
     concat(mbi,'-',category)
@@ -571,10 +557,10 @@ group by
 order by mbi,mbmserv,start_dt,id
 ;
 
---select count(*) from tmp_1q.kn_mbm_episode_3_202511; -- 69143262 69136216 64545494 63423287 66929218  65797555     64650521
+--select count(*) from tmp_1q.kn_mbm_episode_3_202512; -- 70228347 69143262 69136216 64545494 63423287 66929218  65797555     64650521
 
-drop table if exists tmp_1q.kn_mbm_episode_4_202511;  
-create table tmp_1q.kn_mbm_episode_4_202511 as  			
+drop table if exists tmp_1q.kn_mbm_episode_4_202512;  
+create table tmp_1q.kn_mbm_episode_4_202512 as  			
 select 
 	mbi
 	, component
@@ -595,10 +581,10 @@ select
 	, visits
 	, vsts
 	, adj_srvc_units
-from tmp_1q.kn_mbm_episode_3_202511 as a
+from tmp_1q.kn_mbm_episode_3_202512 as a
 ;
 
---select count(*) from tmp_1q.kn_mbm_episode_4_202511; -- 69143262 64545494 66929218  65797555   64650521
+--select count(*) from tmp_1q.kn_mbm_episode_4_202512; -- 70228347 69143262 64545494 66929218  65797555   64650521
 
 
 
@@ -607,8 +593,8 @@ from tmp_1q.kn_mbm_episode_3_202511 as a
  * Calculates time gaps between visits and episode flags
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_lag_202511;  
-create table tmp_1q.kn_mbm_episode_lag_202511 as  
+drop table if exists tmp_1q.kn_mbm_episode_lag_202512;  
+create table tmp_1q.kn_mbm_episode_lag_202512 as  
 select a.mbi
 	, a.component
 	, a.id
@@ -632,22 +618,22 @@ select a.mbi
 	, a.visits
 	, a.vsts
 	, a.adj_srvc_units
-from tmp_1q.kn_mbm_episode_4_202511 as a
-left join tmp_1q.kn_mbm_episode_4_202511 as b 
+from tmp_1q.kn_mbm_episode_4_202512 as a
+left join tmp_1q.kn_mbm_episode_4_202512 as b 
 	on a.mbi = b.mbi 
 	and a.mbm_deploy_dt = b.mbm_deploy_dt
 	and a.i = b.i+1 
 ;
 
---select count(*) from tmp_1q.kn_mbm_episode_lag_202511; -- 69143262 64545494 66929218  65797555  64650521
+--select count(*) from tmp_1q.kn_mbm_episode_lag_202512; -- 70228347 69143262 64545494 66929218  65797555  64650521
 -- 
 /*==============================================================================
  * EPISODE START DATE DETERMINATION
  * Identifies episode boundaries and calculates cumulative episodes
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_vst_ep_2_202511;  
-create or replace table tmp_1q.kn_mbm_episode_vst_ep_2_202511 as
+drop table if exists tmp_1q.kn_mbm_episode_vst_ep_2_202512;  
+create or replace table tmp_1q.kn_mbm_episode_vst_ep_2_202512 as
 select
     a.mbi
   , a.component
@@ -683,15 +669,15 @@ from (
             order by start_dt
             rows between unbounded preceding and current row
         ) as cmltv_episodes
-    from tmp_1q.kn_mbm_episode_lag_202511
+    from tmp_1q.kn_mbm_episode_lag_202512
 ) as a
 ;
 
 
---select count(*) from tmp_1q.kn_mbm_episode_vst_ep_2_202511; -- 69143262 66929218  65797555  64650521
+--select count(*) from tmp_1q.kn_mbm_episode_vst_ep_2_202512; -- 70228347 69143262 66929218  65797555  64650521
 
-drop table if exists tmp_1q.kn_mbm_episode_smry_202511;  
-create or replace table tmp_1q.kn_mbm_episode_smry_202511 as  
+drop table if exists tmp_1q.kn_mbm_episode_smry_202512;  
+create or replace table tmp_1q.kn_mbm_episode_smry_202512 as  
 select  
 	a.serv_month as visit_month
 	, to_char(ep_start_dt,'yyyyMM') as ep_start_mo 
@@ -706,7 +692,7 @@ select
 	, sum(a.paid) as pd 
 	, sum(a.visits) as visits
 	, sum(ep_flag) as episodes
-from tmp_1q.kn_mbm_episode_vst_ep_2_202511 as a
+from tmp_1q.kn_mbm_episode_vst_ep_2_202512 as a
 group by 
 	a.serv_month  
 	, to_char(ep_start_dt,'yyyyMM') 
@@ -718,13 +704,13 @@ group by
 	, a.category
 ;
 
---select count(*) from tmp_1q.kn_mbm_episode_smry_202511; -- 1482158 1479372 1555388  1526174  1496541
+--select count(*) from tmp_1q.kn_mbm_episode_smry_202512; -- 1509656 1482158 1479372 1555388  1526174  1496541
 --  
 /*==============================================================================
  * EPISODE SUMMARY AND RUNOUT ANALYSIS
  * Calculates runout periods and creates aggregated episodes
  *==============================================================================*/
-create or replace table tmp_1q.kn_mbm_episode_ro_lag_202511 as
+create or replace table tmp_1q.kn_mbm_episode_ro_lag_202512 as
 select
     a.mbi
   , a.component
@@ -754,15 +740,13 @@ select
   , a.visits
   , a.vsts
   , a.adj_srvc_units
-from tmp_1q.kn_mbm_episode_vst_ep_2_202511 as a
+from tmp_1q.kn_mbm_episode_vst_ep_2_202512 as a
 ;
 
+--select count(*) from tmp_1q.kn_mbm_episode_ro_lag_202512; -- 70228347 69143262 66929218  65797555  64650521
 
-
---select count(*) from tmp_1q.kn_mbm_episode_ro_lag_202511; -- 69143262 66929218  65797555  64650521
-
-drop table if exists tmp_1q.kn_mbm_episode_ro_lag2_202511;  
-create table tmp_1q.kn_mbm_episode_ro_lag2_202511 as  
+drop table if exists tmp_1q.kn_mbm_episode_ro_lag2_202512;  
+create table tmp_1q.kn_mbm_episode_ro_lag2_202512 as  
 select 
 	a.mbi
 	, a.id
@@ -785,18 +769,13 @@ select
 	, visits
 	, allowed
 	, 0 as mm 
-from tmp_1q.kn_mbm_episode_ro_lag_202511 as a
+from tmp_1q.kn_mbm_episode_ro_lag_202512 as a
 ;
---
---
---select ep_start_mo, count(episodes) from tmp_1q.kn_mbm_episode_ro_lag2_202511
---where episodes = 1
---group by ep_start_mo
---
---select count(*) from tmp_1q.kn_mbm_episode_ro_lag2_202511; -- 69143262 69136216 66929218  65797555  64650521
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_ep_202511;  
-create or replace table tmp_1q.kn_mbm_episode_agg6_ep_202511 as  
+--select count(*) from tmp_1q.kn_mbm_episode_ro_lag2_202512; -- 70228347 69143262 69136216 66929218  65797555  64650521
+
+drop table if exists tmp_1q.kn_mbm_episode_agg6_ep_202512;  
+create or replace table tmp_1q.kn_mbm_episode_agg6_ep_202512 as  
 select 
 	'EPISODES' as data_type
 	, ep_start_mo 
@@ -814,7 +793,7 @@ select
 	, 0 as visits 
 	, 0 as allowed
 	, 0 as mm 
-from (select * from tmp_1q.kn_mbm_episode_ro_lag2_202511 where episodes = 1 ) as a
+from (select * from tmp_1q.kn_mbm_episode_ro_lag2_202512 where episodes = 1 ) as a
 group by 
 	ep_start_mo
 	, concat(ep_start_year,'Q9')
@@ -824,14 +803,14 @@ group by
 	, claim_status
 ;
 --
---select count(*) from tmp_1q.kn_mbm_episode_agg6_ep_202511; -- 46706 46496 45630  44961 44193  43381
+--select count(*) from tmp_1q.kn_mbm_episode_agg6_ep_202512; -- 47476 46706 46496 45630  44961 44193  43381
 
 /*==============================================================================
  * COMBINE VISITS AND EPISODES
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_202511;  
-create or replace table tmp_1q.kn_mbm_episode_agg6_202511 as  
+drop table if exists tmp_1q.kn_mbm_episode_agg6_202512;  
+create or replace table tmp_1q.kn_mbm_episode_agg6_202512 as  
 select 
 	'VISITS' as data_type
 	, ep_start_mo 
@@ -849,7 +828,7 @@ select
 	, sum(visits) as visits 
 	, sum(allowed) as allowed
 	, 0 as mm 
-from tmp_1q.kn_mbm_episode_ro_lag2_202511
+from tmp_1q.kn_mbm_episode_ro_lag2_202512
 group by 
 	ep_start_mo 
 	, concat(ep_start_year,'Q9') 
@@ -864,77 +843,65 @@ group by
 	, visit_ep_lag
 ;
 
---select count(*) from tmp_1q.kn_mbm_episode_agg6_202511; -- 2202473 2198844 2322113  2278610 2234635
+--select count(*) from tmp_1q.kn_mbm_episode_agg6_202512; -- 2242957 2202473 2198844 2322113  2278610 2234635
 
 
-select count(*) from tmp_1q.kn_mbm_episode_agg6_202511 
+select count(*) from tmp_1q.kn_mbm_episode_agg6_202512 
 
-select count(*) from tmp_1q.kn_mbm_episode_agg6_ep_202511 
+select count(*) from tmp_1q.kn_mbm_episode_agg6_ep_202512 
 
 
 
-insert into tmp_1q.kn_mbm_episode_agg6_202511   
-select * from tmp_1q.kn_mbm_episode_agg6_ep_202511 as a;
+insert into tmp_1q.kn_mbm_episode_agg6_202512   
+select * from tmp_1q.kn_mbm_episode_agg6_ep_202512 as a;
 
-alter table tmp_1q.kn_mbm_episode_agg6_202511
+alter table tmp_1q.kn_mbm_episode_agg6_202512
 alter column data_type set data type varchar(50);
 
 
 --
 ---- Minor format adjustments
 ---- Considering removing because of formatting issues
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change data_type data_type varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change ep_start_mo ep_start_mo varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change ep_start_qtr ep_start_qtr varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change mbm_deploy_dt mbm_deploy_dt varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change claim_status claim_status varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change visit_mo visit_mo varchar(20);
-alter table tmp_1q.kn_mbm_episode_agg6_202511 change category category varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change data_type data_type varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change ep_start_mo ep_start_mo varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change ep_start_qtr ep_start_qtr varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change mbm_deploy_dt mbm_deploy_dt varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change claim_status claim_status varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change visit_mo visit_mo varchar(20);
+alter table tmp_1q.kn_mbm_episode_agg6_202512 change category category varchar(20);
 
 
 
-alter table tmp_1q.kn_mbm_episode_agg6_202511
+alter table tmp_1q.kn_mbm_episode_agg6_202512
   alter column data_type       set data type varchar(50);
 --
---alter table tmp_1q.kn_mbm_episode_agg6_202511
+--alter table tmp_1q.kn_mbm_episode_agg6_202512
 --  alter column ep_start_mo     set data type varchar(50);
 --
---alter table tmp_1q.kn_mbm_episode_agg6_202511
+--alter table tmp_1q.kn_mbm_episode_agg6_202512
 --  alter column ep_start_qtr    set data type varchar(50);
 --
---alter table tmp_1q.kn_mbm_episode_agg6_202511
+--alter table tmp_1q.kn_mbm_episode_agg6_202512
 --  alter column mbm_deploy_dt   set data type varchar(50);
 
-alter table tmp_1q.kn_mbm_episode_agg6_202511
+alter table tmp_1q.kn_mbm_episode_agg6_202512
   alter column claim_status    set data type varchar(50);
 
---alter table tmp_1q.kn_mbm_episode_agg6_202511
+--alter table tmp_1q.kn_mbm_episode_agg6_202512
 --  alter column visit_mo        set data type varchar(50);
 
-alter table tmp_1q.kn_mbm_episode_agg6_202511
+alter table tmp_1q.kn_mbm_episode_agg6_202512
   alter column category        set data type varchar(50);
 
+select count(*) from tmp_1q.kn_mbm_episode_agg6_202512; 
 
-
---
---select count(*) from tmp_1q.kn_mbm_episode_agg6_202511; --2245340 2089616 2367743  2323571  2278828  2235149
---
---
---
---
---
---select sum(allowed) 
---from tmp_1q.kn_mbm_episode_visits_after2021
---where visit_mo = '202406'; --73246897.76 73520205.78 73432103.42  73635236.05  73514079.66
+--2290433 2245340 2089616 2367743  2323571  2278828  2235149
 
 select sum(allowed) 
-from tmp_1q.kn_mbm_episode_visits_after2021
-where visit_mo = '202406'; --73246897.76 73520205.78 73432103.42  73635236.05  73514079.66
---
---
---select sum(allowed) 
---from tmp_1q.kn_mbm_episode_agg6_202511
---where visit_mo = '202406'; --73246897.76 73520205.78 73432103.42  73635236.05  73514079.66
+from tmp_1q.kn_mbm_episode_agg6_202512
+where visit_mo = '202406'; 
+
+--73580481.79 73246897.76 73520205.78 73432103.42  73635236.05  73514079.66
 
 
 /*___________________[ SUMARIZING DATA FOR EXCEL ]_________________________________________________*/
@@ -945,8 +912,8 @@ where visit_mo = '202406'; --73246897.76 73520205.78 73432103.42  73635236.05  7
  * Stich up 2023- and 2023+ tables
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202511;
-create table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202511 as 
+drop table if exists tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202512;
+create table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202512 as 
 select 
 	data_type,
 	ep_start_mo,
@@ -961,7 +928,7 @@ select
 	sum(visits) as visit_cnt,
 	sum(allowed) as allowed_amt,
 	sum(mm) as mms
-from tmp_1q.kn_mbm_episode_agg6_202511
+from tmp_1q.kn_mbm_episode_agg6_202512
 where ep_start_mo >= '202301' -- was '201812' 
 group by
 	data_type,
@@ -989,39 +956,34 @@ select
 	visit_cnt,
 	allowed_amt,
 	mms
-from tmp_1q.kn_mbm_mshp_sum1_202511
+from tmp_1q.kn_mbm_mshp_sum1_202512
 ;
---select count(*) from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202511; -- 90055 89653 89653 72856
+--select count(*) from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202512; -- 94756 90055 89653 89653 72856
 
 
-drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023;
-create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023 as
+drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
+create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512 as
 select
 	*
-from tmp_1y.cl_mbm_episode_agg6_sum1
-where ep_start_mo < '202301'
+from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
 ;
 
-select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023;
+select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
+-- 176,560
+
+select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512
+-- 176,560
 
 
-select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023;
--- 176560;
-
-
-drop table if exists tmp_1q.kn_mbm_202511;
-create table tmp_1q.kn_mbm_202511 as
+drop table if exists tmp_1q.kn_mbm_202512;
+create table tmp_1q.kn_mbm_202512 as
 select
 	*
-from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202511
+from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202512
 union all
 select 
 	*
-from tmp_1y.kn_mbm_episode_agg6_sum1_before2023;
+from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
 
-select count(*) from tmp_1q.kn_mbm_202511; -- 266615 266213 257905 253665
+select count(*) from tmp_1q.kn_mbm_202512; -- 271316 266615 266213 257905 253665
 ;
-
-
-
-
