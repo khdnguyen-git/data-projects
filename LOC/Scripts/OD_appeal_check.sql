@@ -762,6 +762,17 @@ select admit_act_month from tmp_7d.hce_adr_avtar_like_25_26_f_ma
 
 select dschg_dt_act from tmp_7d.hce_adr_avtar_like_25_26_f_ma
 
+select
+	table_name
+	, row_count
+	, created
+	, last_altered
+	, last_ddl
+	, last_ddl_by
+from information_schema.tables
+where table_schema ilike 'tmp_7d'
+	and table_name ilike 'hce_adr_avtar_like_25_26_f_ma'
+;
 
 
 select * from fichsrv.cosmos_op
@@ -770,3 +781,11 @@ select * from fichsrv.cosmos_op
 select * from fichsrv.tre_membership
 
 select * from hce_ops_fnl.HCE_ADR_AVTAR_LIKE_25_26_F 
+
+
+select count(distinct fin_mbi_hicn_fnl) from fichsrv.tre_membership
+where global_cap = 'NA' and fin_brand = 'M&R' and tfm_include_flag = 1
+and fin_inc_month = '202601'
+
+select max(fin_inc_month) from fichsrv.TRE_MEMBERSHIP 
+
