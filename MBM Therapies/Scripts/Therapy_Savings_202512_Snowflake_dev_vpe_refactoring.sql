@@ -449,16 +449,13 @@ from tmp_1y.kn_mbm_episode_1b_2018_2020
 -- select count(*) from tmp_1y.kn_mbm_episode_op_2018_2020; 
 -- 16546489
 
-/*==============================================================================
- * REFACTORED THERAPY SAVINGS EPISODE ANALYSIS
- * Consolidated flow from claims union through final aggregation
- *==============================================================================*/
 
-/*------------------------------------------------------------------------------
- * STEP 1: UNION ALL CLAIMS (PR + OP, current + historical)
- *------------------------------------------------------------------------------*/
-drop table if exists tmp_1q.knd_mbm_episode_claims_202512;
-create table tmp_1q.knd_mbm_episode_claims_202512 as
+
+/*==============================================================================
+ * UNION ALL CLAIMS (PR + OP, current + 2018-2020)
+ *==============================================================================*/
+drop table if exists tmp_1q.knd_mbm_episode_all_202512;
+create table tmp_1q.knd_mbm_episode_all_202512 as
 select * from tmp_1q.kn_mbm_episode_pr_202512
 union all
 select * from tmp_1y.kn_mbm_episode_pr_2018_2020
@@ -471,14 +468,15 @@ select * from tmp_1y.kn_mbm_episode_op_2018_2020
 /*------------------------------------------------------------------------------
  * STEP 2: ADD CLAIM STATUS, OPTUM FLAG, MBM SERVICE DETAIL, DEPLOYMENT FLAG
  *------------------------------------------------------------------------------*/
-drop table if exists tmp_1q.knd_mbm_episode_enriched_202512;
-create table tmp_1q.knd_mbm_episode_enriched_202512 as
-with claim_base as (
-    select 
-        a.*
-        , sum(allowed) over (partition by id, start_dt, category) as dnl_allowed
-        , max(lopa_flg) over (partition by id, start_dt, category) as max_lopa_flg
-    from tmp_1q.knd_mbm_episode_claims_202512 as a
+drop table if exists tmp_1q.knd_mbm_episode_extras_202512;
+create table tmp_1q.knd_mbm_episode_extras_202512 as
+with 
+claim_with_lopa as (
+	select 
+	    a.*
+	    , sum(allowed) over (partition by id, start_dt, category) as dnl_allowed
+	    , max(lopa_flg) over (partition by id, start_dt, category) as max_lopa_flg
+	from tmp_1q.knd_mbm_episode_all_202512 as a
 )
 select 
     b.*
@@ -503,10 +501,35 @@ select
         end
         else 'National' 
     end as mbm_deploy_dt
-from claim_base as b
+from claim_with_lopa as b
 left join tmp_1y.p8001_optum_tin_2 as t
     on b.prov_tin = t.tin_num and t.i = 1
 ;
+
+
+select count(*) from tmp_1q.knd_mbm_episode_extras_202512;
+-- 149390036
+
+select claim_status, mbm_deploy_dt, count(*) from tmp_1q.knd_mbm_episode_extras_202512
+group by 1, 2
+;
+
+select optum_flg, mbmserv_dtl, count(*) from tmp_1q.knd_mbm_episode_extras_202512
+group by 1, 2
+;
+
+select serv_month, sum(allowed) as allowedamt 
+from tmp_1q.knd_mbm_episode_extras_202512
+where serv_month = '202406'  
+group by serv_month;
+-- 73580481.79
+
+select serv_month, sum(visits)
+from tmp_1q.knd_mbm_episode_extras_202512
+where serv_month = '202406'  
+group by serv_month;
+
+
 
 /*------------------------------------------------------------------------------
  * STEP 3: EPISODE IDENTIFICATION AND METRICS
@@ -516,8 +539,8 @@ left join tmp_1y.p8001_optum_tin_2 as t
  *------------------------------------------------------------------------------*/
 drop table if exists tmp_1q.knd_mbm_episode_analysis_202512;
 create table tmp_1q.knd_mbm_episode_analysis_202512 as
-with visit_aggregation as (
-    -- Aggregate claims to visit level
+with 
+visit_aggregation as (
     select
         concat(mbi, '-', category) as mbi_key
         , component
@@ -536,70 +559,57 @@ with visit_aggregation as (
         , sum(tadm_util) as tadm_util
         , count(distinct concat(id, start_dt)) as visits
         , sum(adj_srvc_units) as adj_srvc_units
-    from tmp_1q.knd_mbm_episode_enriched_202512
+    from tmp_1q.knd_mbm_episode_extras_202512
     where prov_prtcp_sts_cd = 'P'
-    group by 1,2,3,4,5,6,8,9,10,11,12
+    group by 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12
 ),
 
 visit_with_lag as (
     -- Add previous visit date and gap calculation
     select
         *
-        , lag(start_dt) over (
-            partition by mbi_key, mbm_deploy_dt 
-            order by start_dt
-        ) as prev_start_dt
-        , datediff('day', 
-            lag(start_dt) over (
-                partition by mbi_key, mbm_deploy_dt 
-                order by start_dt
-            ), 
-            start_dt
-        ) as visit_dy_lag
+        , lag(start_dt) over (partition by mbi_key, mbm_deploy_dt order by start_dt) 
+        as prev_start_dt
+        , datediff('day', lag(start_dt) over (partition by mbi_key, mbm_deploy_dt order by start_dt), start_dt) 
+        as visit_day_diff
     from visit_aggregation
 ),
 
-episode_identification as (
+episode_id as (
     -- Flag and number episodes
     select
         *
         , case 
             when prev_start_dt is null then 1
-            when visit_dy_lag > 30 then 1
+            when visit_day_diff > 30 then 1
             else 0
         end as ep_flag
         , sum(case 
-            when prev_start_dt is null then 1
-            when visit_dy_lag > 30 then 1
-            else 0
-        end) over (
-            partition by mbi_key, mbm_deploy_dt
-            order by start_dt
-            rows between unbounded preceding and current row
-        ) as episode_num
+            	when prev_start_dt is null then 1
+            	when visit_day_diff > 30 then 1
+            	else 0
+        	end) over (partition by mbi_key order by start_dt rows between unbounded preceding and current row) 
+    	as episode_num
     from visit_with_lag
 ),
 
-episode_metrics as (
+episode_calc as (
     -- Calculate episode-level attributes
     select
         *
-        , min(start_dt) over (
-            partition by mbi_key, mbm_deploy_dt, episode_num
-        ) as ep_start_dt
-        , min(hctapaidmonth) over (
-            partition by mbi_key, mbm_deploy_dt, episode_num
-        ) as ep_hctapaidmonth
-    from episode_identification
+        , min(start_dt) over (partition by mbi_key, episode_num) 
+        as ep_start_dt
+        , min(hctapaidmonth) over (partition by mbi_key, episode_num) 
+        as ep_hctapaidmonth
+    from episode_id
 )
-
 select
     mbi_key as mbi
     , component
     , id
     , start_dt
     , prev_start_dt
-    , visit_dy_lag
+    , visit_day_diff
     , ep_flag
     , ep_start_dt
     , episode_num as cmltv_episodes
@@ -617,20 +627,26 @@ select
     , tadm_util
     , visits
     , adj_srvc_units
-    -- Derived fields for downstream
     , to_char(ep_start_dt, 'yyyyMM') as ep_start_mo
     , to_char(ep_start_dt, 'yyyy') as ep_start_year
     , to_char(start_dt, 'yyyyMM') as visit_mo
-    , floor(datediff('day', ep_start_dt, start_dt) / 30.5) as visit_ep_lag
     , floor((datediff('day', start_dt, hctapaidmonth) + 20) / 30.5) as visit_runout_mo
-from episode_metrics
+    , floor(datediff('day', ep_start_dt, start_dt) / 30.5) as visit_ep_lag
+from episode_calc
 ;
+
+
+select ep_start_mo, sum(allowed), sum(visits), sum(ep_flag)
+from tmp_1q.knd_mbm_episode_analysis_202512
+where ep_start_mo >= '202401'
+group by 1
+order by 1
+
 
 /*------------------------------------------------------------------------------
  * STEP 4: FINAL AGGREGATION FOR REPORTING
  * Creates visits and episodes summary tables
  *------------------------------------------------------------------------------*/
-
 -- Visits aggregation
 drop table if exists tmp_1q.knd_mbm_agg_visits_202512;
 create table tmp_1q.knd_mbm_agg_visits_202512 as
@@ -704,12 +720,42 @@ union all
 select * from tmp_1q.knd_mbm_agg_episodes_202512
 ;
 
+
+
+select ep_start_mo, sum(allowed), sum(visits), sum(episodes)
+from tmp_1q.knd_mbm_agg_combined_202512
+where ep_start_mo >= '202401'
+group by 1 
+order by 1
+
+
+select visit_mo, sum(allowed), sum(visits), sum(episodes)
+from tmp_1q.knd_mbm_agg_combined_202512
+where visit_mo >= '202401'
+group by 1 
+order by 1
+
 /*------------------------------------------------------------------------------
  * STEP 5: FINAL SUMMARY FOR EXCEL REPORTING
  * Splits by time period and unions with membership
  *------------------------------------------------------------------------------*/
-drop table if exists tmp_1q.knd_mbm_summary_post2023_202512;
-create table tmp_1q.knd_mbm_summary_post2023_202512 as
+drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
+create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512 as
+select
+	*
+from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
+;
+
+
+select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
+-- 176,560
+
+select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512
+-- 176,560
+
+
+drop table if exists tmp_1q.knd_mbm_summary_after2023_202512;
+create table tmp_1q.knd_mbm_summary_after2023_202512 as
 select 
     data_type
     , ep_start_mo
@@ -755,36 +801,29 @@ from tmp_1q.kn_mbm_mshp_sum1_202512
 ;
 
 -- Final output table
-drop table if exists tmp_1q.knd_mbm_final_202512;
-create table tmp_1q.knd_mbm_final_202512 as
-select * from tmp_1q.knd_mbm_summary_post2023_202512
+drop table if exists tmp_1q.knd_mbm_202512;
+create table tmp_1q.knd_mbm_202512 as
+select * from tmp_1q.knd_mbm_summary_after2023_202512
 union all
 select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512
 ;
 
-drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
-create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512 as
-select
-	*
-from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
+
+select count(*) from tmp_1q.knd_mbm_202512
+-- 224,089
+
+select ep_start_mo, sum(allowed_amt), sum(visit_cnt), sum(ep_cnt)
+from tmp_1q.knd_mbm_202512
+where ep_start_mo >= '202401'
+group by 1 
+order by 1
 ;
 
-select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
--- 176,560
-
-select count(*) from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512
--- 176,560
-
-
-drop table if exists tmp_1q.kn_mbm_202512;
-create table tmp_1q.kn_mbm_202512 as
-select
-	*
-from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202512
-union all
-select 
-	*
-from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
-
-select count(*) from tmp_1q.kn_mbm_202512; -- 271316 266615 266213 257905 253665
+select visit_mo, sum(allowed_amt), sum(visit_cnt), sum(ep_cnt)
+from tmp_1q.knd_mbm_202512
+where visit_mo >= '202401'
+group by 1 
+order by 1
 ;
+
+

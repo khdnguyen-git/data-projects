@@ -474,6 +474,14 @@ group by serv_month;
 -- 81177919.11
 -- 81205032.56
 
+
+
+select serv_month, sum(visits) 
+from tmp_1q.kn_mbm_episode_2_202512
+where serv_month = '202406'  
+group by serv_month;
+
+
 drop table if exists tmp_1q.kn_mbm_episode_2_202512;
 create table tmp_1q.kn_mbm_episode_2_202512 as
 with episode_base as (
@@ -505,6 +513,13 @@ select *
 from joined;
 
 --select count(*) from tmp_1q.kn_mbm_episode_2_202512; -- 149390036 146972236 146949829 144378922 134268620 141253070  138658520  135969246
+
+
+select claim_status, mbm_deploy_dt, count(*) from tmp_1q.kn_mbm_episode_2_202512
+group by 1,2
+
+select optum_flg, mbmserv_dtl, count(*) from tmp_1q.kn_mbm_episode_2_202512
+group by 1, 2
 
 
 select serv_month, sum(allowed) as allowedamt 
@@ -674,6 +689,9 @@ from (
 ;
 
 
+
+
+
 --select count(*) from tmp_1q.kn_mbm_episode_vst_ep_2_202512; -- 70228347 69143262 66929218  65797555  64650521
 
 drop table if exists tmp_1q.kn_mbm_episode_smry_202512;  
@@ -704,8 +722,20 @@ group by
 	, a.category
 ;
 
+select ep_start_mo, sum(allw), sum(visits), sum(episodes)
+from tmp_1q.kn_mbm_episode_smry_202512
+where ep_start_mo >= '202401'
+group by 1
+order by 1
+
+
 --select count(*) from tmp_1q.kn_mbm_episode_smry_202512; -- 1509656 1482158 1479372 1555388  1526174  1496541
---  
+
+select sum(visits), sum(episodes), sum(allw), sum(mbr_count)
+from tmp_1q.kn_mbm_episode_smry_202512
+where ep_start_mo = '202406'
+
+
 /*==============================================================================
  * EPISODE SUMMARY AND RUNOUT ANALYSIS
  * Calculates runout periods and creates aggregated episodes
@@ -802,8 +832,12 @@ group by
 	, category
 	, claim_status
 ;
---
 --select count(*) from tmp_1q.kn_mbm_episode_agg6_ep_202512; -- 47476 46706 46496 45630  44961 44193  43381
+
+
+
+
+
 
 /*==============================================================================
  * COMBINE VISITS AND EPISODES
@@ -842,6 +876,9 @@ group by
 	, visit_mo
 	, visit_ep_lag
 ;
+
+
+
 
 --select count(*) from tmp_1q.kn_mbm_episode_agg6_202512; -- 2242957 2202473 2198844 2322113  2278610 2234635
 
@@ -902,6 +939,19 @@ from tmp_1q.kn_mbm_episode_agg6_202512
 where visit_mo = '202406'; 
 
 --73580481.79 73246897.76 73520205.78 73432103.42  73635236.05  73514079.66
+
+select ep_start_mo, sum(allowed), sum(visits), sum(episodes)
+from tmp_1q.kn_mbm_episode_agg6_202512
+where ep_start_mo >= '202401'
+group by 1 
+order by 1
+
+select visit_mo, sum(allowed), sum(visits), sum(episodes)
+from tmp_1q.kn_mbm_episode_agg6_202512
+where visit_mo >= '202401'
+group by 1 
+order by 1
+
 
 
 /*___________________[ SUMARIZING DATA FOR EXCEL ]_________________________________________________*/
@@ -987,3 +1037,27 @@ from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202512;
 
 select count(*) from tmp_1q.kn_mbm_202512; -- 271316 266615 266213 257905 253665
 ;
+
+select ep_start_mo, sum(allowed_amt), sum(visit_cnt), sum(ep_cnt)
+from tmp_1q.kn_mbm_202512
+where ep_start_mo >= '202401'
+group by 1 
+order by 1
+;
+
+
+select visit_mo, sum(allowed_amt), sum(visit_cnt), sum(ep_cnt)
+from tmp_1q.kn_mbm_202512
+where visit_mo >= '202401'
+group by 1 
+order by 1
+;
+
+select max(admit_dt_act) from HCE_OPS_FNL.HCE_ADR_AVTAR_Like_25_26_f 
+where 	
+       svc_setting ='Inpatient' --Inpatient Services
+       and plc_of_svc_cd ='21 - Acute Hospital' -- ACUTE
+       and admit_cat_cd  in ('17 - Medical','30 - Surgical')			
+       and fin_brand in ('M&R','C&S')
+       and TO_VARCHAR(admit_dt_act, 'MM/dd/yyyy') is not null 
+       and TO_VARCHAR(admit_dt_act  ,'yyyy') in ('2026')	;	
