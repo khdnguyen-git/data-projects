@@ -826,4 +826,192 @@ group by 1
 order by 1
 ;
 
+-- Alternate logic
+/*==============================================================================
+ * ALTERNATIVE APPROACH: EPISODE-FIRST LOGIC
+ * Instead of: visits → flag episodes → calculate metrics
+ * Do: identify episode boundaries → create episodes → join visits
+ *==============================================================================*/
 
+-- STEP 1: Get all visits with basic info
+drop table if exists tmp_1q.alt_all_visits;
+create table tmp_1q.alt_all_visits as
+select 
+    mbi,
+    category,
+    concat(mbi, '-', category) as member_key,
+    id as visit_id,
+    start_dt as visit_date,
+    serv_month,
+    hctapaidmonth as paid_date,
+    market_fnl,
+    mbm_deploy_dt,
+    claim_status,
+    mbmserv_dtl,
+    allowed,
+    paid,
+    visits,
+    row_number() over (partition by mbi, category order by start_dt) as visit_sequence
+from tmp_1q.knd_mbm_episode_extras_202512
+where prov_prtcp_sts_cd = 'P';
+
+
+-- STEP 2: Find episode start dates (first visits and visits after >30 day gaps)
+drop table if exists tmp_1q.alt_episode_starts;
+create table tmp_1q.alt_episode_starts as
+select 
+    member_key,
+    visit_date as episode_start_date,
+    visit_id as first_visit_id,
+    row_number() over (partition by member_key order by visit_date) as episode_num
+from tmp_1q.alt_all_visits a
+where 
+    -- First visit ever
+    visit_sequence = 1
+    or
+    -- OR visit more than 30 days after previous visit
+    datediff('day', 
+        lag(visit_date) over (partition by member_key order by visit_date),
+        visit_date
+    ) > 30;
+
+
+-- STEP 3: Assign each visit to an episode
+-- Logic: Find the most recent episode start that happened before or on this visit date
+drop table if exists tmp_1q.alt_visits_with_episodes;
+create table tmp_1q.alt_visits_with_episodes as
+select 
+    v.*,
+    e.episode_num,
+    e.episode_start_date,
+    datediff('day', e.episode_start_date, v.visit_date) as days_from_episode_start
+from tmp_1q.alt_all_visits v
+left join tmp_1q.alt_episode_starts e
+    on v.member_key = e.member_key
+    and e.episode_start_date <= v.visit_date
+    and e.episode_start_date = (
+        -- Get the most recent episode start before this visit
+        select max(e2.episode_start_date)
+        from tmp_1q.alt_episode_starts e2
+        where e2.member_key = v.member_key
+          and e2.episode_start_date <= v.visit_date
+    );
+
+
+-- STEP 4: Calculate all derived metrics
+drop table if exists tmp_1q.alt_final_data;
+create table tmp_1q.alt_final_data as
+select 
+    member_key,
+    mbi,
+    category,
+    visit_id,
+    visit_date,
+    episode_num,
+    episode_start_date,
+    
+    -- Time metrics
+    to_char(episode_start_date, 'YYYYMM') as episode_start_month,
+    to_char(episode_start_date, 'YYYY') as episode_start_year,
+    to_char(visit_date, 'YYYYMM') as visit_month,
+    
+    -- Episode progression
+    floor(days_from_episode_start / 30.5) as months_into_episode,
+    
+    -- Payment lag
+    floor((datediff('day', visit_date, paid_date) + 20) / 30.5) as payment_lag_months,
+    
+    -- Is this the first visit of an episode?
+    case when visit_date = episode_start_date then 1 else 0 end as is_episode_start,
+    
+    -- Original fields
+    serv_month,
+    paid_date,
+    market_fnl,
+    mbm_deploy_dt,
+    claim_status,
+    mbmserv_dtl,
+    allowed,
+    paid,
+    visits
+from tmp_1q.alt_visits_with_episodes;
+
+
+/*==============================================================================
+ * VERIFICATION QUERIES
+ *==============================================================================*/
+
+-- Check: Do episodes match the old logic?
+select 
+    episode_start_month,
+    count(distinct case when is_episode_start = 1 then concat(member_key, episode_num) end) as episode_count,
+    count(*) as visit_count,
+    sum(allowed) as total_allowed
+from tmp_1q.alt_final_data
+group by episode_start_month
+order by episode_start_month;
+
+-- Check: See one member's episodes
+select 
+    member_key,
+    episode_num,
+    episode_start_date,
+    visit_date,
+    days_from_episode_start,
+    months_into_episode,
+    is_episode_start,
+    allowed
+from tmp_1q.alt_final_data
+where mbi = 'SOME_MBI'
+order by visit_date;
+
+
+/*==============================================================================
+ * AGGREGATE FOR REPORTING (same output as before)
+ *==============================================================================*/
+
+drop table if exists tmp_1q.alt_agg_final;
+create table tmp_1q.alt_agg_final as
+-- Visits
+select 
+    'VISITS' as data_type,
+    episode_start_month,
+    concat(episode_start_year, 'Q9') as episode_start_qtr,
+    visit_month as visit_mo,
+    market_fnl,
+    mbm_deploy_dt,
+    category,
+    claim_status,
+    mbmserv_dtl as visit_mbmserv,
+    months_into_episode as visit_ep_lag,
+    payment_lag_months as visit_runout_mo,
+    0 as ep_runout_mo,
+    sum(visits) as visit_cnt,
+    0 as ep_cnt,
+    sum(allowed) as allowed_amt,
+    0 as mms
+from tmp_1q.alt_final_data
+group by 1,2,3,4,5,6,7,8,9,10,11
+
+union all
+
+-- Episodes
+select 
+    'EPISODES' as data_type,
+    episode_start_month,
+    concat(episode_start_year, 'Q9') as episode_start_qtr,
+    '0' as visit_mo,
+    market_fnl,
+    mbm_deploy_dt,
+    category,
+    claim_status,
+    '' as visit_mbmserv,
+    0 as visit_ep_lag,
+    0 as visit_runout_mo,
+    0 as ep_runout_mo,
+    0 as visit_cnt,
+    sum(is_episode_start) as ep_cnt,
+    0 as allowed_amt,
+    0 as mms
+from tmp_1q.alt_final_data
+group by 1,2,3,4,5,6,7,8,9,10,11,12;
