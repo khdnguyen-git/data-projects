@@ -1015,3 +1015,132 @@ select
     0 as mms
 from tmp_1q.alt_final_data
 group by 1,2,3,4,5,6,7,8,9,10,11,12;
+
+
+
+
+-- Step 1: Create EPISODES aggregation (only rows where episodes start)
+create or replace table tmp_1m.knd_mbm_episode_agg_episodes as
+select 
+	'EPISODES' as data_type
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') as ep_start_year
+	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
+	, '' as visit_month
+	, '' as visit_year
+	, min_hctapaidmonth as paid_month
+	, entity
+	, category
+	, market_fnl
+	, mbm_deploy_dt
+	, population
+	, claim_status
+	, 0 as visit_ep_lag
+	, 0 as visit_runout_mo
+	, sum(ep_flag) as n_episodes
+	, 0 as n_visits
+	, 0 as sum_allowed
+	, 0 as sum_paid
+	, 0 as mbr_count
+from tmp_1m.knd_mbm_visit_analysis_2
+where ep_flag = 1  -- Only episode-starting visits
+group by 
+	to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy')
+	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
+	, min_hctapaidmonth
+	, entity
+	, category
+	, market_fnl
+	, mbm_deploy_dt
+	, population
+	, claim_status
+;
+
+-- Step 2: Create VISITS aggregation (all visits with additional dimensions)
+create or replace table tmp_1m.knd_mbm_episode_agg_visits as
+select 
+	'VISITS' as data_type
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') as ep_start_year
+	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
+	, fst_srvc_month as visit_month
+	, fst_srvc_year as visit_year
+	, min_hctapaidmonth as paid_month
+	, entity
+	, category
+	, market_fnl
+	, mbm_deploy_dt
+	, population
+	, claim_status
+	, datediff('month', ep_start_dt, fst_srvc_dt) as visit_ep_lag
+	, floor((datediff('day', fst_srvc_dt, min_hctapaidmonth) + 20) / 30.5) as visit_runout_mo
+	, 0 as n_episodes
+	, sum(n_visits) as n_visits
+	, sum(allowed) as sum_allowed
+	, sum(paid) as sum_paid
+	, count(distinct mbi_key) as mbr_count
+from tmp_1m.knd_mbm_visit_analysis_2
+group by 
+	to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy')
+	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
+	, fst_srvc_month
+	, fst_srvc_year
+	, min_hctapaidmonth
+	, entity
+	, category
+	, market_fnl
+	, mbm_deploy_dt
+	, population
+	, claim_status
+	, datediff('month', ep_start_dt, fst_srvc_dt)
+	, floor((datediff('day', fst_srvc_dt, min_hctapaidmonth) + 20) / 30.5)
+;
+
+-- Step 3: Stack VISITS and EPISODES together
+create or replace table tmp_1m.knd_mbm_episode_agg_combined as
+select * from tmp_1m.knd_mbm_episode_agg_visits
+union all
+select * from tmp_1m.knd_mbm_episode_agg_episodes
+;
+
+-- Step 4: Summary query to get totals by population and episode start month
+select 
+	population
+	, ep_start_month
+	, sum(n_episodes) as total_episodes
+	, sum(n_visits) as total_visits
+	, sum(sum_allowed) as total_allowed
+	, sum(sum_paid) as total_paid
+	, case 
+		when sum(n_episodes) > 0 
+		then sum(n_visits) / sum(n_episodes) 
+		else 0 
+	end as visits_per_episode
+	, case 
+		when sum(n_episodes) > 0 
+		then sum(sum_allowed) / sum(n_episodes) 
+		else 0 
+	end as allowed_per_episode
+from tmp_1m.knd_mbm_episode_agg_combined
+where population != 'N/A'
+group by 
+	population
+	, ep_start_month
+order by 
+	population
+	, ep_start_month
+;
+
+-- Step 5: Validation - Compare with stable file logic
+select 
+	ep_start_month
+	, sum(n_episodes) as total_episodes
+	, sum(n_visits) as total_visits
+	, sum(sum_allowed) as total_allowed
+from tmp_1m.knd_mbm_episode_agg_combined
+where ep_start_year = '2024'
+group by ep_start_month
+order by ep_start_month
+;
