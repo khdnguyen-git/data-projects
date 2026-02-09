@@ -434,7 +434,7 @@ select
 		   when MnR_Dual_flag = 1 then 'M&R DSNP'
 		   when MnR_ISNP_flag = 1 then 'M&R ISNP' 
 		   when MnR_FFS_flag  = 1 then 'M&R FFS'
-		   
+		 
 		   else 'N/A'
 	end as population
 from cte_union;
@@ -627,10 +627,10 @@ select
     , product_level_3_fnl
     , fin_member_cnt
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
-		when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
-		when migration_source = 'OAH' then 1
-		else 0
-	end as OAH_flag
+			when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
+			when migration_source = 'OAH' then 1
+			else 0
+		end as OAH_flag
 	, case when (
 			   (brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL')
 			or (brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD') 
@@ -669,10 +669,10 @@ select
     , product_level_3_fnl
     , fin_member_cnt
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
-		when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
-		when migration_source = 'OAH' then 1
-		else 0
-	end as OAH_flag
+			when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
+			when migration_source = 'OAH' then 1
+			else 0
+		end as OAH_flag
 	, case when (
 			   (brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL')
 			or (brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD') 
@@ -711,13 +711,13 @@ select
     , product_level_3_fnl
     , fin_member_cnt
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
-		when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
-		when migration_source = 'OAH' then 1
-		else 0
-	end as OAH_flag
+			when brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' then 0
+			when migration_source = 'OAH' then 1
+			else 0
+		end as OAH_flag
 	, case when (
 			   (brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL')
-			or (brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD')
+			or (brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD') 
 			or (brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD')
 			) then 1
 		else 0

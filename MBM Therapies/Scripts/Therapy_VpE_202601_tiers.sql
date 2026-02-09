@@ -967,6 +967,14 @@ from tmp_1m.knd_mbm_vpe_summary
 where population != 'NA'
 ;
 
+
+
+-- VpE Tier
+
+
+
+
+
 -- QA 
 -- Results
 select
@@ -974,6 +982,7 @@ select
 	, sum(allowed) as total_allowed
 	, sum(total_episodes) as total_episodes
 	, sum(total_visits) as total_visits
+	, sum(total_visits) / sum(total_episodes) as VpE
 from tmp_1m.knd_mbm_vpe_summary
 where ep_start_year = '2024'  
 	and population = 'M&R FFS (excl. DSNP)'
@@ -1016,6 +1025,7 @@ select
 	, sum(allowed_amt)
 	, sum(ep_cnt)
 	, sum(visit_cnt)
+	, sum(visit_cnt) / sum(ep_cnt)
 from tmp_1q.kn_mbm_202601
 where ep_year = '2024'
 group by 1 
