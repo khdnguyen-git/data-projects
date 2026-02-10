@@ -778,6 +778,9 @@ select
 from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1
 ;
 
+select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1
+where visit_id = '9PK2N41YE29_20250303_KLC00710019979'
+
 select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2
 where visit_id = '9PK2N41YE29_20250303_KLC00710019979'
 -- 1 continuous episode
@@ -801,15 +804,16 @@ from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2
 )
 select 
 	mbi_key
+	, fst_srvc_dt
 	, prev_srvc_dt
 	, visit_day_diff
 	, iff(prev_srvc_dt is null, 1, ep_flag) as ep_flag 
 	, cmltv_episodes
 	, min(fst_srvc_dt) over (partition by mbi_key, mbm_deploy_dt, cmltv_episodes) as ep_start_dt
+	, min(min_hctapaidmonth) over (partition by mbi_key, mbm_deploy_dt, cmltv_episodes) as ep_hctapaidmonth
 	, entity
 	, mbmserv_dtl
 	, visit_id
-	, fst_srvc_dt
     , fst_srvc_month
     , min_hctapaidmonth
     , fst_srvc_year
@@ -823,9 +827,13 @@ select
 from ep_numbering
 ;
 
+select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+
 select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
 where visit_id = '9PK2N41YE29_20250303_KLC00710019979'
-
+      
 -- Episodes summary
 create or replace table tmp_1m.knd_mbm_episodes_summary as
 select 
@@ -835,7 +843,8 @@ select
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
 	, cast(null as varchar) as visit_month
 	, cast(null as varchar) as visit_year
-	, min_hctapaidmonth as paid_month
+	, cast(null as varchar) as visit_paid_month
+	, ep_hctapaidmonth as ep_paid_month
 	, entity
 	, mbmserv_dtl
 	, category
@@ -856,7 +865,7 @@ group by
 	to_char(ep_start_dt, 'yyyyMM')
 	, to_char(ep_start_dt, 'yyyy')
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
-	, min_hctapaidmonth
+	, ep_hctapaidmonth
 	, entity
 	, mbmserv_dtl
 	, category
@@ -875,7 +884,8 @@ select
     , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
     , fst_srvc_month as visit_month
     , fst_srvc_year as visit_year
-    , min_hctapaidmonth as paid_month
+    , min_hctapaidmonth as visit_paid_month
+    , cast(null as varchar) as ep_paid_month
     , entity
     , mbmserv_dtl
     , category
@@ -925,7 +935,8 @@ select
     , ep_start_month_num
     , visit_month
     , visit_year
-    , paid_month
+    , visit_paid_month
+    , ep_paid_month
     , entity
     , mbmserv_dtl
     , category
@@ -948,7 +959,8 @@ group by
     , ep_start_month_num
     , visit_month
     , visit_year
-    , paid_month
+    , visit_paid_month
+    , ep_paid_month
     , entity
     , mbmserv_dtl
     , category
@@ -969,7 +981,336 @@ where population != 'NA'
 
 
 
--- VpE Tier
+-- VpE in episodes
+create or replace table tmp_1m.knd_mbm_vpe_aggregated as
+with vpe as (
+select
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, ep_hctapaidmonth
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
+	, mbm_deploy_dt
+	, category
+	, population
+	, count(distinct concat(visit_id, fst_srvc_dt)) as n_vpe
+	, sum(allowed) as allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+group by
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, ep_hctapaidmonth
+	, to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
+	, mbm_deploy_dt
+	, category
+	, population
+)
+select * from vpe;
+
+select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+select * from tmp_1m.knd_mbm_vpe_aggregated
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+
+-- VpE in episodes
+create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr as
+with pct_mnr as (
+    select
+        *
+        , percentile_cont(0.25) within group (order by n_vpe)
+            over (partition by mbi_key, mbm_deploy_dt, category) as p25
+        , percentile_cont(0.50) within group (order by n_vpe)
+            over (partition by mbi_key, mbm_deploy_dt, category) as p50
+        , percentile_cont(0.75) within group (order by n_vpe)
+            over (partition by mbi_key, mbm_deploy_dt, category) as p75
+    from tmp_1m.knd_mbm_vpe_aggregated
+    where population = 'M&R FFS (excl. DSNP)'
+)
+select
+	*
+	, case when n_vpe between 0 and 6 then '0 - 6'
+		   when n_vpe between 7 and 12 then '7 - 12'
+		   when n_vpe between 13 and 24 then '13 - 24'
+		   when n_vpe between 25 and 35 then '25 - 35'
+		   when n_vpe between 36 and 45 then '36 - 45'
+		   when n_vpe >= 46 then '46+'
+		   else ''
+	end as vpe_cat1
+    , case when n_vpe between 1 and 10 then '1 - 10'
+           when n_vpe between 11 and 20 then '11 - 20'
+           when n_vpe between 21 and 30 then '21 - 30'
+           when n_vpe >= 31 then '31+'
+           else ''
+    end as vpe_cat2
+	, case when n_vpe > (p75 + 1.5 * (p75 - p25)) then 'Outlier'
+		   when n_vpe >= p50 then 'High'
+		   else 'Low - Normal'
+	end as vpe_cat3
+	, 1 as n_episodes
+from pct_mnr
+where ep_start_month >= '202401'
+;
+
+select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+;
+select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+;
+
+
+
+
+
+
+
+select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+where mbi_key = '3WA5F82HJ95-OP_REHAB'
+
+select * from tmp_1m.knd_mbm_vpe_aggregated
+where mbi_key = '3WA5F82HJ95-OP_REHAB'
+
+
+-- VpE in episodes
+create or replace table tmp_1m.knd_mbm_vpe_aggregated_test as
+with vpe as (
+select
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
+	, mbm_deploy_dt
+	, market_fnl
+	, category
+	, population
+	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
+	, sum(allowed) as allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+group by
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
+	, mbm_deploy_dt
+	, market_fnl
+	, category
+	, population
+)
+select
+	ep_start_month
+	, ep_start_qtr
+	, mbm_deploy_dt
+	, category
+	, market_fnl
+	, population
+	, case when n_visits between 0 and 6 then '0 - 6'
+		   when n_visits between 7 and 12 then '7 - 12'
+		   when n_visits between 13 and 24 then '13 - 24'
+		   when n_visits between 25 and 35 then '25 - 35'
+		   when n_visits between 36 and 45 then '36 - 45'
+		   when n_visits >= 46 then '46+'
+		   else ''
+	end as vpe_cat
+	, 1 as n_episodes
+	, n_visits
+	, allowed
+from vpe
+where ep_start_month >= '202401'
+;
+
+select ep_start_qtr
+, vpe_cat
+, sum(n_visits)
+, sum(n_episodes)
+from tmp_1m.knd_mbm_vpe_aggregated_test
+group by 1, 2
+
+select count(*) from tmp_1m.knd_mbm_vpe_aggregated_category
+
+
+select * from tmp_1m.knd_mbm_vpe_aggregated
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+select 
+	mbi
+	, category
+	, fst_srvc_dt
+	, count(distinct concat(visit_id, fst_srvc_dt))
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated
+where mbi = '9PK2N41YE29' and category = 'OP_REHAB'
+group by 1, 2,3
+order by fst_srvc_dt
+
+
+select count(*) from tmp_1m.knd_mbm_vpe_aggregated_category
+
+
+
+
+
+select 
+	mbi
+	, category
+	, visit_id
+	, proc_cd
+    , case when proc_cd in ('98940','98941','98942') 
+    		then 'Chiro'
+           when proc_cd in ('97001','97002','97003','97004','97012','97016','97018','97022','97024','97026','97028','97032','97033','97034','97035','97036','97039','97110','97112','97113','97116','97124','97139','97140','97150','97161','97162','97163','97164','97165','97166','97167','97168','97530','97532','97533','97535','97537','97542','97545','97546','97750','97755','97760','97761','97762','97799','G0129','G0151','G0152','G0281','G0282','G0283','G9041','G9043','G9044','S9129','S9131') 
+			then 'PT-OT'
+           when proc_cd in ('70371','92506','92507','92508','92521','92522','92523','92524','92526','92626','92627','92630','92633','96105','S9128') 
+           	then 'ST'
+           else 'Other' 
+	end as mbmserv_dtl
+	, fst_srvc_dt
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated
+where mbi = '9PK2N41YE29' and category = 'OP_REHAB'
+order by fst_srvc_dt
+
+select
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
+	, mbm_deploy_dt
+	, category
+	, population
+	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
+	, sum(allowed) as allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+group by
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
+	, mbm_deploy_dt
+	, category
+	, population
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
+	, mbm_deploy_dt
+	, category
+	, population
+	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
+	, sum(allowed) as allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3 
+ group by
+	mbi_key
+	, cmltv_episodes
+	, ep_start_dt
+	, to_char(ep_start_dt, 'yyyyMM')
+	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
+	, mbm_deploy_dt
+	, category
+	, population
+
+select * fr
+
+
+
+
+
+
+
+
+
+
+select
+	vpe_cat
+	, sum(n_visits)
+	, sum(n_episodes)
+from tmp_1m.knd_mbm_vpe_cat
+where ep_start_month >= '202401'  
+	and population = 'M&R FFS (excl. DSNP)'
+group by 1
+order by 1
+;
+	
 
 
 
@@ -986,6 +1327,8 @@ select
 from tmp_1m.knd_mbm_vpe_summary
 where ep_start_year = '2024'  
 	and population = 'M&R FFS (excl. DSNP)'
+	and mbm_deploy_dt = 'National'
+	and category = 'OP_REHAB'
 group by 1
 order by 1
 ;
@@ -1003,6 +1346,19 @@ order by 1
 --202410	68,326,695.5308343	148,636	1,090,604
 --202411	57,084,270.87	124,565	890,164
 --202412	53,163,106.5609544	121,512	827,522
+--EP_START_MONTH	TOTAL_ALLOWED	TOTAL_EPISODES	TOTAL_VISITS	VPE
+--202401	95,657,095.5251416	161,953	1,447,681	8.938896
+--202402	76,240,951.991272	135,814	1,139,411	8.389496
+--202403	73,545,042.8449926	129,499	1,093,063	8.440706
+--202404	77,920,660.3424233	144,207	1,167,808	8.098137
+--202405	74,731,816.9506473	141,701	1,124,527	7.935914
+--202406	69,959,438.6068112	136,320	1,055,334	7.741593
+--202407	72,987,961.7960574	147,120	1,131,405	7.690355
+--202408	65,352,330.2667911	143,450	1,059,541	7.386135
+--202409	59,568,380.9378911	134,551	981,670	7.295895
+--202410	68,326,695.5308343	148,636	1,090,604	7.337415
+--202411	57,084,270.87	124,565	890,164	7.146181
+--202412	53,163,106.5609544	121,512	827,522	6.810208
 
 -- Pre-fixed
 --EP_START_MONTH	TOTAL_ALLOWED	TOTAL_EPISODES	TOTAL_VISITS
