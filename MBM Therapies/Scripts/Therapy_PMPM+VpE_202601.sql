@@ -1010,60 +1010,17 @@ group by
 )
 select * from vpe;
 
-select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
-where mbi_key = '9PK2N41YE29-OP_REHAB'
-
-select * from tmp_1m.knd_mbm_vpe_aggregated
-where mbi_key = '9PK2N41YE29-OP_REHAB'
-
-select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
-where mbi_key = '9PK2N41YE29-OP_REHAB'
+--select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+--where mbi_key = '9PK2N41YE29-OP_REHAB'
+--
+--select * from tmp_1m.knd_mbm_vpe_aggregated
+--where mbi_key = '9PK2N41YE29-OP_REHAB'
+--
+--select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+--where mbi_key = '9PK2N41YE29-OP_REHAB'
 
 
 -- VpE in episodes
-create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr as
-with pct_mnr as (
-    select
-        *
-        , percentile_cont(0.25) within group (order by n_visits)
-            over (partition by mbm_deploy_dt, category) as p25
-        , percentile_cont(0.50) within group (order by n_visits)
-            over (partition by mbm_deploy_dt, category) as p50
-        , percentile_cont(0.75) within group (order by n_visits)
-            over (partition by mbm_deploy_dt, category) as p75
-    from tmp_1m.knd_mbm_vpe_aggregated
-    where population = 'M&R FFS (excl. DSNP)' and ep_start_month >= '202401'
-)
-select
-	*
-	, case when n_visits between 0 and 6 then '1 - 6'
-		   when n_visits between 7 and 12 then '7 - 12'
-		   when n_visits between 13 and 24 then '13 - 24'
-		   when n_visits between 25 and 35 then '25 - 35'
-		   when n_visits between 36 and 45 then '36 - 45'
-		   when n_visits >= 46 then '46+'
-		   else ''
-	end as vpe_cat1
-    , case when n_visits between 1 and 10 then '1 - 10'
-           when n_visits between 11 and 20 then '11 - 20'
-           when n_visits between 21 and 30 then '21 - 30'
-           when n_visits >= 31 then '31+'
-           else ''
-    end as vpe_cat2
-	, case when n_visits > (p75 + 3 * (p75 - p25)) then 'Extreme Outlier'
-		   when n_visits > (p75 + 1.5 * (p75 - p25)) then 'Mild Outlier'
-		   when n_visits > p75 then 'Above Average'
-		   when n_visits > p25 then 'Normal'
-		   else 'Below Average'
-	end as vpe_cat3
-	, 1 as n_episodes
-from pct_mnr
-;
-select min(ep_start_month) from tmp_1m.knd_mbm_vpe_aggregated
-
-
-
--- Visits in episodes for completion
 create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr as
 with pct_mnr as (
     select
@@ -1102,6 +1059,197 @@ select
 	, 1 as n_episodes
 from pct_mnr
 ;
+--select min(ep_start_month) from tmp_1m.knd_mbm_vpe_aggregated
+--
+--select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+
+-- Episodes summary for stacking, to count only episodes
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_episodes as
+select
+	'EPISODES' as data_type
+	, ep_start_month
+	, cast(null as varchar) as visit_month
+	, mbm_deploy_dt
+	, category
+	, population
+	, vpe_cat2 as vpe_buckets_10
+	, vpe_cat3 as vpe_buckets_stat
+	, 0 as visit_runout_month
+	, 0 as visit_ep_runout_month
+	, sum(n_episodes) as n_episodes
+	, sum(n_visits) as n_visits
+	, 0 as allowed
+	, 0 as mm
+from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+group by
+	ep_start_month
+	, mbm_deploy_dt
+	, category
+	, population
+	, vpe_cat2
+	, vpe_cat3
+;
+
+-- Visit summary for stacking
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits as
+select		
+	'VISITS' as data_type
+	, to_char(a.ep_start_dt, 'yyyyMM') as ep_start_month
+	, a.fst_srvc_month as visit_month
+	, a.mbm_deploy_dt
+	, a.category
+	, a.population
+	, cast(null as varchar) as vpe_buckets_10
+	, cast(null as varchar) as vpe_buckets_stat
+    , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5) as visit_ep_runout_month
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hctapaidmonth) + 20) / 30.5) as visit_runout_month
+	, 0 as n_episodes
+	, 0 as n_visits
+	, sum(a.allowed) as allowed
+	, count(distinct a.mbi_key) as mm
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3 as a
+join tmp_1m.knd_mbm_vpe_aggregated_category_mnr as b
+	on a.mbi_key = b.mbi_key
+	and a.cmltv_episodes = b.cmltv_episodes
+	and a.mbm_deploy_dt = b.mbm_deploy_dt
+where a.population = 'M&R FFS (excl. DSNP)'
+group by
+	to_char(a.ep_start_dt, 'yyyyMM')
+	, a.fst_srvc_month
+	, a.mbm_deploy_dt
+	, a.category
+	, a.population
+    , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5)
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hctapaidmonth) + 20) / 30.5)
+;
+
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked as
+select * from tmp_1m.knd_mbm_vpe_with_runout_visits
+union all
+select * from tmp_1m.knd_mbm_vpe_with_runout_episodes
+;
+
+
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_summary as
+select
+	ep_start_month
+	, visit_month
+	, visit_ep_runout_month
+	, visit_runout_month
+	, vpe_buckets_10
+	, vpe_buckets_stat
+	, mbm_deploy_dt
+	, population
+	, category
+	, sum(n_visits) as n_visits
+	, sum(n_episodes) as n_episodes
+	, sum(allowed) as allowed
+	, sum(mm) as mm
+from tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked
+group by
+	ep_start_month
+	, visit_month
+	, visit_ep_runout_month
+	, visit_runout_month
+	, vpe_buckets_10
+	, vpe_buckets_stat
+	, mbm_deploy_dt
+	, population
+	, category
+;
+
+
+select ep_start_month, sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_category_mnr_summmary
+where substring(ep_start_month, 1, 4) = '2024'
+group by 1
+order by 1 
+;
+
+--EP_START_MONTH	SUM(N_VISITS)	SUM(N_EPISODES)	SUM(ALLOWED)
+--202401	1,414,322	162,830	95,657,095.5251416
+--202402	1,113,151	136,478	76,240,951.991272
+--202403	1,065,859	130,143	73,545,042.8449925
+--202404	1,140,331	144,916	77,920,660.3424232
+--202405	1,097,254	142,334	74,731,816.9506473
+--202406	1,029,853	136,923	69,959,438.6068112
+--202407	1,104,152	147,727	72,987,961.7960574
+--202408	1,033,643	144,034	65,352,330.2667911
+--202409	958,184	135,132	59,568,380.9378911
+--202410	1,064,123	149,280	68,326,695.5308343
+--202411	866,854	125,209	57,084,270.87
+--202412	806,961	122,365	53,163,106.5609544
+
+
+
+select ep_start_month, sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_with_runout_summary
+where substring(ep_start_month, 1, 4) = '2024'
+group by 1
+order by 1 
+;
+
+select vpe_cat2, sum(n_visits), sum(n_episodes) from tmp_1m.knd_mbm_vpe_category_mnr_summmary
+group by 1
+
+--VPE_CAT2	SUM(N_VISITS)	SUM(N_EPISODES)
+--31+	4,217,584	88,349
+--21 - 30	3,570,985	145,447
+--11 - 20	7,314,767	505,142
+--1 - 10	9,054,816	2,658,487
+
+select ep_start_month, sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_category_mnr_summmary
+where substring(ep_start_month, 1, 4) = '2024'
+group by 1
+order by 1 
+;
+
+select vpe_buckets_10, sum(n_visits), sum(n_episodes) from tmp_1m.knd_mbm_vpe_with_runout_summary
+group by 1
+
+--VPE_BUCKETS_10	SUM(N_VISITS)	SUM(N_EPISODES)
+--[NULL]	0	0
+--21 - 30	5,473,320	222,519
+--1 - 10	13,458,717	3,954,500
+--31+	8,418,049	162,538
+--11 - 20	10,810,073	745,587
+
+
+--EP_START_MONTH	SUM(N_VISITS)	SUM(N_EPISODES)	SUM(ALLOWED)
+--202401	1,414,614	162,830	95,657,095.5251416
+--202402	1,113,402	136,478	76,240,951.991272
+--202403	1,066,113	130,143	73,545,042.8449926
+--202404	1,140,608	144,916	77,920,660.3424232
+--202405	1,097,486	142,334	74,731,816.9506473
+--202406	1,030,118	136,923	69,959,438.6068112
+--202407	1,104,410	147,727	72,987,961.7960574
+--202408	1,033,873	144,034	65,352,330.2667911
+--202409	958,360	135,132	59,568,380.9378911
+--202410	1,064,350	149,280	68,326,695.5308342
+--202411	867,252	125,209	57,084,270.87
+--202412	807,140	122,365	53,163,106.5609544
+--202501	1,282,174	168,069	82,199,741.1202238
+--202502	991,736	132,427	65,910,133.31
+--202503	1,060,376	142,576	71,245,643
+--202504	1,092,789	148,899	73,444,705.799259
+--202505	1,001,407	139,631	67,871,169.4463687
+--202506	1,047,535	144,981	71,436,794.5115028
+--202507	1,085,002	150,184	73,674,399.4028599
+--202508	990,225	140,933	67,901,451.77
+--202509	996,243	146,228	68,737,399.55
+--202510	923,236	149,244	63,930,847.55
+--202511	599,308	119,651	41,308,551.57
+--202512	356,567	112,848	23,412,131.07
+--202601	38,725	24,383	1,534,689.55
+
+
+select sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked
+where ep_start_month = '202407'
+;
+
+select * from tmp_1m.knd_mbm_vpe_with_runout
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+where mbi_key = '9PK2N41YE29-OP_REHAB'
 
 
 
