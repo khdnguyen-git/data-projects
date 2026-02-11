@@ -1059,6 +1059,52 @@ select
 	, 1 as n_episodes
 from pct_mnr
 ;
+select min(ep_start_month) from tmp_1m.knd_mbm_vpe_aggregated
+
+
+
+-- Visits in episodes for completion
+create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr as
+with pct_mnr as (
+    select
+        *
+        , percentile_cont(0.25) within group (order by n_visits)
+            over (partition by mbm_deploy_dt, category) as p25
+        , percentile_cont(0.50) within group (order by n_visits)
+            over (partition by mbm_deploy_dt, category) as p50
+        , percentile_cont(0.75) within group (order by n_visits)
+            over (partition by mbm_deploy_dt, category) as p75
+    from tmp_1m.knd_mbm_vpe_aggregated
+    where population = 'M&R FFS (excl. DSNP)'
+)
+select
+	*
+	, case when n_visits between 0 and 6 then '1 - 6'
+		   when n_visits between 7 and 12 then '7 - 12'
+		   when n_visits between 13 and 24 then '13 - 24'
+		   when n_visits between 25 and 35 then '25 - 35'
+		   when n_visits between 36 and 45 then '36 - 45'
+		   when n_visits >= 46 then '46+'
+		   else ''
+	end as vpe_cat1
+    , case when n_visits between 1 and 10 then '1 - 10'
+           when n_visits between 11 and 20 then '11 - 20'
+           when n_visits between 21 and 30 then '21 - 30'
+           when n_visits >= 31 then '31+'
+           else ''
+    end as vpe_cat2
+	, case when n_visits > (p75 + 3 * (p75 - p25)) then 'Extreme Outlier'
+		   when n_visits > (p75 + 1.5 * (p75 - p25)) then 'Mild Outlier'
+		   when n_visits > p75 then 'Above Average'
+		   when n_visits > p25 then 'Normal'
+		   else 'Below Average'
+	end as vpe_cat3
+	, 1 as n_episodes
+from pct_mnr
+;
+
+
+
 
 select vpe_cat3, sum(n_vpe)
 from tmp_1m.knd_mbm_vpe_aggregated_category_mnr 
