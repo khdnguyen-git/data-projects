@@ -124,6 +124,7 @@ org.eclipse.ui.editors.inlineAnnotationColor=153,153,153
 org.eclipse.ui.editors.lineNumberRulerColor=133,133,133
 org.eclipse.ui.editors.printMarginColor=61,61,61
 org.eclipse.ui.editors.stickyLinesSeparatorColor=18,18,18
+org.eclipse.ui.r30.org.eclipse.ui.workbench.ACTIVE_TAB_BG_START=36,36,36
 org.eclipse.ui.showkeys.backgroundColor=189,189,189
 org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_END=41,41,41
 org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_START=36,36,36
