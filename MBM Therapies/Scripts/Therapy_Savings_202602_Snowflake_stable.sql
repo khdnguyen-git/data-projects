@@ -2,16 +2,16 @@
  * VARIABLE SETUP
  * Set current and previous month tags for reuse throughout script
  *==============================================================================*/
-SET current_month  = '202602';
-SET previous_month = '202601';
+@set current_month  = 202602
+@set previous_month = 202601
 
 
 /*==============================================================================
  * MEMBERSHIP DETAIL PROCESSING
  * Creates base membership table with pilot/national deployment flags
  *==============================================================================*/
-drop table if exists tmp_1q.kn_mbm_dtl_$current_month;					
-create table tmp_1q.kn_mbm_dtl_$current_month as 					
+drop table if exists tmp_1q.kn_mbm_dtl_${current_month};
+create table tmp_1q.kn_mbm_dtl_${current_month} as
 select 			
 	fin_mbi_hicn_fnl			
 	, fin_inc_month			
@@ -59,17 +59,34 @@ group by
 	, sgr_source_name
 ;
 
--- QA: kn_mbm_dtl | expected ~450M+ rows (prev run: 476794132)
-select 'kn_mbm_dtl' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_dtl_$current_month;
+-- QA
+select 
+	'202602' as month
+	, count(*) as n
+from tmp_1q.kn_mbm_dtl_${current_month}
+union all
+select 
+	'202601' as month
+	, count(*) as n
+from tmp_1q.kn_mbm_dtl_${previous_month}
 
+
+select 
+	'202601' as month
+	, count(*) as n
+from tmp_1q.kn_mbm_dtl_202601
+
+
+
+select * from tmp_1q.kn_mbm_dtl_202601
 
 /*==============================================================================
  * MEMBERSHIP SUMMARY CREATION
  * Aggregates membership data and creates summary tables for analysis
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_mshp_$current_month;
-create temporary table tmp_1q.kn_mbm_mshp_$current_month as
+drop table if exists tmp_1q.kn_mbm_mshp_${current_month};
+create temporary table tmp_1q.kn_mbm_mshp_${current_month} as
 select
     fin_inc_month as ep_start_mo
     , substring(market_fnl, 1, 2) as market_fnl
@@ -85,7 +102,7 @@ select
     , sum(mm) as mm
     , substring(fin_inc_month, 1, 4) as ep_yr
     , substring(fin_inc_month, 5, 2) as ep_mnth
-from tmp_1q.kn_mbm_dtl_$current_month as a
+from tmp_1q.kn_mbm_dtl_${current_month} as a
 where global_cap = 1
 group by
     fin_inc_month
@@ -102,10 +119,10 @@ group by
 ;
 
 -- QA: kn_mbm_mshp | expected ~10K rows (prev run: 10428)
-select 'kn_mbm_mshp' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_mshp_$current_month;
+select 'kn_mbm_mshp' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_mshp_${current_month};
 
-drop table if exists tmp_1q.kn_mbm_mshp_sum1_$current_month;
-create table tmp_1q.kn_mbm_mshp_sum1_$current_month as
+drop table if exists tmp_1q.kn_mbm_mshp_sum1_${current_month};
+create table tmp_1q.kn_mbm_mshp_sum1_${current_month} as
 select 
 	'MM' as data_type
 	, ep_start_mo
@@ -119,7 +136,7 @@ select
 	, 0 as visit_cnt
 	, 0 as allowed_amt
 	, sum(mm) as mms
-from tmp_1q.kn_mbm_mshp_$current_month
+from tmp_1q.kn_mbm_mshp_${current_month}
 where population not in ('M&R DUALS', 'C&S DUALS')
 group by 
 	ep_start_mo
@@ -127,7 +144,7 @@ group by
 ;
 
 -- QA: kn_mbm_mshp_sum1 | expected ~140+ rows (prev run: 144)
-select 'kn_mbm_mshp_sum1' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_mshp_sum1_$current_month;
+select 'kn_mbm_mshp_sum1' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_mshp_sum1_${current_month};
 
 --_____________[ END OF MEMBERSHIP ]_____________________________________
 
@@ -137,8 +154,8 @@ select 'kn_mbm_mshp_sum1' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_mshp_su
  * On-track to be removed
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_lopa_op_1_$current_month;
-create table tmp_1q.kn_lopa_op_1_$current_month as
+drop table if exists tmp_1q.kn_lopa_op_1_${current_month};
+create table tmp_1q.kn_lopa_op_1_${current_month} as
 select  
 	case when include_non_sug_event = 1 then mbi_dos end as total_mbi_dos
 	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 and include_non_sug_event = 1 
@@ -151,21 +168,21 @@ from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
 ;	
 
 -- QA: kn_lopa_op_1 | expected ~2.9M+ rows (prev run: 2981365)
-select 'kn_lopa_op_1' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_op_1_$current_month;
+select 'kn_lopa_op_1' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_op_1_${current_month};
 
-drop table if exists tmp_1q.kn_lopa_op_$current_month;
-create table tmp_1q.kn_lopa_op_$current_month as
+drop table if exists tmp_1q.kn_lopa_op_${current_month};
+create table tmp_1q.kn_lopa_op_${current_month} as
 select 
 	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
 	, *
-from tmp_1q.kn_lopa_op_1_$current_month
+from tmp_1q.kn_lopa_op_1_${current_month}
 ; 
 
 -- QA: kn_lopa_op | expected ~2.9M+ rows (prev run: 2981365)
-select 'kn_lopa_op' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_op_$current_month;
+select 'kn_lopa_op' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_op_${current_month};
 
-drop table if exists tmp_1q.kn_lopa_pr_1_$current_month;
-create table tmp_1q.kn_lopa_pr_1_$current_month as
+drop table if exists tmp_1q.kn_lopa_pr_1_${current_month};
+create table tmp_1q.kn_lopa_pr_1_${current_month} as
 select  
 	mbi_dos as total_mbi_dos
 	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 then mbi_dos end as still_lopa_mbi_dos
@@ -175,26 +192,26 @@ from hce_ops_stage.pa_trckng_pr_evnt_lopa_dtl
 ;	
 
 -- QA: kn_lopa_pr_1 | expected ~4.7M+ rows (prev run: 4790609)
-select 'kn_lopa_pr_1' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_pr_1_$current_month;
+select 'kn_lopa_pr_1' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_pr_1_${current_month};
 
-drop table if exists tmp_1q.kn_lopa_pr_$current_month;
-create table tmp_1q.kn_lopa_pr_$current_month as
+drop table if exists tmp_1q.kn_lopa_pr_${current_month};
+create table tmp_1q.kn_lopa_pr_${current_month} as
 select 
 	case when still_lopa_mbi_dos is not null or overturn_lopa_mbi_dos is not null then mbi_dos else null end as ever_lopa
 	, *
-from tmp_1q.kn_lopa_pr_1_$current_month
+from tmp_1q.kn_lopa_pr_1_${current_month}
 ;
 
 -- QA: kn_lopa_pr | expected ~4.7M+ rows (prev run: 4790609)
-select 'kn_lopa_pr' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_pr_$current_month;
+select 'kn_lopa_pr' as tbl, count(*) as row_cnt from tmp_1q.kn_lopa_pr_${current_month};
 
 
 /*==============================================================================
  * PROFESSIONAL CLAIMS PROCESSING
  * Pull in PR claims, combine with LOPA flags
  *==============================================================================*/
-drop table if exists tmp_1q.kn_mbm_episode_pr_$current_month;
-create table tmp_1q.kn_mbm_episode_pr_$current_month as
+drop table if exists tmp_1q.kn_mbm_episode_pr_${current_month};
+create table tmp_1q.kn_mbm_episode_pr_${current_month} as
 select
     a.gal_mbi_hicn_fnl as mbi
     , a.component
@@ -230,7 +247,7 @@ select
     , count(distinct a.eventkey) as visits
     , sum(a.adj_srvc_unit_cnt) as adj_srvc_units
 from fichsrv.glxy_pr_f as a
-left join tmp_1q.kn_lopa_pr_$current_month as b
+left join tmp_1q.kn_lopa_pr_${current_month} as b
     on concat(a.gal_mbi_hicn_fnl, '_', a.fst_srvc_dt) = b.total_mbi_dos
     and a.proc_cd = b.proc_cd
     and a.prov_tin = b.prov_tin
@@ -288,10 +305,10 @@ group by
 ;
 
 -- QA: kn_mbm_episode_pr | expected ~69M+ rows, serv_month='202407' sum(allowed) ~40.8M (prev run: 69597958 / 40768591.31)
-select 'kn_mbm_episode_pr' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_pr_$current_month;
+select 'kn_mbm_episode_pr' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_pr_${current_month};
 select 'kn_mbm_episode_pr latest_mo' as tbl, serv_month, sum(allowed) as allowed_amt
-from tmp_1q.kn_mbm_episode_pr_$current_month
-where serv_month = (select max(serv_month) from tmp_1q.kn_mbm_episode_pr_$current_month)
+from tmp_1q.kn_mbm_episode_pr_${current_month}
+where serv_month = (select max(serv_month) from tmp_1q.kn_mbm_episode_pr_${current_month})
 group by serv_month;
 	
 /*==============================================================================
@@ -326,8 +343,8 @@ from (
 -- QA: kn_mbm_op_claims | expected ~82M+ rows (prev run: 82571364)
 select 'kn_mbm_op_claims' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_op_claims;
 
-drop table if exists tmp_1q.kn_mbm_episode_op_$current_month;
-create table tmp_1q.kn_mbm_episode_op_$current_month as
+drop table if exists tmp_1q.kn_mbm_episode_op_${current_month};
+create table tmp_1q.kn_mbm_episode_op_${current_month} as
 select
     a.gal_mbi_hicn_fnl as mbi
     , a.component
@@ -363,7 +380,7 @@ select
     , count(distinct a.eventkey) as visits
     , sum(a.adj_srvc_unit_cnt) as adj_srvc_units
 from tmp_1q.kn_mbm_op_claims as a
-left join tmp_1q.kn_lopa_op_$current_month as b
+left join tmp_1q.kn_lopa_op_${current_month} as b
     on concat_ws('_', a.gal_mbi_hicn_fnl, a.fst_srvc_dt) = b.total_mbi_dos
     and a.proc_cd = b.proc_cd
     and a.prov_tin = b.prov_tin
@@ -424,7 +441,7 @@ group by
 ;
 
 -- QA: kn_mbm_episode_op | expected ~42M+ rows (prev run: 42475737)
-select 'kn_mbm_episode_op' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_op_$current_month;
+select 'kn_mbm_episode_op' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_op_${current_month};
 
 
 /*==============================================================================
@@ -451,33 +468,33 @@ select 'kn_mbm_episode_op_2018_2020' as tbl, count(*) as row_cnt from tmp_1y.kn_
 
 
 -- Stack OP + PR Episodes from 2018 to current
-drop table if exists tmp_1q.kn_mbm_episode_1c_$current_month;
-create table tmp_1q.kn_mbm_episode_1c_$current_month as
-select * from tmp_1q.kn_mbm_episode_pr_$current_month
+drop table if exists tmp_1q.kn_mbm_episode_1c_${current_month};
+create table tmp_1q.kn_mbm_episode_1c_${current_month} as
+select * from tmp_1q.kn_mbm_episode_pr_${current_month}
 union all
 select * from tmp_1y.kn_mbm_episode_pr_2018_2020
 union all
-select * from tmp_1q.kn_mbm_episode_op_$current_month
+select * from tmp_1q.kn_mbm_episode_op_${current_month}
 union all
 select * from tmp_1y.kn_mbm_episode_op_2018_2020
 ;
 
 -- QA: kn_mbm_episode_1c | expected ~149M+ rows (prev run: 149390036)
 --     serv_month latest sum(allowed) spot check vs previous month run
-select 'kn_mbm_episode_1c' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_1c_$current_month;
+select 'kn_mbm_episode_1c' as tbl, count(*) as row_cnt, sum(allowed) as total_allowed from tmp_1q.kn_mbm_episode_1c_${current_month};
 select 'kn_mbm_episode_1c latest_mo' as tbl, serv_month, sum(allowed) as allowed_amt
-from tmp_1q.kn_mbm_episode_1c_$current_month
-where serv_month = (select max(serv_month) from tmp_1q.kn_mbm_episode_1c_$current_month)
+from tmp_1q.kn_mbm_episode_1c_${current_month}
+where serv_month = (select max(serv_month) from tmp_1q.kn_mbm_episode_1c_${current_month})
 group by serv_month;
 
 
-drop table if exists tmp_1q.kn_mbm_episode_2_$current_month;
-create table tmp_1q.kn_mbm_episode_2_$current_month as
+drop table if exists tmp_1q.kn_mbm_episode_2_${current_month};
+create table tmp_1q.kn_mbm_episode_2_${current_month} as
 with episode_base as (
     select *
         , sum(allowed) over (partition by id, start_dt, category) as dnl_allowed
         , max(lopa_flg) over (partition by id, start_dt, category) as max_lopa_flg
-    from tmp_1q.kn_mbm_episode_1c_$current_month
+    from tmp_1q.kn_mbm_episode_1c_${current_month}
 ),
 joined as (
     select a.*, b.tin_num
@@ -503,19 +520,19 @@ from joined
 ;
 
 -- QA: kn_mbm_episode_2 | expected ~151M+ rows (prev run: 151638417)
-select 'kn_mbm_episode_2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_2_$current_month;
+select 'kn_mbm_episode_2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_2_${current_month};
 select 'kn_mbm_episode_2 serv_month 202406' as tbl, sum(allowed) as allowed_amt
-from tmp_1q.kn_mbm_episode_2_$current_month
+from tmp_1q.kn_mbm_episode_2_${current_month}
 where serv_month = '202406';
 -- prev: 73580481.79
 
 -- QA: distribution checks
 select claim_status, mbm_deploy_dt, count(*) as row_cnt
-from tmp_1q.kn_mbm_episode_2_$current_month
+from tmp_1q.kn_mbm_episode_2_${current_month}
 group by 1, 2;
 
 select optum_flg, mbmserv_dtl, count(*) as row_cnt
-from tmp_1q.kn_mbm_episode_2_$current_month
+from tmp_1q.kn_mbm_episode_2_${current_month}
 group by 1, 2;
 
 
@@ -524,8 +541,8 @@ group by 1, 2;
  * Creates episode aggregation and visit ranking structure
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_3_$current_month;  
-create table tmp_1q.kn_mbm_episode_3_$current_month as 
+drop table if exists tmp_1q.kn_mbm_episode_3_${current_month};  
+create table tmp_1q.kn_mbm_episode_3_${current_month} as 
 select			
 	concat(mbi,'-',category) as mbi		
 	, component		
@@ -545,7 +562,7 @@ select
 	, count(distinct concat(id,start_dt)) as visits 
 	, count(visits) as vsts                     		
 	, sum(adj_srvc_units) as adj_srvc_units		
-from tmp_1q.kn_mbm_episode_2_$current_month
+from tmp_1q.kn_mbm_episode_2_${current_month}
 where prov_prtcp_sts_cd = 'P'	
 group by			
     concat(mbi,'-',category)
@@ -564,10 +581,10 @@ order by mbi, mbmserv, start_dt, id
 ;
 
 -- QA: kn_mbm_episode_3 | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_3' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_3_$current_month;
+select 'kn_mbm_episode_3' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_3_${current_month};
 
-drop table if exists tmp_1q.kn_mbm_episode_4_$current_month;  
-create table tmp_1q.kn_mbm_episode_4_$current_month as  			
+drop table if exists tmp_1q.kn_mbm_episode_4_${current_month};  
+create table tmp_1q.kn_mbm_episode_4_${current_month} as  			
 select 
 	mbi
 	, component
@@ -588,11 +605,11 @@ select
 	, visits
 	, vsts
 	, adj_srvc_units
-from tmp_1q.kn_mbm_episode_3_$current_month as a
+from tmp_1q.kn_mbm_episode_3_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_4 | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_4' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_4_$current_month;
+select 'kn_mbm_episode_4' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_4_${current_month};
 
 
 /*==============================================================================
@@ -600,8 +617,8 @@ select 'kn_mbm_episode_4' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode
  * Calculates time gaps between visits and episode flags
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_lag_$current_month;  
-create table tmp_1q.kn_mbm_episode_lag_$current_month as  
+drop table if exists tmp_1q.kn_mbm_episode_lag_${current_month};  
+create table tmp_1q.kn_mbm_episode_lag_${current_month} as  
 select a.mbi
 	, a.component
 	, a.id
@@ -625,15 +642,15 @@ select a.mbi
 	, a.visits
 	, a.vsts
 	, a.adj_srvc_units
-from tmp_1q.kn_mbm_episode_4_$current_month as a
-left join tmp_1q.kn_mbm_episode_4_$current_month as b 
+from tmp_1q.kn_mbm_episode_4_${current_month} as a
+left join tmp_1q.kn_mbm_episode_4_${current_month} as b 
 	on a.mbi = b.mbi 
 	and a.mbm_deploy_dt = b.mbm_deploy_dt
 	and a.i = b.i+1 
 ;
 
 -- QA: kn_mbm_episode_lag | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_lag' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_lag_$current_month;
+select 'kn_mbm_episode_lag' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_lag_${current_month};
 
 
 /*==============================================================================
@@ -641,8 +658,8 @@ select 'kn_mbm_episode_lag' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episo
  * Identifies episode boundaries and calculates cumulative episodes
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_vst_ep_2_$current_month;  
-create or replace table tmp_1q.kn_mbm_episode_vst_ep_2_$current_month as
+drop table if exists tmp_1q.kn_mbm_episode_vst_ep_2_${current_month};  
+create or replace table tmp_1q.kn_mbm_episode_vst_ep_2_${current_month} as
 select
     a.mbi
   , a.component
@@ -678,15 +695,15 @@ from (
             order by start_dt
             rows between unbounded preceding and current row
         ) as cmltv_episodes
-    from tmp_1q.kn_mbm_episode_lag_$current_month
+    from tmp_1q.kn_mbm_episode_lag_${current_month}
 ) as a
 ;
 
 -- QA: kn_mbm_episode_vst_ep_2 | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_vst_ep_2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_vst_ep_2_$current_month;
+select 'kn_mbm_episode_vst_ep_2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_vst_ep_2_${current_month};
 
-drop table if exists tmp_1q.kn_mbm_episode_smry_$current_month;  
-create or replace table tmp_1q.kn_mbm_episode_smry_$current_month as  
+drop table if exists tmp_1q.kn_mbm_episode_smry_${current_month};  
+create or replace table tmp_1q.kn_mbm_episode_smry_${current_month} as  
 select  
 	a.serv_month as visit_month
 	, to_char(ep_start_dt,'yyyyMM') as ep_start_mo 
@@ -701,7 +718,7 @@ select
 	, sum(a.paid) as pd 
 	, sum(a.visits) as visits
 	, sum(ep_flag) as episodes
-from tmp_1q.kn_mbm_episode_vst_ep_2_$current_month as a
+from tmp_1q.kn_mbm_episode_vst_ep_2_${current_month} as a
 group by 
 	a.serv_month  
 	, to_char(ep_start_dt,'yyyyMM') 
@@ -714,11 +731,11 @@ group by
 ;
 
 -- QA: kn_mbm_episode_smry | expected ~1.5M+ rows (prev run: 1509656)
-select 'kn_mbm_episode_smry' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_smry_$current_month;
+select 'kn_mbm_episode_smry' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_smry_${current_month};
 
 -- QA: spot check recent ep_start_mo totals vs previous run
 select ep_start_mo, sum(allw) as allw, sum(visits) as visits, sum(episodes) as episodes
-from tmp_1q.kn_mbm_episode_smry_$current_month
+from tmp_1q.kn_mbm_episode_smry_${current_month}
 where ep_start_mo >= '202401'
 group by 1
 order by 1;
@@ -728,7 +745,7 @@ order by 1;
  * EPISODE SUMMARY AND RUNOUT ANALYSIS
  * Calculates runout periods and creates aggregated episodes
  *==============================================================================*/
-create or replace table tmp_1q.kn_mbm_episode_ro_lag_$current_month as
+create or replace table tmp_1q.kn_mbm_episode_ro_lag_${current_month} as
 select
     a.mbi
   , a.component
@@ -758,14 +775,14 @@ select
   , a.visits
   , a.vsts
   , a.adj_srvc_units
-from tmp_1q.kn_mbm_episode_vst_ep_2_$current_month as a
+from tmp_1q.kn_mbm_episode_vst_ep_2_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_ro_lag | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_ro_lag' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_ro_lag_$current_month;
+select 'kn_mbm_episode_ro_lag' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_ro_lag_${current_month};
 
-drop table if exists tmp_1q.kn_mbm_episode_ro_lag2_$current_month;  
-create table tmp_1q.kn_mbm_episode_ro_lag2_$current_month as  
+drop table if exists tmp_1q.kn_mbm_episode_ro_lag2_${current_month};  
+create table tmp_1q.kn_mbm_episode_ro_lag2_${current_month} as  
 select 
 	a.mbi
 	, a.id
@@ -788,14 +805,14 @@ select
 	, visits
 	, allowed
 	, 0 as mm 
-from tmp_1q.kn_mbm_episode_ro_lag_$current_month as a
+from tmp_1q.kn_mbm_episode_ro_lag_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_ro_lag2 | expected ~70M+ rows (prev run: 70228347)
-select 'kn_mbm_episode_ro_lag2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_ro_lag2_$current_month;
+select 'kn_mbm_episode_ro_lag2' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_ro_lag2_${current_month};
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_ep_$current_month;  
-create or replace table tmp_1q.kn_mbm_episode_agg6_ep_$current_month as  
+drop table if exists tmp_1q.kn_mbm_episode_agg6_ep_${current_month};  
+create or replace table tmp_1q.kn_mbm_episode_agg6_ep_${current_month} as  
 select 
 	'EPISODES' as data_type
 	, ep_start_mo 
@@ -813,7 +830,7 @@ select
 	, 0 as visits 
 	, 0 as allowed
 	, 0 as mm 
-from (select * from tmp_1q.kn_mbm_episode_ro_lag2_$current_month where episodes = 1 ) as a
+from (select * from tmp_1q.kn_mbm_episode_ro_lag2_${current_month} where episodes = 1 ) as a
 group by 
 	ep_start_mo
 	, concat(ep_start_year,'Q9')
@@ -824,15 +841,15 @@ group by
 ;
 
 -- QA: kn_mbm_episode_agg6_ep | expected ~47K+ rows (prev run: 47476)
-select 'kn_mbm_episode_agg6_ep' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_ep_$current_month;
+select 'kn_mbm_episode_agg6_ep' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_ep_${current_month};
 
 
 /*==============================================================================
  * COMBINE VISITS AND EPISODES
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_$current_month;  
-create or replace table tmp_1q.kn_mbm_episode_agg6_$current_month as  
+drop table if exists tmp_1q.kn_mbm_episode_agg6_${current_month};  
+create or replace table tmp_1q.kn_mbm_episode_agg6_${current_month} as  
 select 
 	'VISITS' as data_type
 	, ep_start_mo 
@@ -850,7 +867,7 @@ select
 	, sum(visits) as visits 
 	, sum(allowed) as allowed
 	, 0 as mm 
-from tmp_1q.kn_mbm_episode_ro_lag2_$current_month
+from tmp_1q.kn_mbm_episode_ro_lag2_${current_month}
 group by 
 	ep_start_mo 
 	, concat(ep_start_year,'Q9') 
@@ -866,41 +883,41 @@ group by
 ;
 
 -- QA: kn_mbm_episode_agg6 visits-only | expected ~2.2M+ rows (prev run: 2242957)
-select 'kn_mbm_episode_agg6 (pre-insert)' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_$current_month;
+select 'kn_mbm_episode_agg6 (pre-insert)' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_${current_month};
 
-alter table tmp_1q.kn_mbm_episode_agg6_$current_month
+alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
   alter column data_type set data type varchar(50);
 
-insert into tmp_1q.kn_mbm_episode_agg6_$current_month   
-select * from tmp_1q.kn_mbm_episode_agg6_ep_$current_month as a;
+insert into tmp_1q.kn_mbm_episode_agg6_${current_month}   
+select * from tmp_1q.kn_mbm_episode_agg6_ep_${current_month} as a;
 
-alter table tmp_1q.kn_mbm_episode_agg6_$current_month
+alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
   alter column data_type    set data type varchar(50);
 
-alter table tmp_1q.kn_mbm_episode_agg6_$current_month
+alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
   alter column claim_status set data type varchar(50);
 
-alter table tmp_1q.kn_mbm_episode_agg6_$current_month
+alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
   alter column category     set data type varchar(50);
 
 -- QA: kn_mbm_episode_agg6 (final, visits+episodes) | expected ~2.3M+ rows (prev run: 2324504)
-select 'kn_mbm_episode_agg6 (final)' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_$current_month;
+select 'kn_mbm_episode_agg6 (final)' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_${current_month};
 
 -- QA: spot check visit_mo allowed vs previous run (prev run visit_mo=202406: 73607414.24)
 select 'agg6 visit_mo 202406' as tbl, sum(allowed) as allowed_amt
-from tmp_1q.kn_mbm_episode_agg6_$current_month
+from tmp_1q.kn_mbm_episode_agg6_${current_month}
 where visit_mo = '202406';
 
 -- QA: recent ep_start_mo breakdown
 select ep_start_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
-from tmp_1q.kn_mbm_episode_agg6_$current_month
+from tmp_1q.kn_mbm_episode_agg6_${current_month}
 where ep_start_mo >= '202401'
 group by 1 
 order by 1;
 
 -- QA: recent visit_mo breakdown
 select visit_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
-from tmp_1q.kn_mbm_episode_agg6_$current_month
+from tmp_1q.kn_mbm_episode_agg6_${current_month}
 where visit_mo >= '202401'
 group by 1 
 order by 1;
@@ -914,8 +931,8 @@ order by 1;
  * Stitch up pre-2023 and 2023+ tables
  *==============================================================================*/
 
-drop table if exists tmp_1q.kn_mbm_episode_agg6_sum1_after2023_$current_month;
-create table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_$current_month as 
+drop table if exists tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month};
+create table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month} as 
 select 
 	data_type,
 	ep_start_mo,
@@ -930,7 +947,7 @@ select
 	sum(visits) as visit_cnt,
 	sum(allowed) as allowed_amt,
 	sum(mm) as mms
-from tmp_1q.kn_mbm_episode_agg6_$current_month
+from tmp_1q.kn_mbm_episode_agg6_${current_month}
 where ep_start_mo >= '202301'
 group by
 	data_type,
@@ -958,48 +975,48 @@ select
 	visit_cnt,
 	allowed_amt,
 	mms
-from tmp_1q.kn_mbm_mshp_sum1_$current_month
+from tmp_1q.kn_mbm_mshp_sum1_${current_month}
 ;
 
 -- QA: after2023 summary | expected ~94K+ rows (prev run: 94756)
-select 'agg6_sum1_after2023' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_$current_month;
+select 'agg6_sum1_after2023' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month};
 
 
-drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023_$current_month;
-create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_$current_month as
+drop table if exists tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month};
+create table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month} as
 select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023;
 
 -- QA: before2023 | expected 176560
-select 'agg6_sum1_before2023' as tbl, count(*) as row_cnt from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_$current_month;
+select 'agg6_sum1_before2023' as tbl, count(*) as row_cnt from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month};
 
 
-drop table if exists tmp_1q.kn_mbm_$current_month;
-create table tmp_1q.kn_mbm_$current_month as
-select * from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_$current_month
+drop table if exists tmp_1q.kn_mbm_${current_month};
+create table tmp_1q.kn_mbm_${current_month} as
+select * from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month}
 union all
-select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_$current_month;
+select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month};
 
 -- QA: kn_mbm FINAL | expected ~275K+ rows (prev run: 275176)
-select 'kn_mbm FINAL' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_$current_month;
+select 'kn_mbm FINAL' as tbl, count(*) as row_cnt from tmp_1q.kn_mbm_${current_month};
 
 -- QA: final ep_start_mo spot check
 select ep_start_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes
-from tmp_1q.kn_mbm_$current_month
+from tmp_1q.kn_mbm_${current_month}
 where ep_start_mo >= '202401'
 group by 1 
 order by 1;
 
 -- QA: final visit_mo spot check
 select visit_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes
-from tmp_1q.kn_mbm_$current_month
+from tmp_1q.kn_mbm_${current_month}
 where visit_mo >= '202401'
 group by 1 
 order by 1;
 
 -- QA: compare row count to previous month's final table
-select $previous_month as prev_month, count(*) as prev_row_cnt from tmp_1q.kn_mbm_$previous_month
+select $previous_month as prev_month, count(*) as prev_row_cnt from tmp_1q.kn_mbm_${previous_month}
 union all
-select $current_month as curr_month, count(*) as curr_row_cnt from tmp_1q.kn_mbm_$current_month;
+select ${current_month} as curr_month, count(*) as curr_row_cnt from tmp_1q.kn_mbm_${current_month};
 
 -- QA: AVTAR max admit date check
 select max(admit_dt_act) 
