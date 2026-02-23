@@ -1,9 +1,12 @@
 /*============================================================================================================
  * OP Therapies VpE Calculation
+ * 02/12: changed hctapaidmonth to hcta_paid_dt because of format
+ * 02/11: added visit_paid_month to recalculate 2024Q1Q2 VpE with similar runout to 2025Q1Q2
+ * 02/10: added separate VpE analysis, where visits are counted at the episode level to break VpE into 10s tier and count visits/episodes that fall into these levels
  * 02/09: added rvnu_cd to NICE
  * 02/09: fixed substring(coalesce(bil_typ_cd,'0'), 0, 1) != '3' to substring(coalesce(bil_typ_cd,'0'), 1, 1) != '3'
+ * 02/09: fixed home health filters
  * 02/09: removed service_code from visit aggregation
- * 
  * 02/05: removing claim_status case when (resulted in, same claim, same ID, 2 claim_status) in extraction,
  *    but adding it back after aggregation (not using clm_dnl_f field)
  * 02/05: changed M&R FFS to M&R FFS excl. DSNP (product_level_3 not in ('DUAL', 'INSTITUTIONAL')
@@ -16,9 +19,6 @@
  *  If the (current fst_srvc_dt - previous fst_srvc_dt) for this partition > 30 -> New Episode
  *  Or if (current fst_srvc_dt - previous fst_srvc_dt) is NULL -> New Episode
  *===========================================================================================================*/
-select * from fichsrv.glxy_pr_f
- 
-
 
 -- COSMOS claims
 drop table if exists tmp_1m.knd_mbm_cosmos_claims;
@@ -31,7 +31,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, gal_mbi_hicn_fnl as mbi
     , proc_cd
@@ -88,7 +88,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, gal_mbi_hicn_fnl as mbi
     , proc_cd
@@ -155,7 +155,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, gal_mbi_hicn_fnl as mbi
     , proc_cd
@@ -212,7 +212,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, gal_mbi_hicn_fnl as mbi
     , proc_cd
@@ -250,38 +250,17 @@ where brand_fnl = 'C&S'
 	and st_abbr_cd = market_fnl
 	and substring(coalesce(bil_typ_cd,'0'),1,1) != '3'
 	and ama_pl_of_srvc_cd != '12'
-	and (proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
-	 	rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
-	and proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
+		and (proc_cd in
+			('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
+			 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
+			 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
+			 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
+			 '98940', '98941', '98942') 
+	     	or 
+		 	rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
+		and proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and fst_srvc_year >= '2023'
 ;
-
---select sum(allw_amt_fnl) from tmp_1m.knd_mbm_csp_claims
---where fst_srvc_month = '202406'
---;
--- 24460463.76 
-
---
---select * from fichsrv.nce_pr_f
---
---select
---	table_name
---	, column_name
---	, ordinal_position
---	, is_nullable
---	, data_type
---from information_schema.columns
---where table_schema = 'FICHSRV'
---	and table_name = 'NCE_PR_F'
---	and column_name ilike '%_cd%'
---order by column_name
---;
 
 -- NICE claims
 -- special_network doesn't exist in NCE; ericksonflag doesn't work
@@ -295,7 +274,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, mbi_hicn_fnl as mbi
     , proc_cd
@@ -352,7 +331,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hctapaidmonth
+    , date_trunc('month', dateadd(day, 10, adjd_dt)) as hcta_paid_dt
     , fst_srvc_year
 	, mbi_hicn_fnl as mbi
     , proc_cd
@@ -415,7 +394,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-	, hctapaidmonth
+	, hcta_paid_dt
     , fst_srvc_year
 	, mbi
 	, proc_cd
@@ -469,7 +448,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , hctapaidmonth
+    , hcta_paid_dt
     , fst_srvc_year
 	, mbi
 	, proc_cd
@@ -523,7 +502,7 @@ select
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_qtr
-    , hctapaidmonth
+    , hcta_paid_dt
     , fst_srvc_year
 	, mbi
 	, proc_cd
@@ -594,7 +573,7 @@ select
 	, fst_srvc_dt
 	, fst_srvc_month
 	, fst_srvc_qtr
-	, hctapaidmonth
+	, hcta_paid_dt
 	, fst_srvc_year
 	, mbi
 	, proc_cd
@@ -623,7 +602,7 @@ group by
 	, fst_srvc_dt
 	, fst_srvc_month
 	, fst_srvc_qtr
-	, hctapaidmonth
+	, hcta_paid_dt
 	, fst_srvc_year
 	, mbi
 	, proc_cd
@@ -674,7 +653,7 @@ select
 	end as mbmserv_dtl
 	, fst_srvc_dt
     , fst_srvc_month
-    , min(hctapaidmonth) as min_hctapaidmonth
+    , min(hcta_paid_dt) as min_hcta_paid_dt
     , fst_srvc_year
 	, category
     , market_fnl
@@ -758,7 +737,7 @@ select
 	, mbmserv_dtl
 	, fst_srvc_dt
     , fst_srvc_month
-    , min_hctapaidmonth
+    , min_hcta_paid_dt
     , fst_srvc_year
 	, category
     , market_fnl
@@ -812,12 +791,12 @@ select
 	, iff(prev_srvc_dt is null, 1, ep_flag) as ep_flag 
 	, cmltv_episodes
 	, min(fst_srvc_dt) over (partition by mbi_key, mbm_deploy_dt, cmltv_episodes) as ep_start_dt
-	, min(min_hctapaidmonth) over (partition by mbi_key, mbm_deploy_dt, cmltv_episodes) as ep_hctapaidmonth
+	, min(min_hcta_paid_dt) over (partition by mbi_key, mbm_deploy_dt, cmltv_episodes) as ep_hcta_paid_dt
 	, entity
 	, mbmserv_dtl
 	, visit_id
     , fst_srvc_month
-    , min_hctapaidmonth
+    , min_hcta_paid_dt
     , fst_srvc_year
 	, category
     , market_fnl
@@ -846,7 +825,7 @@ select
 	, cast(null as varchar) as visit_month
 	, cast(null as varchar) as visit_year
 	, cast(null as varchar) as visit_paid_month
-	, ep_hctapaidmonth as ep_paid_month
+	, ep_hcta_paid_dt as ep_paid_month
 	, entity
 	, mbmserv_dtl
 	, category
@@ -867,7 +846,7 @@ group by
 	to_char(ep_start_dt, 'yyyyMM')
 	, to_char(ep_start_dt, 'yyyy')
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
-	, ep_hctapaidmonth
+	, ep_hcta_paid_dt
 	, entity
 	, mbmserv_dtl
 	, category
@@ -886,7 +865,7 @@ select
     , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
     , fst_srvc_month as visit_month
     , fst_srvc_year as visit_year
-    , min_hctapaidmonth as visit_paid_month
+    , min_hcta_paid_dt as visit_paid_month
     , cast(null as varchar) as ep_paid_month
     , entity
     , mbmserv_dtl
@@ -896,7 +875,7 @@ select
     , population
     , claim_status
     , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5) as visit_ep_runout_month
-    , floor((datediff('day', fst_srvc_dt, min_hctapaidmonth) + 20) / 30.5) as visit_runout_month
+    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5) as visit_runout_month
     , 0 as n_episodes
     , count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
     , sum(allowed) as sum_allowed
@@ -909,7 +888,7 @@ group by
     , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
     , fst_srvc_month
     , fst_srvc_year
-    , min_hctapaidmonth
+    , min_hcta_paid_dt
     , entity
     , mbmserv_dtl
     , category
@@ -918,7 +897,7 @@ group by
     , population
     , claim_status
     , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
-    , floor((datediff('day', fst_srvc_dt, min_hctapaidmonth) + 20) / 30.5);
+    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5);
 ;
 
 -- Stack VISITS and EPISODES
@@ -990,7 +969,7 @@ select
 	mbi_key
 	, cmltv_episodes
 	, ep_start_dt
-	, ep_hctapaidmonth
+	, ep_hcta_paid_dt
 	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
 	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
 	, mbm_deploy_dt
@@ -1003,7 +982,7 @@ group by
 	mbi_key
 	, cmltv_episodes
 	, ep_start_dt
-	, ep_hctapaidmonth
+	, ep_hcta_paid_dt
 	, to_char(ep_start_dt, 'yyyyMM')
 	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
 	, mbm_deploy_dt
@@ -1105,6 +1084,7 @@ group by
 	, vpe_cat3
 ;
 
+select visit_paid_month from tmp_1m.knd_mbm_vpe_with_runout_visits
 -- Visit summary for stacking
 create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits as
 with visits_dedup as (
@@ -1113,7 +1093,7 @@ select
 	, visit_id
 	, fst_srvc_dt
 	, fst_srvc_month
-	, min(min_hctapaidmonth) as min_hctapaidmonth
+	, min(min_hcta_paid_dt) as min_hcta_paid_dt
 	, ep_start_dt
 	, mbm_deploy_dt
 	, cmltv_episodes
@@ -1137,36 +1117,115 @@ select
 	'VISITS' as data_type
 	, to_char(a.ep_start_dt, 'yyyyMM') as ep_start_month
 	, a.fst_srvc_month as visit_month
-	, a.min_hctapaidmonth as visit_paid_month
+	, a.min_hcta_paid_dt as visit_paid_month
 	, a.mbm_deploy_dt
 	, a.category
 	, a.population
-	, cast(null as varchar) as vpe_buckets_10
-	, cast(null as varchar) as vpe_buckets_stat
-    , floor((datediff('day', a.fst_srvc_dt, a.min_hctapaidmonth) + 20) / 30.5) as visit_runout_month
+	, b.vpe_cat2 as vpe_buckets_10
+	, b.vpe_cat3 as vpe_buckets_stat
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hcta_paid_dt) + 20) / 30.5) as visit_runout_month
     , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5) as visit_ep_runout_month
 	, 0 as n_episodes
 	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
 	, sum(a.allowed) as allowed
 	, count(distinct a.mbi_key) as mm
 from visits_dedup as a
+join tmp_1m.knd_mbm_vpe_aggregated_category_mnr as b
+	on a.mbi_key = b.mbi_key 
+	and a.mbm_deploy_dt = b.mbm_deploy_dt
+	and a.cmltv_episodes = b.cmltv_episodes
 where a.population = 'M&R FFS (excl. DSNP)'
 group by
 	to_char(a.ep_start_dt, 'yyyyMM')
 	, a.fst_srvc_month
-	, a.min_hctapaidmonth
+	, a.min_hcta_paid_dt
 	, a.mbm_deploy_dt
 	, a.category
 	, a.population
-    , floor((datediff('day', a.fst_srvc_dt, a.min_hctapaidmonth) + 20) / 30.5)
+	, b.vpe_cat2
+	, b.vpe_cat3
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hcta_paid_dt) + 20) / 30.5)
     , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5)
 ;
+
+
+select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+
+
+with visits_dedup as (
+select
+	mbi_key
+	, visit_id
+	, fst_srvc_dt
+	, fst_srvc_month
+	, min(min_hcta_paid_dt) as min_hcta_paid_dt
+	, ep_start_dt
+	, mbm_deploy_dt
+	, cmltv_episodes
+	, category
+	, population
+	, sum(allowed) as allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3
+where mbi_key = '9PK2N41YE29-OP_REHAB'
+group by
+	mbi_key
+	, visit_id
+	, fst_srvc_dt
+	, fst_srvc_month
+	, ep_start_dt
+	, mbm_deploy_dt
+	, cmltv_episodes
+	, category
+	, population
+)
+select
+	'VISITS' as data_type
+	, to_char(a.ep_start_dt, 'yyyyMM') as ep_start_month
+	, a.fst_srvc_month as visit_month
+	, a.min_hcta_paid_dt as visit_paid_month
+	, a.mbm_deploy_dt
+	, a.category
+	, a.population
+	, b.vpe_cat2 as vpe_buckets_10
+	, b.vpe_cat3 as vpe_buckets_stat
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hcta_paid_dt) + 20) / 30.5) as visit_runout_month
+    , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5) as visit_ep_runout_month
+	, 0 as n_episodes
+	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
+	, sum(a.allowed) as allowed
+	, count(distinct a.mbi_key) as mm
+from visits_dedup as a
+join tmp_1m.knd_mbm_vpe_aggregated_category_mnr as b
+	on a.mbi_key = b.mbi_key 
+	and a.mbm_deploy_dt = b.mbm_deploy_dt
+	and a.cmltv_episodes = b.cmltv_episodes
+--where a.population = 'M&R FFS (excl. DSNP)'
+group by
+	to_char(a.ep_start_dt, 'yyyyMM')
+	, a.fst_srvc_month
+	, a.min_hcta_paid_dt
+	, a.mbm_deploy_dt
+	, a.category
+	, a.population
+	, b.vpe_cat2
+	, b.vpe_cat3
+    , floor((datediff('day', a.fst_srvc_dt, a.min_hcta_paid_dt) + 20) / 30.5)
+    , floor(datediff('day', a.ep_start_dt, a.fst_srvc_dt) / 30.5)
+;
+
+
+
+
+
+
 
 create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked as
 select * from tmp_1m.knd_mbm_vpe_with_runout_visits
 union all
 select * from tmp_1m.knd_mbm_vpe_with_runout_episodes
 ;
+select distinct vpe_buckets_10 from tmp_1m.knd_mbm_vpe_with_runout_summary
 
 
 create or replace table tmp_1m.knd_mbm_vpe_with_runout_summary as
@@ -1200,8 +1259,8 @@ group by
 ;
 
 
-select ep_start_month, sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_category_mnr_summmary
-where substring(ep_start_month, 1, 4) = '2024'
+select ep_start_month, sum(n_visits)/sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_category_mnr_summmary
+where substring(ep_start_month, 1, 4) >= '2023'
 group by 1
 order by 1 
 ;
@@ -1222,14 +1281,14 @@ order by 1
 
 
 
-select ep_start_month, sum(n_visits), sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_with_runout_summary
-where substring(ep_start_month, 1, 4) = '2024'
+select ep_start_month, sum(n_visits)/sum(n_episodes), sum(allowed) from tmp_1m.knd_mbm_vpe_with_runout_summary
+where substring(ep_start_month, 1, 4) >= '2024'
 group by 1
 order by 1 
 ;
 
 select visit_runout_month, visit_ep_runout_month, sum(n_visits) from tmp_1m.knd_mbm_vpe_with_runout_summary
-where ep_start_month = '202407'
+where ep_start_month >= '202401'
 group by 1, 2
 
 
@@ -1260,7 +1319,7 @@ group by 1
 --1 - 10	9,054,816	2,658,487
 
 
-select vpe_buckets_10, sum(n_visits), sum(n_episodes) from tmp_1m.knd_mbm_vpe_with_runout_summary
+select vpe_buckets_10, sum(n_visits), sum(n_episodes) from tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked
 where ep_start_month >= '202401'
 group by 1
 
@@ -1289,6 +1348,10 @@ select * from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
 where mbi_key = '9PK2N41YE29-OP_REHAB'
 
 
+select fin_market, cns_dual_flag, sum(case_count), sum(membership) from tmp_1m.ec_ip_dataset_loc_02112026_od
+where fin_market IN ('OK','NC','NM','NV','OH','TX') and 
+group by 1,2
+
 
 
 select vpe_cat3, sum(n_vpe)
@@ -1301,7 +1364,7 @@ create or replace table tmp_1m.knd_mbm_vpe_category_mnr_summmary as
 select	
 	ep_start_qtr
 	, ep_start_month
-	, ep_hctapaidmonth
+	, ep_hcta_paid_dt
 	, mbm_deploy_dt
 	, category
 	, population
@@ -1315,7 +1378,7 @@ from tmp_1m.knd_mbm_vpe_aggregated_category_mnr
 group by
 	ep_start_qtr
 	, ep_start_month
-	, ep_hctapaidmonth
+	, ep_hcta_paid_dt
 	, mbm_deploy_dt
 	, category
 	, population

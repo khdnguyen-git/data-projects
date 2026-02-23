@@ -1,3 +1,16 @@
+/*============================================================================================================
+ * OP Therapies claims extraction + VpE calculation
+ * 02/18: added titles + context + notes
+ * Visits definition (from _stable script): count(concat(eventkey, fst_srvc_dt))
+ *  Eventkey: field in claims data, equiv. to mbi | fst_srvc_dt | srvc_prov_id 
+ * Episode definition
+ *	Partition by mbi-category (Office/Chiro/OP_Rehab), mbm_deploy_dt (National/Pilot)
+ *  Order by fst_srvc_dt
+ *  If the (current fst_srvc_dt - previous fst_srvc_dt) for this partition > 30 -> New Episode
+ *  Or if (current fst_srvc_dt - previous fst_srvc_dt) is NULL -> New Episode
+ *===========================================================================================================*/
+
+
 /*==============================================================================
  * MEMBERSHIP DETAIL PROCESSING
  * Creates base membership table with pilot/national deployment flags
@@ -50,6 +63,11 @@ group by
 	, iff(special_network in ('ERICKSON'), 1, 0) 			
 	, sgr_source_name
 ;
+
+select distinct market_fnl, group_ind_fnl, mbm_deploy_dt
+from tmp_1q.kn_mbm_dtl_202601
+;
+
 -- select count(*) from tmp_1q.kn_mbm_dtl_202601;  
 -- 476794132 469046914 430370488 415060257  407463331 399836379   392256742 (removed 2019) 442855070  435558291  428264965  450161568
 								
