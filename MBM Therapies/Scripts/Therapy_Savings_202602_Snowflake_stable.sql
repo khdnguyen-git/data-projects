@@ -1057,4 +1057,5 @@ where
        and admit_cat_cd  in ('17 - Medical','30 - Surgical')			
        and fin_brand in ('M&R','C&S')
        and TO_VARCHAR(admit_dt_act, 'MM/dd/yyyy') is not null 
-       and TO_VARCHAR(admit_dt_act  ,'yyyy') in ('2026')	;	
+       and TO_VARCHAR(admit_dt_act  ,'yyyy') in ('2026')	
+;	
