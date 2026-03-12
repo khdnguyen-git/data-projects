@@ -65,6 +65,9 @@ select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_dtl_${prev
 ;
 
 
+select * from tmp_1q.kn_mbm_dtl_${current_month}
+
+
 /*==============================================================================
  * MEMBERSHIP SUMMARY CREATION
  * Aggregates membership data and creates summary tables for analysis
@@ -106,6 +109,8 @@ select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${curr
 union all
 select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${previous_month}
 ;
+
+select * from tmp_1q.kn_mbm_mshp_202602
 
 
 create or replace table tmp_1q.kn_mbm_mshp_sum1_${current_month} as
@@ -181,7 +186,7 @@ select
 	, case when final_lopa_ind = 1 and mbr_dos_latest_submission = 1 then mbi_dos end as still_lopa_mbi_dos
 	, case when final_lopa_ind != 1 or mbr_dos_latest_submission != 1 then mbi_dos end as overturn_lopa_mbi_dos
 	, *
-from hce_ops_stage.pa_trckng_pr_evnt_lopa_dtl
+from HCE_OPS_STAGE.PA_TRCKNG_PR_EVNT_LOPA_DTL
 ;
 
 -- QA: kn_lopa_pr_1 | expected ~4.7M+ rows (prev run: 4790609)
@@ -1019,6 +1024,13 @@ union all
 select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
 ;
 
+
+select count(*) from tmp_1q.kn_mbm_202601
+
+
+
+
+
 -- QA: kn_mbm FINAL | expected ~275K+ rows (prev run: 275176)
 select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_${current_month}
 union all
@@ -1049,5 +1061,12 @@ where svc_setting = 'Inpatient'
     and admit_cat_cd in ('17 - Medical','30 - Surgical')
     and fin_brand in ('M&R','C&S')
     and TO_VARCHAR(admit_dt_act, 'MM/dd/yyyy') is not null
-    and TO_VARCHAR(admit_dt_act, 'yyyy') in ('2026')
+    and TO_VARCHAR(admit_dt_act, 'yyyy') in ('2026')                  
 ;
+
+select max(load_date) from mard.m1_claims_f
+
+select * from mard
+
+
+select max(last_refreshed) from mard.daily_claims_f

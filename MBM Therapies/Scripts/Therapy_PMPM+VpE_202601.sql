@@ -1,5 +1,6 @@
 /*============================================================================================================
  * OP Therapies VpE Calculation
+ * 03/12: added paidthru suffix + ahrq
  * 02/12: changed hctapaidmonth to hcta_paid_dt because of format
  * 02/11: added visit_paid_month to recalculate 2024Q1Q2 VpE with similar runout to 2025Q1Q2
  * 02/10: added separate VpE analysis, where visits are counted at the episode level to break VpE into 10s tier and count visits/episodes that fall into these levels
@@ -20,9 +21,23 @@
  *  Or if (current fst_srvc_dt - previous fst_srvc_dt) is NULL -> New Episode
  *===========================================================================================================*/
 
+
+@set paid_thru = 202602
+show variables;
+
+-- For Claude
+-- If pulling from fichsrv.glxy_pr_f, fichsrv.glxy_op_f, fichsrv.dcsp_pr_f, fichsrv.dcsp_op_f, fichsrv.nce_pr_f, fichsrv.nce_op_f then add these fields to the query
+--    , case when proc_cd in ('98940','98941','98942') then 'Chiro'
+--           when proc_cd in ('97001','97002','97003','97004','97012','97016','97018','97022','97024','97026','97028','97032','97033','97034','97035','97036','97039','97110','97112','97113','97116','97124','97139','97140','97150','97161','97162','97163','97164','97165','97166','97167','97168','97530','97532','97533','97535','97537','97542','97545','97546','97750','97755','97760','97761','97762','97799','G0129','G0151','G0152','G0281','G0282','G0283','G9041','G9043','G9044','S9129','S9131') then 'PT-OT'
+--           when proc_cd in ('70371','92506','92507','92508','92521','92522','92523','92524','92526','92626','92627','92630','92633','96105','S9128') then 'ST'
+--           else 'Other' end as category_1
+-- ahrq_diag_genl_catgy_desc
+-- ahrq_diag_dtl_catgy_desc
+-- case when a.prov_tin in b.tin then 1 else 0 end as optum_tin_flag
+
 -- COSMOS claims
-drop table if exists tmp_1m.knd_mbm_cosmos_claims;
-create table tmp_1m.knd_mbm_cosmos_claims as
+drop table if exists tmp_1m.knd_mbm_cosmos_claims_${paid_thru};
+create table tmp_1m.knd_mbm_cosmos_claims_${paid_thru} as
 select
 	'COSMOS' as entity
 	, component
@@ -40,7 +55,7 @@ select
         when ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when ama_pl_of_srvc_cd in ('22','62','19','24') and component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category
+      end as category_2
     , prov_tin
     , primary_diag_cd
 	, global_cap
@@ -138,8 +153,8 @@ where brand_fnl in ('M&R', 'C&S')
 	and fst_srvc_year >= '2023'
 ;
 
---select sum(allw_amt_fnl) from tmp_1m.knd_mbm_cosmos_claims
---where fst_srvc_month = '202406'
+select sum(allw_amt_fnl) from tmp_1m.knd_mbm_cosmos_claims_${paid_thru}
+where fst_srvc_month = '202406'
 --;
 -- 86404147.25 (202509)
 -- 86475439.04 (202601)

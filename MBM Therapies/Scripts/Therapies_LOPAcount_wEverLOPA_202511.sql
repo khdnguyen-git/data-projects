@@ -3,8 +3,15 @@
 describe formatted tmp_1y.PA_TRCKNG_op_EVNT_LOPA_DTL;
 describe formatted tmp_1q.kn_mbm_episode_2_202511;
 
+use role AZU_SDRP_VING_PRD_DEVELOPER_ROLE;
+use warehouse VING_PRD_TREND_DB_WH;
+
+show warehouses
+
+select * from hce_ops_stage.PA_TRCKNG_op_EVNT_LOPA_DTL
 
 
+select * from 
 
 
 
@@ -346,3 +353,5 @@ from tmp_7d.kn_mbm_lopa_tracking_3_cat_paid_lopa
 where proc_cd = '97110' and still_lopa_f = 'Y' and serv_month between '202401' and '202412'
 group by
 category;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               fidel
