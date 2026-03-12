@@ -26,6 +26,7 @@
 show variables;
 
 -- For Claude
+-- Please add _${paid_thru} at the end of every tables in this script. Like the first table tmp_1m.knd_mbm_cosmos_claims was changed to tmp_1m.knd_mbm_cosmos_claims_${paid_thru}
 -- If pulling from fichsrv.glxy_pr_f, fichsrv.glxy_op_f, fichsrv.dcsp_pr_f, fichsrv.dcsp_op_f, fichsrv.nce_pr_f, fichsrv.nce_op_f then add these fields to the query
 --    , case when proc_cd in ('98940','98941','98942') then 'Chiro'
 --           when proc_cd in ('97001','97002','97003','97004','97012','97016','97018','97022','97024','97026','97028','97032','97033','97034','97035','97036','97039','97110','97112','97113','97116','97124','97139','97140','97150','97161','97162','97163','97164','97165','97166','97167','97168','97530','97532','97533','97535','97537','97542','97545','97546','97750','97755','97760','97761','97762','97799','G0129','G0151','G0152','G0281','G0282','G0283','G9041','G9043','G9044','S9129','S9131') then 'PT-OT'
