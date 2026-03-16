@@ -65,8 +65,6 @@ select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_dtl_${prev
 ;
 
 
-select * from tmp_1q.kn_mbm_dtl_${current_month}
-
 
 /*==============================================================================
  * MEMBERSHIP SUMMARY CREATION
@@ -109,9 +107,6 @@ select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${curr
 union all
 select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${previous_month}
 ;
-
-select * from tmp_1q.kn_mbm_mshp_202602
-
 
 create or replace table tmp_1q.kn_mbm_mshp_sum1_${current_month} as
 select
