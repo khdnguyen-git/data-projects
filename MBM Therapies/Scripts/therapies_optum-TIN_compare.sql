@@ -1,7 +1,9 @@
+-- ============================================================
+-- NO DENIED: Excludes denied claims
+-- ============================================================
 
 -- COSMOS claims
-drop table if exists tmp_1m.knd_mbm_cosmos_claims_no_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_claims_no_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_claims_no_denied_${paid_thru} as
 select
 	'COSMOS' as entity
 	, a.component
@@ -37,7 +39,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , a.migration_source
-    --, a.tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -45,24 +46,24 @@ select
     , a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.glxy_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.glxy_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	and a.special_network not in ('ERICKSON')			
-	and a.prov_prtcp_sts_cd = 'P'		
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.special_network not in ('ERICKSON')
+	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
-	and a.ama_pl_of_srvc_cd != '12' 
+	and a.ama_pl_of_srvc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
@@ -103,7 +104,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , a.migration_source
-    --, a.tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -111,33 +111,33 @@ select
 	, a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.glxy_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.glxy_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	and a.special_network not in ('ERICKSON')			
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.special_network not in ('ERICKSON')
 	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
-	and a.ama_pl_of_srvc_cd != '12'   
+	and a.ama_pl_of_srvc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
 	and a.clm_dnl_f not in ('D', 'Y')
 ;
 
+
 -- CSP claims
-drop table if exists tmp_1m.knd_mbm_csp_claims_no_denied_${paid_thru};
-create table tmp_1m.knd_mbm_csp_claims_no_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_csp_claims_no_denied_${paid_thru} as
 select
 	'CSP' as entity
 	, a.component
@@ -173,7 +173,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , a.migration_source
-    --, a.tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -181,24 +180,24 @@ select
 	, a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.dcsp_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.dcsp_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on substring(a.tin, 1 , 9) = b.tin
-where a.brand_fnl = 'C&S'	
+where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	and a.special_network not in ('ERICKSON')			
-	and a.prov_prtcp_sts_cd = 'P'		
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.special_network not in ('ERICKSON')
+	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
-	and a.ama_pl_of_srvc_cd != '12'  
+	and a.ama_pl_of_srvc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
@@ -239,7 +238,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , a.migration_source
-    --, a.tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -247,34 +245,33 @@ select
 	, a.clm_dnl_f
     , a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.dcsp_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.dcsp_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	and a.special_network not in ('ERICKSON')			
-	and a.prov_prtcp_sts_cd = 'P'		
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.special_network not in ('ERICKSON')
+	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
 	and a.ama_pl_of_srvc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
 	and a.clm_dnl_f not in ('D', 'Y')
 ;
 
+
 -- NICE claims
--- special_network doesn't exist in NCE; ericksonflag doesn't work
-drop table if exists tmp_1m.knd_mbm_nice_claims_${paid_thru};
-create table tmp_1m.knd_mbm_nice_claims_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_nice_claims_no_denied_${paid_thru} as
 select
 	'NICE' as entity
 	, a.component
@@ -310,7 +307,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , 'NA' as migration_source
-    --, a.tfm_product_fnl as tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -318,24 +314,23 @@ select
     , a.dnl_f as clm_dnl_f
 	, a.calc_allw as allw_amt_fnl
 	, a.calc_net_pd as net_pd_amt_fnl
-from fichsrv.nce_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.nce_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	--and special_network not in ('ERICKSON')			
-	and a.prov_prtcp_sts_cd = 'P'		
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and (a.clm_cap_flag = 'FFS' and a.dec_risk_type_fnl in ('FFS', 'PCP', 'PHYSICIAN'))
-	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3' -- Home Health
-	and a.claim_place_of_svc_cd != '12'   
+	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
+	and a.claim_place_of_svc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
@@ -376,7 +371,6 @@ select
     , a.group_ind_fnl
     , a.tfm_include_flag
     , 'NA' as migration_source
-    --, a.tfm_product_fnl as tfm_product_new_fnl
     , a.product_level_3_fnl
     , case when a.market_fnl in ('AR','GA','NJ','SC') and a.group_ind_fnl = 'I' then 'Pilot'
     	else 'National'
@@ -384,34 +378,32 @@ select
     , a.dnl_f as clm_dnl_f
 	, a.allw_amt as allw_amt_fnl
 	, a.net_pd_amt as net_pd_amt_fnl
-from fichsrv.nce_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.nce_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
-	and a.plan_level_2_fnl not in ('PFFS')			
-	--and special_network not in ('ERICKSON')			
-	and a.prov_prtcp_sts_cd = 'P'		
+	and a.plan_level_2_fnl not in ('PFFS')
+	and a.prov_prtcp_sts_cd = 'P'
 	and a.st_abbr_cd = a.market_fnl
 	and (a.clm_cap_flag = 'FFS' and a.dec_risk_type_fnl in ('FFS', 'PCP', 'PHYSICIAN'))
-	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3' -- Home Health
+	and substring(coalesce(a.bil_typ_cd,'0'),1,1) != '3'
 	and a.claim_place_of_svc_cd != '12'
 	and (a.proc_cd in
-		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028', 
-		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116', 
-		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537', 
-		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283', 
-		 '98940', '98941', '98942') 
-     	or 
+		('92507', '92508', '92526', '97012', '97016', '97018', '97022', '97024', '97026', '97028',
+		 '97032', '97033', '97034', '97035', '97036', '97039', '97110', '97112', '97113', '97116',
+		 '97124', '97139', '97140', '97150', '97164', '97168', '97530', '97533', '97535', '97537',
+		 '97542', '97545', '97546', '97750', '97755', '97760', '97761', '97799', 'G0283',
+		 '98940', '98941', '98942')
+     	or
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
 	and a.dnl_f not in ('D', 'Y')
 ;
 
+
 -- Stack COSMOS + CSP + NICE claims
--- Make flags for population
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_no_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_no_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_no_denied_${paid_thru} as
 with cte_union as (
 select
 	entity
@@ -438,7 +430,6 @@ select
     , group_ind_fnl
     , tfm_include_flag
     , migration_source
-    --, tfm_product_new_fnl
     , product_level_3_fnl
 	, national_pilot_flag
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
@@ -448,7 +439,7 @@ select
 		end as OAH_flag
 	, case when (
 			   (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL' and global_cap = 'NA')
-			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA') 
+			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA')
 			or (entity in ('COSMOS', 'CSP') and brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' and global_cap = 'NA')
 			) then 1
 		else 0
@@ -460,10 +451,10 @@ select
 		else 0
 	end as MnR_ISNP_flag
 	, case when (
-			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 ) then 1 
- 		else 0 
+			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 ) then 1
+ 		else 0
  	end as MnR_FFS_flag
  	, clm_dnl_f
 	, allw_amt_fnl
@@ -495,7 +486,6 @@ select
     , group_ind_fnl
     , tfm_include_flag
     , migration_source
-    --, tfm_product_new_fnl
     , product_level_3_fnl
 	, national_pilot_flag
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
@@ -505,7 +495,7 @@ select
 		end as OAH_flag
 	, case when (
 			   (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL' and global_cap = 'NA')
-			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA') 
+			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA')
 			or (entity in ('COSMOS', 'CSP') and brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' and global_cap = 'NA')
 			) then 1
 		else 0
@@ -517,10 +507,10 @@ select
 		else 0
 	end as MnR_ISNP_flag
 	, case when (
-			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 ) then 1 
- 		else 0 
+			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 ) then 1
+ 		else 0
  	end as MnR_FFS_flag
  	, clm_dnl_f
 	, allw_amt_fnl
@@ -552,7 +542,6 @@ select
     , group_ind_fnl
     , tfm_include_flag
     , migration_source
-    --, tfm_product_new_fnl
     , product_level_3_fnl
 	, national_pilot_flag
 	, case when brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' then 0
@@ -562,7 +551,7 @@ select
 		end as OAH_flag
 	, case when (
 			   (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and migration_source != 'OAH' and product_level_3_fnl = 'DUAL' and global_cap = 'NA')
-			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA') 
+			or (entity in ('COSMOS', 'CSP') and brand_fnl = 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and st_abbr_cd = 'MD' and global_cap = 'NA')
 			or (entity in ('COSMOS', 'CSP') and brand_fnl != 'C&S' and fst_srvc_year = '2024' and migration_source = 'OAH' and market_fnl = 'MD' and global_cap = 'NA')
 			) then 1
 		else 0
@@ -574,10 +563,10 @@ select
 		else 0
 	end as MnR_ISNP_flag
 	, case when (
-			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1) 
- 		 ) then 1 
- 		else 0 
+			(brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 or (brand_fnl = 'M&R' and global_cap = 'NA' and product_level_3_fnl not in ('DUAL', 'INSTITUTIONAL') and tfm_include_flag = 1)
+ 		 ) then 1
+ 		else 0
  	end as MnR_FFS_flag
  	, clm_dnl_f
 	, allw_amt_fnl
@@ -596,10 +585,8 @@ select
 from cte_union;
 
 
--- Aggregate to sum(allowed) and sum(paid) before VpE analysis
--- Adding claim_status
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_no_denied_${paid_thru}
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_no_denied_${paid_thru} as
+-- Aggregate
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_no_denied_${paid_thru} as
 with aggregated as (
 select
 	population
@@ -627,7 +614,6 @@ select
 	, group_ind_fnl
 	, tfm_include_flag
 	, migration_source
-	--, tfm_product_new_fnl
 	, product_level_3_fnl
 	, national_pilot_flag
 	, clm_dnl_f
@@ -660,23 +646,20 @@ group by
 	, group_ind_fnl
 	, tfm_include_flag
 	, migration_source
-	--, tfm_product_new_fnl
 	, product_level_3_fnl
 	, national_pilot_flag
 	, clm_dnl_f
 )
 select
 	*
-	, iff(sum(allw_amt_fnl) over (partition by visit_id, fst_srvc_dt, category_2)  > 0.01, 'Paid', 'Denied') as claim_status -- reserving logic from original script
+	, iff(sum(allw_amt_fnl) over (partition by visit_id, fst_srvc_dt, category_2)  > 0.01, 'Paid', 'Denied') as claim_status
 from aggregated
 ;
 
 
--- Defining visits ranking structure
--- Grouping proc_cd into mbmserv_dtl (PT/OT/ST, )
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_no_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_no_denied_${paid_thru} as
-select 
+-- VPE 1
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_no_denied_${paid_thru} as
+select
     entity
     , concat(mbi, '-', category_2) as mbi_key
 	, component
@@ -719,8 +702,7 @@ group by
 ;
 
 
--- Mark new episode
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_no_denied_${paid_thru};
+-- VPE 2 - Mark new episode
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_no_denied_${paid_thru} as
 select
 	mbi_key
@@ -743,36 +725,36 @@ select
     , clm_dnl_f
     , allowed
     , paid
- 	, lag(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt) 
+ 	, lag(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt)
  	as prev_srvc_dt
     , datediff('day'
     		, lag(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt)
-    		, fst_srvc_dt) 
+    		, fst_srvc_dt)
     as visit_day_diff
     , iff(datediff('day'
     		, lag(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt)
-    		, fst_srvc_dt) > 30, 1 , 0) 
+    		, fst_srvc_dt) > 30, 1 , 0)
     as ep_flag
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_${paid_thru}
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_no_denied_${paid_thru}
 ;
 
 
--- Episodes
+-- VPE 3 - Episodes
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru} as
-with ep_numbering as 
+with ep_numbering as
 (
 select
 	*
-  	, sum(iff(prev_srvc_dt is null, 1, ep_flag)) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt rows between unbounded preceding and current row) 
+  	, sum(iff(prev_srvc_dt is null, 1, ep_flag)) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt rows between unbounded preceding and current row)
   	as cmltv_episodes
 from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_no_denied_${paid_thru}
 )
-select 
+select
 	mbi_key
 	, fst_srvc_dt
 	, prev_srvc_dt
 	, visit_day_diff
-	, iff(prev_srvc_dt is null, 1, ep_flag) as ep_flag 
+	, iff(prev_srvc_dt is null, 1, ep_flag) as ep_flag
 	, cmltv_episodes
 	, min(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag, cmltv_episodes) as ep_start_dt
 	, min(min_hcta_paid_dt) over (partition by mbi_key, national_pilot_flag, cmltv_episodes) as ep_hcta_paid_dt
@@ -792,13 +774,14 @@ select
     , claim_status
     , clm_dnl_f
     , allowed
-    , paid    
+    , paid
 from ep_numbering
 ;
 
+
 -- Episodes summary
 create or replace table tmp_1m.knd_mbm_episodes_summary_no_denied_${paid_thru} as
-select 
+select
 	'EPISODES' as data_type
 	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
 	, to_char(ep_start_dt, 'yyyy') as ep_start_year
@@ -826,8 +809,8 @@ select
 	, 0 as sum_paid
 	, 0 as mbr_count
 from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru}
-where ep_flag = 1  -- Filter for only episode-starting visits
-group by 
+where ep_flag = 1
+group by
 	to_char(ep_start_dt, 'yyyyMM')
 	, to_char(ep_start_dt, 'yyyy')
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
@@ -844,6 +827,7 @@ group by
 	, claim_status
 	, clm_dnl_f
 ;
+
 
 -- Visits summary
 create or replace table tmp_1m.knd_mbm_visits_summary_no_denied_${paid_thru} as
@@ -892,9 +876,11 @@ group by
     , national_pilot_flag
     , population
     , claim_status
+    , clm_dnl_f
     , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
     , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5)
 ;
+
 
 -- Stack VISITS and EPISODES
 create or replace table tmp_1m.knd_mbm_visits_episodes_stacked_no_denied_${paid_thru} as
@@ -904,7 +890,7 @@ select * from tmp_1m.knd_mbm_episodes_summary_no_denied_${paid_thru}
 ;
 
 
--- Summary 1
+-- VPE Summary
 create or replace table tmp_1m.knd_mbm_vpe_summary_no_denied_${paid_thru} as
 select
     ep_start_month
@@ -958,7 +944,7 @@ group by
 ;
 
 
--- Remove 'NA' population before loading into Excel
+-- Extract
 create or replace table tmp_1m.knd_mbm_visits_episodes_extract_no_denied_${paid_thru} as
 select
 	population
@@ -971,16 +957,19 @@ select
     , sum(total_episodes) as episode_count
     , sum(total_visits) as visit_count
     , sum(allowed) as allowed
-from tmp_1m.knd_mbm_vpe_summary_${paid_thru}
+from tmp_1m.knd_mbm_vpe_summary_no_denied_${paid_thru}
 where ep_start_month >= '202501'
-group by 
+group by
 	population
 	, prov_tin
 	, optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
     , category_1
     , market_fnl
-;-- ============================================================
+;
+
+
+-- ============================================================
 -- WITH DENIED: Same pipeline as no_denied but includes denied claims
 -- (clm_dnl_f / dnl_f filter commented out)
 -- ============================================================
