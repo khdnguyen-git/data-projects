@@ -1629,6 +1629,40 @@ from aggregated
 ;
 
 
+
+
+select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_202602 where fst_srvc_year = '2025'
+order by visit_id, fst_srvc_month
+
+
+1A00CX0GA19_20230427_ATL00640188762
+
+
+select 
+	fst_srvc_month
+	, count(*)
+	, sum(allowed) 
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_202602 
+where fst_srvc_year = '2025' 
+	and visit_id = '1A00AM6QH05_20251105_KEN00640187148'
+group by 1
+order by 1
+;
+
+select 
+	fst_srvc_month
+	, count(*)
+	, sum(allowed) 
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_no_denied_202602 
+where fst_srvc_year = '2025' 
+	and visit_id = '1A00AM6QH05_20251105_KEN00640187148'
+group by 1
+order by 1
+;
+
+
+
+
 -- VPE 1 (with denied)
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_${paid_thru} as
 select
@@ -1945,31 +1979,30 @@ group by
 -- COMPARISON QUERIES: with_denied vs no_denied
 -- By population, optum_tin_flag | ep_start_month >= '202501'
 -- ============================================================
-
 -- 1. Compare AGGREGATED tables
 -- Note: aggregated doesn't have ep_start_month, so we filter on fst_srvc_month >= '202501'
 select
     'aggregated' as table_name
     , a.population
     , a.optum_tin_flag
-    , a.nd_allowed
-    , b.wd_allowed
-    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
-    , a.nd_rows
-    , b.wd_rows
-    , coalesce(b.wd_rows, 0) - coalesce(a.nd_rows, 0) as delta_rows
+    , a.no_denied_allowed
+    , b.with_denied_allowed
+    , coalesce(a.no_denied_allowed, 0) - coalesce(b.with_denied_allowed, 0) as diff_allowed
+    , a.no_denied_rows
+    , b.with_denied_rows
+    , coalesce(a.no_denied_rows, 0) - coalesce(b.with_denied_rows, 0) as diff_rows
 from (
     select population, optum_tin_flag
-        , sum(allw_amt_fnl) as nd_allowed
-        , count(*) as nd_rows
+        , sum(allw_amt_fnl) as no_denied_allowed
+        , count(*) as no_denied_rows
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_no_denied_${paid_thru}
     where fst_srvc_month >= '202501'
     group by population, optum_tin_flag
 ) as a
 full outer join (
     select population, optum_tin_flag
-        , sum(allw_amt_fnl) as wd_allowed
-        , count(*) as wd_rows
+        , sum(allw_amt_fnl) as with_denied_allowed
+        , count(*) as with_denied_rows
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_with_denied_${paid_thru}
     where fst_srvc_month >= '202501'
     group by population, optum_tin_flag
@@ -1985,34 +2018,34 @@ select
     'vpe_3' as table_name
     , coalesce(a.population, b.population) as population
     , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
-    , a.nd_allowed
-    , b.wd_allowed
-    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
-    , a.nd_visits
-    , b.wd_visits
-    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
-    , a.nd_episodes
-    , b.wd_episodes
-    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
-    , a.nd_members
-    , b.wd_members
-    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
+    , a.no_denied_allowed
+    , b.with_denied_allowed
+    , coalesce(a.no_denied_allowed, 0) - coalesce(b.with_denied_allowed, 0) as diff_allowed
+    , a.no_denied_visits
+    , b.with_denied_visits
+    , coalesce(a.no_denied_visits, 0) - coalesce(b.with_denied_visits, 0) as diff_visits
+    , a.no_denied_episodes
+    , b.with_denied_episodes
+    , coalesce(a.no_denied_episodes, 0) - coalesce(b.with_denied_episodes, 0) as diff_episodes
+    , a.no_denied_members
+    , b.with_denied_members
+    , coalesce(a.no_denied_members, 0) - coalesce(b.with_denied_members, 0) as diff_members
 from (
     select population, optum_tin_flag
-        , sum(allowed) as nd_allowed
-        , count(distinct concat(visit_id, fst_srvc_dt)) as nd_visits
-        , sum(ep_flag) as nd_episodes
-        , count(distinct mbi_key) as nd_members
+        , sum(allowed) as no_denied_allowed
+        , count(distinct concat(visit_id, fst_srvc_dt)) as no_denied_visits
+        , sum(ep_flag) as no_denied_episodes
+        , count(distinct mbi_key) as no_denied_members
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru}
     where to_char(ep_start_dt, 'yyyyMM') >= '202501'
     group by population, optum_tin_flag
 ) as a
 full outer join (
     select population, optum_tin_flag
-        , sum(allowed) as wd_allowed
-        , count(distinct concat(visit_id, fst_srvc_dt)) as wd_visits
-        , sum(ep_flag) as wd_episodes
-        , count(distinct mbi_key) as wd_members
+        , sum(allowed) as with_denied_allowed
+        , count(distinct concat(visit_id, fst_srvc_dt)) as with_denied_visits
+        , sum(ep_flag) as with_denied_episodes
+        , count(distinct mbi_key) as with_denied_members
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_with_denied_${paid_thru}
     where to_char(ep_start_dt, 'yyyyMM') >= '202501'
     group by population, optum_tin_flag
@@ -2028,34 +2061,34 @@ select
     'vpe_summary' as table_name
     , coalesce(a.population, b.population) as population
     , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
-    , a.nd_allowed
-    , b.wd_allowed
-    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
-    , a.nd_visits
-    , b.wd_visits
-    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
-    , a.nd_episodes
-    , b.wd_episodes
-    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
-    , a.nd_members
-    , b.wd_members
-    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
+    , a.no_denied_allowed
+    , b.with_denied_allowed
+    , coalesce(a.no_denied_allowed, 0) - coalesce(b.with_denied_allowed, 0) as diff_allowed
+    , a.no_denied_visits
+    , b.with_denied_visits
+    , coalesce(a.no_denied_visits, 0) - coalesce(b.with_denied_visits, 0) as diff_visits
+    , a.no_denied_episodes
+    , b.with_denied_episodes
+    , coalesce(a.no_denied_episodes, 0) - coalesce(b.with_denied_episodes, 0) as diff_episodes
+    , a.no_denied_members
+    , b.with_denied_members
+    , coalesce(a.no_denied_members, 0) - coalesce(b.with_denied_members, 0) as diff_members
 from (
     select population, optum_tin_flag
-        , sum(allowed) as nd_allowed
-        , sum(total_visits) as nd_visits
-        , sum(total_episodes) as nd_episodes
-        , sum(mbr_count) as nd_members
+        , sum(allowed) as no_denied_allowed
+        , sum(total_visits) as no_denied_visits
+        , sum(total_episodes) as no_denied_episodes
+        , sum(mbr_count) as no_denied_members
     from tmp_1m.knd_mbm_vpe_summary_no_denied_${paid_thru}
     where ep_start_month >= '202501'
     group by population, optum_tin_flag
 ) as a
 full outer join (
     select population, optum_tin_flag
-        , sum(allowed) as wd_allowed
-        , sum(total_visits) as wd_visits
-        , sum(total_episodes) as wd_episodes
-        , sum(mbr_count) as wd_members
+        , sum(allowed) as with_denied_allowed
+        , sum(total_visits) as with_denied_visits
+        , sum(total_episodes) as with_denied_episodes
+        , sum(mbr_count) as with_denied_members
     from tmp_1m.knd_mbm_vpe_summary_with_denied_${paid_thru}
     where ep_start_month >= '202501'
     group by population, optum_tin_flag
@@ -2068,40 +2101,37 @@ order by coalesce(a.population, b.population), coalesce(a.optum_tin_flag, b.optu
 
 -- 4. Compare EXTRACT tables (already filtered to ep_start_month >= '202501' in table definition)
 select
-    'extract' as table_name
-    , coalesce(a.population, b.population) as population
+    coalesce(a.population, b.population) as population
     , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
-    , a.nd_allowed
-    , b.wd_allowed
-    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
-    , a.nd_visits
-    , b.wd_visits
-    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
-    , a.nd_episodes
-    , b.wd_episodes
-    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
-    , a.nd_members
-    , b.wd_members
-    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
+    , a.no_denied_allowed
+    , b.with_denied_allowed
+    , coalesce(a.no_denied_allowed, 0) - coalesce(b.with_denied_allowed, 0) as diff_allowed
+    , a.no_denied_visits
+    , b.with_denied_visits
+    , coalesce(a.no_denied_visits, 0) - coalesce(b.with_denied_visits, 0) as diff_visits
+    , a.no_denied_episodes
+    , b.with_denied_episodes
+    , coalesce(a.no_denied_episodes, 0) - coalesce(b.with_denied_episodes, 0) as diff_episodes
+    , a.no_denied_members
+    , b.with_denied_members
+    , coalesce(a.no_denied_members, 0) - coalesce(b.with_denied_members, 0) as diff_members
 from (
     select population, optum_tin_flag
-        , sum(allowed) as nd_allowed
-        , sum(visit_count) as nd_visits
-        , sum(episode_count) as nd_episodes
-        , sum(unique_member_count) as nd_members
+        , sum(allowed) as no_denied_allowed
+        , sum(visit_count) as no_denied_visits
+        , sum(episode_count) as no_denied_episodes
+        , sum(unique_member_count) as no_denied_members
     from tmp_1m.knd_mbm_visits_episodes_extract_no_denied_${paid_thru}
     group by population, optum_tin_flag
 ) as a
 full outer join (
     select population, optum_tin_flag
-        , sum(allowed) as wd_allowed
-        , sum(visit_count) as wd_visits
-        , sum(episode_count) as wd_episodes
-        , sum(unique_member_count) as wd_members
+        , sum(allowed) as with_denied_allowed
+        , sum(visit_count) as with_denied_visits
+        , sum(episode_count) as with_denied_episodes
+        , sum(unique_member_count) as with_denied_members
     from tmp_1m.knd_mbm_visits_episodes_extract_with_denied_${paid_thru}
     group by population, optum_tin_flag
 ) as b
     on a.population = b.population
     and a.optum_tin_flag = b.optum_tin_flag
-order by coalesce(a.population, b.population), coalesce(a.optum_tin_flag, b.optum_tin_flag)
-;
