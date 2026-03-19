@@ -1033,7 +1033,7 @@ select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_${previous
 ;
 
 -- QA: final ep_start_mo spot check
-select ep_start_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes
+select ep_start_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes, sum(mms) as mbr_count
 from tmp_1q.kn_mbm_${current_month}
 where ep_start_mo >= '202401'
 group by 1

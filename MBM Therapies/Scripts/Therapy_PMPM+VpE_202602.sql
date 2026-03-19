@@ -32,8 +32,57 @@
 @set paid_thru = 202602
 show variables;
 
+
+select distinct len(tin) from tmp_1y.cl_therapy_optum_tins_202602
+
+select distinct len(tin) from fichsrv.nce_pr_f
+
+select distinct len(prov_tin) from fichsrv.glxy_pr_f
+
+
+select tin from fichsrv.dcsp_op_f
+
+
+select tin, substring(tin, 1, 9), substring(tin, 0, 9) from fichsrv.dcsp_op_f
+
+
+
+select optum_tin_flag, count(*) from tmp_1m.knd_mbm_cosmos_claims_${paid_thru}
+group by 1
+0	53002449
+1	14431637
+
+select optum_tin_flag, count(*) from tmp_1m.knd_mbm_csp_claims_${paid_thru}  
+group by 1
+
+select flag, count(*) from (
+select 
+	a.tin as tin_nice
+	, b.tin
+	, case when b.tin is null then 0 else 1 end as flag
+from fichsrv.nce_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
+on substring(a.tin, 1, 7) = b.tin
+)
+group by 1 
+
+select optum_tin_flag, count(*) from tmp_1m.knd_mbm_nice_claims_${paid_thru}
+group by 1
+
+;
+
 select * from tmp_1m.knd_mbm_cosmos_claims_${paid_thru}
 where prov_tin = '860208451' and fst_srvc_month = '202503'
+
+
+select sum(allw_amt_fnl) from fichsrv.glxy_op_f
+where clm_dnl_f in ('D', 'Y')
+
+
+select distinct clm_dnl_f from fichsrv.glxy_pr_f
+
+select distinct dnl_f from fichsrv.nce_pr_f
+
 
 -- COSMOS claims
 drop table if exists tmp_1m.knd_mbm_cosmos_claims_${paid_thru};
@@ -101,7 +150,7 @@ where a.brand_fnl in ('M&R', 'C&S')
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.clm_dnl_f, '') not in ('D', 'Y')
+	and a.clm_dnl_f not in ('D', 'Y')
 union all
 select
 	'COSMOS' as entity
@@ -166,7 +215,7 @@ where a.brand_fnl in ('M&R', 'C&S')
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.clm_dnl_f, '') not in ('D', 'Y')
+	and a.clm_dnl_f not in ('D', 'Y')
 ;
 
 -- CSP claims
@@ -216,7 +265,7 @@ select
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_pr_f a
 left join tmp_1y.cl_therapy_optum_tins_202602 b
-    on a.tin = b.tin
+    on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'	
 	and a.global_cap = 'NA'
 	and a.plan_level_2_fnl not in ('PFFS')			
@@ -235,7 +284,7 @@ where a.brand_fnl = 'C&S'
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.clm_dnl_f, '') not in ('D', 'Y')
+	and a.clm_dnl_f not in ('D', 'Y')
 union all
 select
 	'CSP' as entity
@@ -281,7 +330,7 @@ select
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_op_f a
 left join tmp_1y.cl_therapy_optum_tins_202602 b
-    on a.tin = b.tin
+    on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
 	and a.plan_level_2_fnl not in ('PFFS')			
@@ -300,7 +349,7 @@ where a.brand_fnl = 'C&S'
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.clm_dnl_f, '') not in ('D', 'Y')
+	and a.clm_dnl_f not in ('D', 'Y')
 ;
 
 -- NICE claims
@@ -370,7 +419,7 @@ where a.brand_fnl = 'M&R'
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.dnl_f, '') not in ('D', 'Y')
+	and a.dnl_f not in ('D', 'Y')
 union all
 select
 	'NICE' as entity
@@ -435,7 +484,7 @@ where a.brand_fnl = 'M&R'
 	 	a.rvnu_cd in ('0430','0431','0432','0433','0434','0439','0420','0421','0422','0423','0424','0429','0440','0441','0442','0443','0444','0449') )
 	and a.proc_cd not in ('92630','92633','97001','97002','97003','97004','97545','97546','98943','G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131')
 	and a.fst_srvc_year >= '2023'
-	and coalesce(a.dnl_f, '') not in ('D', 'Y')
+	and a.dnl_f not in ('D', 'Y')
 ;
 
 -- Stack COSMOS + CSP + NICE claims
@@ -696,14 +745,6 @@ select
 from aggregated
 ;
 
-select * from tmp_1m.knd_mbm_cosmos_csp_nice_claims_${paid_thru}
-where ahrq_diag_dtl_catgy_desc = 'OTHER GASTROINTESTINAL DISORDE' and prov_tin = '621768105' and fst_srvc_month = '202509'
-
-
-select * from fichsrv.glxy_op_f
-where eventkey = '7NE9NE6PX29_20250929_KEN00520000140'
-
-
 
 -- Defining visits ranking structure
 -- Grouping proc_cd into mbmserv_dtl (PT/OT/ST, )
@@ -930,20 +971,7 @@ select * from tmp_1m.knd_mbm_episodes_summary_${paid_thru}
 ;
 
 
-select * from tmp_1m.knd_mbm_visits_episodes_stacked_${paid_thru} 
-where prov_tin = '621768105' and ep_start_month >= '202501'
-
-
-select data_type, prov_tin, visit_month, ep_start_month, category_1, ahrq_diag_dtl_catgy_desc, population, n_episodes, n_visits, sum_allowed, mbr_count from tmp_1m.knd_mbm_visits_episodes_stacked_${paid_thru}
-where prov_tin = '621768105' and category_1 not in ('Other', 'Chiro') and ((data_type = 'VISITS' and visit_month >= '202501') or (data_type = 'EPISODES' and ep_start_month >= '202501'))
-order by visit_month, ep_start_month
-
-select prov_tin, optum_tin_flag, category_1, market_fnl, sum(mbr_count), sum(total_episodes), sum(total_visits), sum(allowed) from tmp_1m.knd_mbm_vpe_summary_${paid_thru}
-where prov_tin = '621768105' and category_1 not in ('Other', 'Chiro') and ((visit_month >= '202501') or (ep_start_month >= '202501'))
-group by 1,2,3,4,5
-
-
--- Summary
+-- Summary 1
 create or replace table tmp_1m.knd_mbm_vpe_summary_${paid_thru} as
 select
     ep_start_month
@@ -995,14 +1023,43 @@ group by
 ;
 
 
--- Summary
-create or replace table tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru} as
+-- Remove 'NA' population before loading into Excel
+create or replace table tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru} as
 select
 	population
-	, ep_start_month
-	, visit_month
 	, prov_tin
 	, iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
+    , ahrq_diag_dtl_catgy_desc
+    , category_1 as category
+    , market_fnl
+    , sum(mbr_count) as unique_member_count
+    , sum(total_episodes) as episode_count
+    , sum(total_visits) as visit_count
+    , sum(allowed) as allowed
+from tmp_1m.knd_mbm_vpe_summary_${paid_thru}
+where ep_start_month >= '202501'
+group by 
+	population
+	, prov_tin
+	, iff(optum_tin_flag = 1, 'Y', 'N') 
+    , ahrq_diag_dtl_catgy_desc
+    , category_1
+    , market_fnl
+;
+
+select * from tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru}
+where prov_tin = '921313506'
+
+
+
+-- Summary 2
+create or replace table tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru} as
+with agg as (
+select
+    population
+    , prov_tin
+    , ep_start_month
+    , iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
     , category_1 as category
     , ahrq_diag_dtl_catgy_desc
     , market_fnl    
@@ -1012,17 +1069,62 @@ select
     , sum(sum_paid) as paid
     , sum(mbr_count) as mbr_count
 from tmp_1m.knd_mbm_visits_episodes_stacked_${paid_thru}
-where population != 'NA' and category not in ('Other', 'Chiro') and ((data_type = 'VISITS' and visit_month >= '202501') or (data_type = 'EPISODES' and ep_start_month >= '202501'))
+where population != 'NA'
 group by
-	population
-	, ep_start_month
-	, visit_month
-	, prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N')
+    population
+    , prov_tin
+    , ep_start_month
+    , iff(optum_tin_flag = 1, 'Y', 'N')
     , category_1
     , ahrq_diag_dtl_catgy_desc
+    , market_fnl
+)
+select 
+    population
+    , prov_tin
+    , optum_tin_flag
+    , category
+    , ahrq_diag_dtl_catgy_desc
     , market_fnl    
+    , sum(total_episodes) as episode_count
+    , sum(total_visits) as visit_count
+    , sum(allowed) as allowed
+    , sum(paid) as paid
+    , sum(mbr_count) as unique_member_count
+from agg
+where ep_start_month >= '202501'
+group by
+    population
+    , prov_tin
+    , optum_tin_flag
+    , category
+    , ahrq_diag_dtl_catgy_desc
+    , market_fnl
 ;
+
+
+select * from tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru}
+where prov_tin = '921313506'
+;
+
+select count(*) from tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru}
+
+
+select count(*) from tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru}
+
+select * from tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru}
+where prov_tin = '921313506'
+
+select
+	population
+	, optum_tin_flag
+    , sum(episode_count)
+    , sum(visit_count)
+    , sum(allowed)
+    , sum(unique_member_count)
+from tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru}
+group by 1,2
+
 
 select 	
 	population
@@ -1136,29 +1238,6 @@ group by 1,2,3,4,5,6,7,8
 ;
 
 
--- Remove 'NA' population before loading into Excel
-create or replace table tmp_1m.knd_mbm_visits_episodes_extract_${paid_thru} as
-select
-	population
-	, prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
-    , ahrq_diag_dtl_catgy_desc
-    , category_1 as category
-    , market_fnl
-    , sum(mbr_count) as unique_member_count
-    , sum(total_episodes) as episode_count
-    , sum(total_visits) as visit_count
-    , sum(allowed) as allowed
-from tmp_1m.knd_mbm_vpe_summary_${paid_thru}
-where category not in ('Other', 'Chiro') and ((data_type = 'VISITS' and visit_month >= '202501') or (data_type = 'EPISODES' and ep_start_month >= '202501'))
-group by 
-	population
-	, prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N') 
-    , ahrq_diag_dtl_catgy_desc
-    , category_1
-    , market_fnl
-;
 
 
 
@@ -1223,21 +1302,28 @@ where prov_tin = '921313506'
 
 select 	
 	population
-	, ep_start_month
-	, visit_month
 	, prov_tin
 	, optum_tin_flag
     , category
     , ahrq_diag_dtl_catgy_desc
-    , market_fnl    
+    , market_fnl
     , sum(total_episodes) as total_episodes
     , sum(total_visits) as total_visits
     , sum(allowed) as allowed
     , sum(mbr_count) as mbr_count
 from tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru}
 where prov_tin = '921313506'
-group by 1,2,3,4,5,6,7,8
+group by 1,2,3,4,5,6
 ;
+
+select * from tmp_1m.knd_mbm_vpe_tin_summary_${paid_thru}
+where prov_tin = '921313506'
+
+
+
+
+
+
 
 select
 	population
@@ -1290,6 +1376,11 @@ order by visit_id, fst_srvc_dt, allw_amt_fnl
 select visit_id, service_code, fst_srvc_dt, fst_srvc_month, proc_cd, prov_tin, mbi, category_1, category_2, primary_diag_cd, ahrq_diag_dtl_catgy_desc, allw_amt_fnl from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${paid_thru} where prov_tin = '921313506' and visit_id = '3KW2XQ1WJ12_20250605_EVC00710008114'
 order by visit_id, fst_srvc_dt, allw_amt_fnl
 
+
+-- Issues
+-- TIN has multiple populations
+-- TIN has multiple categories
+-- 
 
 
 select prov_tin, ep_start_month, visit_month, category_2, category_1, ahrq_diag_dtl_catgy_desc, total_episodes, total_visits, allowed, mbr_count from tmp_1m.knd_mbm_vpe_summary_${paid_thru} where prov_tin = '921313506' and visit_month >= '202406'
