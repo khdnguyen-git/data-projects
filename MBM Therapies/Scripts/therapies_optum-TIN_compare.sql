@@ -980,16 +980,13 @@ group by
     , ahrq_diag_dtl_catgy_desc
     , category_1
     , market_fnl
-;
-
--- ============================================================
+;-- ============================================================
 -- WITH DENIED: Same pipeline as no_denied but includes denied claims
 -- (clm_dnl_f / dnl_f filter commented out)
 -- ============================================================
 
 -- COSMOS claims (with denied)
-drop table if exists tmp_1m.knd_mbm_cosmos_claims_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_claims_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_claims_with_denied_${paid_thru} as
 select
 	'COSMOS' as entity
 	, a.component
@@ -1032,8 +1029,8 @@ select
     , a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.glxy_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.glxy_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -1097,8 +1094,8 @@ select
 	, a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.glxy_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.glxy_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -1123,8 +1120,7 @@ where a.brand_fnl in ('M&R', 'C&S')
 
 
 -- CSP claims (with denied)
-drop table if exists tmp_1m.knd_mbm_csp_claims_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_csp_claims_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_csp_claims_with_denied_${paid_thru} as
 select
 	'CSP' as entity
 	, a.component
@@ -1167,8 +1163,8 @@ select
 	, a.clm_dnl_f
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.dcsp_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.dcsp_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -1232,8 +1228,8 @@ select
 	, a.clm_dnl_f
     , a.allw_amt_fnl
 	, a.net_pd_amt_fnl
-from fichsrv.dcsp_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.dcsp_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -1258,8 +1254,7 @@ where a.brand_fnl = 'C&S'
 
 
 -- NICE claims (with denied)
-drop table if exists tmp_1m.knd_mbm_nice_claims_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_nice_claims_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_nice_claims_with_denied_${paid_thru} as
 select
 	'NICE' as entity
 	, a.component
@@ -1302,8 +1297,8 @@ select
     , a.dnl_f as clm_dnl_f
 	, a.calc_allw as allw_amt_fnl
 	, a.calc_net_pd as net_pd_amt_fnl
-from fichsrv.nce_pr_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.nce_pr_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -1366,8 +1361,8 @@ select
     , a.dnl_f as clm_dnl_f
 	, a.allw_amt as allw_amt_fnl
 	, a.net_pd_amt as net_pd_amt_fnl
-from fichsrv.nce_op_f a
-left join tmp_1y.cl_therapy_optum_tins_202602 b
+from fichsrv.nce_op_f as a
+left join tmp_1y.cl_therapy_optum_tins_202602 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -1391,8 +1386,7 @@ where a.brand_fnl = 'M&R'
 
 
 -- Stack COSMOS + CSP + NICE claims (with denied)
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_with_denied_${paid_thru} as
 with cte_union as (
 select
 	entity
@@ -1575,8 +1569,7 @@ from cte_union;
 
 
 -- Aggregate (with denied)
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_with_denied_${paid_thru} as
 with aggregated as (
 select
 	population
@@ -1648,8 +1641,7 @@ from aggregated
 
 
 -- VPE 1 (with denied)
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_${paid_thru};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_${paid_thru} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_with_denied_${paid_thru} as
 select
     entity
     , concat(mbi, '-', category_2) as mbi_key
@@ -1694,7 +1686,6 @@ group by
 
 
 -- VPE 2 - Mark new episode (with denied)
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_with_denied_${paid_thru};
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_with_denied_${paid_thru} as
 select
 	mbi_key
@@ -1868,6 +1859,7 @@ group by
     , national_pilot_flag
     , population
     , claim_status
+    , clm_dnl_f
     , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
     , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5)
 ;
@@ -1969,14 +1961,14 @@ group by
 -- Note: aggregated doesn't have ep_start_month, so we filter on fst_srvc_month >= '202501'
 select
     'aggregated' as table_name
-    , nd.population
-    , nd.optum_tin_flag
-    , nd.nd_allowed
-    , wd.wd_allowed
-    , coalesce(wd.wd_allowed, 0) - coalesce(nd.nd_allowed, 0) as delta_allowed
-    , nd.nd_rows
-    , wd.wd_rows
-    , coalesce(wd.wd_rows, 0) - coalesce(nd.nd_rows, 0) as delta_rows
+    , a.population
+    , a.optum_tin_flag
+    , a.nd_allowed
+    , b.wd_allowed
+    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
+    , a.nd_rows
+    , b.wd_rows
+    , coalesce(b.wd_rows, 0) - coalesce(a.nd_rows, 0) as delta_rows
 from (
     select population, optum_tin_flag
         , sum(allw_amt_fnl) as nd_allowed
@@ -1984,7 +1976,7 @@ from (
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_no_denied_${paid_thru}
     where fst_srvc_month >= '202501'
     group by population, optum_tin_flag
-) nd
+) as a
 full outer join (
     select population, optum_tin_flag
         , sum(allw_amt_fnl) as wd_allowed
@@ -1992,30 +1984,30 @@ full outer join (
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_with_denied_${paid_thru}
     where fst_srvc_month >= '202501'
     group by population, optum_tin_flag
-) wd
-    on nd.population = wd.population
-    and nd.optum_tin_flag = wd.optum_tin_flag
-order by nd.population, nd.optum_tin_flag
+) as b
+    on a.population = b.population
+    and a.optum_tin_flag = b.optum_tin_flag
+order by a.population, a.optum_tin_flag
 ;
 
 
 -- 2. Compare VPE_3 tables
 select
     'vpe_3' as table_name
-    , coalesce(nd.population, wd.population) as population
-    , coalesce(nd.optum_tin_flag, wd.optum_tin_flag) as optum_tin_flag
-    , nd.nd_allowed
-    , wd.wd_allowed
-    , coalesce(wd.wd_allowed, 0) - coalesce(nd.nd_allowed, 0) as delta_allowed
-    , nd.nd_visits
-    , wd.wd_visits
-    , coalesce(wd.wd_visits, 0) - coalesce(nd.nd_visits, 0) as delta_visits
-    , nd.nd_episodes
-    , wd.wd_episodes
-    , coalesce(wd.wd_episodes, 0) - coalesce(nd.nd_episodes, 0) as delta_episodes
-    , nd.nd_members
-    , wd.wd_members
-    , coalesce(wd.wd_members, 0) - coalesce(nd.nd_members, 0) as delta_members
+    , coalesce(a.population, b.population) as population
+    , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
+    , a.nd_allowed
+    , b.wd_allowed
+    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
+    , a.nd_visits
+    , b.wd_visits
+    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
+    , a.nd_episodes
+    , b.wd_episodes
+    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
+    , a.nd_members
+    , b.wd_members
+    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
 from (
     select population, optum_tin_flag
         , sum(allowed) as nd_allowed
@@ -2025,7 +2017,7 @@ from (
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru}
     where to_char(ep_start_dt, 'yyyyMM') >= '202501'
     group by population, optum_tin_flag
-) nd
+) as a
 full outer join (
     select population, optum_tin_flag
         , sum(allowed) as wd_allowed
@@ -2035,30 +2027,30 @@ full outer join (
     from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_with_denied_${paid_thru}
     where to_char(ep_start_dt, 'yyyyMM') >= '202501'
     group by population, optum_tin_flag
-) wd
-    on nd.population = wd.population
-    and nd.optum_tin_flag = wd.optum_tin_flag
-order by coalesce(nd.population, wd.population), coalesce(nd.optum_tin_flag, wd.optum_tin_flag)
+) as b
+    on a.population = b.population
+    and a.optum_tin_flag = b.optum_tin_flag
+order by coalesce(a.population, b.population), coalesce(a.optum_tin_flag, b.optum_tin_flag)
 ;
 
 
 -- 3. Compare VPE_SUMMARY tables
 select
     'vpe_summary' as table_name
-    , coalesce(nd.population, wd.population) as population
-    , coalesce(nd.optum_tin_flag, wd.optum_tin_flag) as optum_tin_flag
-    , nd.nd_allowed
-    , wd.wd_allowed
-    , coalesce(wd.wd_allowed, 0) - coalesce(nd.nd_allowed, 0) as delta_allowed
-    , nd.nd_visits
-    , wd.wd_visits
-    , coalesce(wd.wd_visits, 0) - coalesce(nd.nd_visits, 0) as delta_visits
-    , nd.nd_episodes
-    , wd.wd_episodes
-    , coalesce(wd.wd_episodes, 0) - coalesce(nd.nd_episodes, 0) as delta_episodes
-    , nd.nd_members
-    , wd.wd_members
-    , coalesce(wd.wd_members, 0) - coalesce(nd.nd_members, 0) as delta_members
+    , coalesce(a.population, b.population) as population
+    , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
+    , a.nd_allowed
+    , b.wd_allowed
+    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
+    , a.nd_visits
+    , b.wd_visits
+    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
+    , a.nd_episodes
+    , b.wd_episodes
+    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
+    , a.nd_members
+    , b.wd_members
+    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
 from (
     select population, optum_tin_flag
         , sum(allowed) as nd_allowed
@@ -2068,7 +2060,7 @@ from (
     from tmp_1m.knd_mbm_vpe_summary_no_denied_${paid_thru}
     where ep_start_month >= '202501'
     group by population, optum_tin_flag
-) nd
+) as a
 full outer join (
     select population, optum_tin_flag
         , sum(allowed) as wd_allowed
@@ -2078,30 +2070,30 @@ full outer join (
     from tmp_1m.knd_mbm_vpe_summary_with_denied_${paid_thru}
     where ep_start_month >= '202501'
     group by population, optum_tin_flag
-) wd
-    on nd.population = wd.population
-    and nd.optum_tin_flag = wd.optum_tin_flag
-order by coalesce(nd.population, wd.population), coalesce(nd.optum_tin_flag, wd.optum_tin_flag)
+) as b
+    on a.population = b.population
+    and a.optum_tin_flag = b.optum_tin_flag
+order by coalesce(a.population, b.population), coalesce(a.optum_tin_flag, b.optum_tin_flag)
 ;
 
 
 -- 4. Compare EXTRACT tables (already filtered to ep_start_month >= '202501' in table definition)
 select
     'extract' as table_name
-    , coalesce(nd.population, wd.population) as population
-    , coalesce(nd.optum_tin_flag, wd.optum_tin_flag) as optum_tin_flag
-    , nd.nd_allowed
-    , wd.wd_allowed
-    , coalesce(wd.wd_allowed, 0) - coalesce(nd.nd_allowed, 0) as delta_allowed
-    , nd.nd_visits
-    , wd.wd_visits
-    , coalesce(wd.wd_visits, 0) - coalesce(nd.nd_visits, 0) as delta_visits
-    , nd.nd_episodes
-    , wd.wd_episodes
-    , coalesce(wd.wd_episodes, 0) - coalesce(nd.nd_episodes, 0) as delta_episodes
-    , nd.nd_members
-    , wd.wd_members
-    , coalesce(wd.wd_members, 0) - coalesce(nd.nd_members, 0) as delta_members
+    , coalesce(a.population, b.population) as population
+    , coalesce(a.optum_tin_flag, b.optum_tin_flag) as optum_tin_flag
+    , a.nd_allowed
+    , b.wd_allowed
+    , coalesce(b.wd_allowed, 0) - coalesce(a.nd_allowed, 0) as delta_allowed
+    , a.nd_visits
+    , b.wd_visits
+    , coalesce(b.wd_visits, 0) - coalesce(a.nd_visits, 0) as delta_visits
+    , a.nd_episodes
+    , b.wd_episodes
+    , coalesce(b.wd_episodes, 0) - coalesce(a.nd_episodes, 0) as delta_episodes
+    , a.nd_members
+    , b.wd_members
+    , coalesce(b.wd_members, 0) - coalesce(a.nd_members, 0) as delta_members
 from (
     select population, optum_tin_flag
         , sum(allowed) as nd_allowed
@@ -2110,7 +2102,7 @@ from (
         , sum(unique_member_count) as nd_members
     from tmp_1m.knd_mbm_visits_episodes_extract_no_denied_${paid_thru}
     group by population, optum_tin_flag
-) nd
+) as a
 full outer join (
     select population, optum_tin_flag
         , sum(allowed) as wd_allowed
@@ -2119,8 +2111,8 @@ full outer join (
         , sum(unique_member_count) as wd_members
     from tmp_1m.knd_mbm_visits_episodes_extract_with_denied_${paid_thru}
     group by population, optum_tin_flag
-) wd
-    on nd.population = wd.population
-    and nd.optum_tin_flag = wd.optum_tin_flag
-order by coalesce(nd.population, wd.population), coalesce(nd.optum_tin_flag, wd.optum_tin_flag)
+) as b
+    on a.population = b.population
+    and a.optum_tin_flag = b.optum_tin_flag
+order by coalesce(a.population, b.population), coalesce(a.optum_tin_flag, b.optum_tin_flag)
 ;
