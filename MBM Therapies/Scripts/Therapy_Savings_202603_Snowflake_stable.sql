@@ -10,7 +10,7 @@
  * MEMBERSHIP DETAIL PROCESSING
  * Creates base membership table with pilot/national deployment flags
  *==============================================================================*/
-create or replace table tmp_1q.kn_mbm_dtl_${previous_month} as
+create or replace table tmp_1q.kn_mbm_dtl_${current_month} as
 select
 	fin_mbi_hicn_fnl
 	, fin_inc_month
@@ -33,7 +33,7 @@ select
 	, fin_product_level_2
 	, iff(special_network in ('ERICKSON'), 1, 0) as erk
 	, sgr_source_name
-from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_${previous_month} 
+from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_${current_month} 
 --from fichsrv.tre_membership
 where fin_inc_year > 2018
 	  and fin_brand = 'M&R'
@@ -49,69 +49,11 @@ union all
 select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_dtl_${previous_month}
 ;
 
-
---202509	6,269,883
---202601	5,440,439
-
-select 	fin_inc_month
-, migration_source
-, tfm_include
-, count(distinct fin_mbi_hicn_fnl)
-from tmp_1m.kn_mbm_mm_sample_${current_month}
-group by 1,2,3
-;
-
-select 	fin_inc_month
-	, global_cap
-	, tfm_include
-	, fin_product_level_3
-	, sgr_source_name
-	, migration_source
-	, population
-	, sum(mm) 
-from tmp_1m.kn_mbm_mm_sample_${current_month}
-group by 1,2,3,4,5,6,7
-;
-
-
-select fin_inc_month, sum(membership) from tmp_1m.ec_ip_dataset_04012026_mm_od
-where fin_inc_month in ('202509', '202601') and MnR_TOTAL_FFS_FLAG = 1 
-group by 1
-order by 1
-
---FIN_INC_MONTH	SUM(MEMBERSHIP)
---202509	5,893,327
---202601	5,437,207
-
-select fst_srvc_month, count(distinct fin_mbi_hicn_fnl)
-from tmp_1m.knd_mbm_cosmos_csp_nice_mm_${current_month}
-where population = 'M&R FFS (excl. DSNP)' and fst_srvc_month in ('202509', '202601')
-group by 1
-order by 1
-
---FST_SRVC_MONTH	COUNT(DISTINCT FIN_MBI_HICN_FNL)
---202509	5,855,828
---202601	5,437,207
-
-
-
-
-select fin_inc_month, sum(membership) from tmp_1m.ec_ip_dataset_04012026_mm_od
-where fin_inc_month in ('202509', '202601') and MnR_Dual_flag = 1 
-group by 1 
-order by 1
-
---FIN_INC_MONTH	SUM(MEMBERSHIP)
---202509	628,906
---202601	597,447
-
-
-
 /*==============================================================================
  * MEMBERSHIP SUMMARY CREATION
  * Aggregates membership data and creates summary tables for analysis
  *==============================================================================*/
-create or replace temporary table tmp_1q.kn_mbm_mshp_${previous_month} as
+create or replace temporary table tmp_1q.kn_mbm_mshp_${current_month} as
 select
     fin_inc_month as ep_start_mo
     , substring(market_fnl, 1, 2) as market_fnl
@@ -127,7 +69,7 @@ select
     , count(distinct fin_mbi_hicn_fnl) as mm
     , substring(fin_inc_month, 1, 4) as ep_yr
     , substring(fin_inc_month, 5, 2) as ep_mnth
-from tmp_1q.kn_mbm_dtl_${previous_month} as a
+from tmp_1q.kn_mbm_dtl_${current_month} as a
 where sgr_source_name = 'COSMOS'
 group by
     fin_inc_month
@@ -149,14 +91,7 @@ union all
 select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${previous_month}
 ;
 
-
-select sgr_source_name, sum(mm) from tmp_1q.kn_mbm_mshp_${previous_month} 
-where ep_start_mo = '202509'
-group by 1
-
-
-
-create or replace table tmp_1q.kn_mbm_mshp_sum1_${previous_month} as
+create or replace table tmp_1q.kn_mbm_mshp_sum1_${current_month} as
 select
 	'MM' as data_type
 	, ep_start_mo
@@ -170,24 +105,22 @@ select
 	, 0 as visit_cnt
 	, 0 as allowed_amt
 	, sum(mm) as mms
-from tmp_1q.kn_mbm_mshp_${previous_month}
+from tmp_1q.kn_mbm_mshp_${current_month}
 where population not in ('M&R DUALS', 'C&S DUALS')
 group by
 	ep_start_mo
 	, mbm_deploy_dt
 ;
 
-
-
-
-select sum(mms) from tmp_1q.kn_mbm_mshp_sum1_${current_month} 
-where ep_start_mo = '202509'
-
 -- QA: kn_mbm_mshp_sum1 | expected ~144 rows (prev run: 144)
 select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${current_month}
 union all
 select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${previous_month}
 ;
+
+
+select ep_start_mo, sum(mms) from tmp_1q.kn_mbm_mshp_sum1_${current_month}
+group by 1
 
 --_____________[ END OF MEMBERSHIP ]_____________________________________
 
@@ -1051,7 +984,8 @@ select
 from tmp_1q.kn_mbm_mshp_sum1_${current_month}
 ;
 
-create or replace table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202602 as
+-- Stack claims and mm
+create or replace table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month} as
 select
 	data_type
 	, ep_start_mo
@@ -1066,7 +1000,7 @@ select
 	, sum(visits) as visit_cnt
 	, sum(allowed) as allowed_amt
 	, sum(mm) as mms
-from tmp_1q.kn_mbm_episode_agg6_202602
+from tmp_1q.kn_mbm_episode_agg6_${current_month}
 where ep_start_mo >= '202301'
 group by
 	data_type
@@ -1094,14 +1028,14 @@ select
 	, visit_cnt
 	, allowed_amt
 	, mms
-from tmp_1q.kn_mbm_mshp_sum1_202602
+from tmp_1q.kn_mbm_mshp_sum1_${current_month}
 ;
 
-
-create or replace table tmp_1q.kn_mbm_202602 as
-select * from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_202602
+-- Final Excel table
+create or replace table tmp_1q.kn_mbm_${current_month} as
+select * from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month}
 union all
-select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_202602
+select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
 ;
 
 

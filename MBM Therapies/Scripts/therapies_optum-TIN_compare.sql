@@ -2,6 +2,53 @@
 -- NO DENIED: Excludes denied claims
 -- ============================================================
 
+select count(distinct tin) from tmp_1y.cl_therapy_optum_tins_202602
+;
+-- 15163
+
+select count(distinct tin) from tmp_1y.kn_therapy_optum_tins_202603
+;
+-- 15500
+
+
+@set paid_thru = 202602
+
+
+select * from tmp_1m.knd_mbm_cosmos_claims_no_denied_${paid_thru}
+where prov_tin = '650088713' and fst_srvc_month >= '202501'
+;
+
+
+
+create or replace table tmp_1m.knd_mbm_other_proccd_${paid_thru} as
+with proccd as (
+select 
+	distinct proc_cd
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_no_denied_${paid_thru}
+where category_1 = 'Other'
+) 
+select
+	a.proc_cd
+	, b.proc_full_desc
+	, b.proc_desc
+from proccd as a
+left join hce_ops_lkup.tadm_glxy_procedure_code as b
+	on a.proc_cd = b.proc_cd
+;
+
+select * from tmp_1m.knd_mbm_other_proccd_${paid_thru}
+	
+
+
+;
+
+select *  from hce_ops_lkup.proc_desc
+
+select *  from hce_ops_lkup.tadm_glxy_procedure_code
+
+
+
+
 -- COSMOS claims
 create or replace table tmp_1m.knd_mbm_cosmos_claims_no_denied_${paid_thru} as
 select
@@ -47,7 +94,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.glxy_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -112,7 +159,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.glxy_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -181,7 +228,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -246,7 +293,7 @@ select
     , a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -315,7 +362,7 @@ select
 	, a.calc_allw as allw_amt_fnl
 	, a.calc_net_pd as net_pd_amt_fnl
 from fichsrv.nce_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -379,7 +426,7 @@ select
 	, a.allw_amt as allw_amt_fnl
 	, a.net_pd_amt as net_pd_amt_fnl
 from fichsrv.nce_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -702,6 +749,8 @@ group by
 ;
 
 
+
+
 -- VPE 2 - Mark new episode
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_no_denied_${paid_thru} as
 select
@@ -1019,7 +1068,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.glxy_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -1084,7 +1133,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.glxy_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.prov_tin = b.tin
 where a.brand_fnl in ('M&R', 'C&S')
 	and a.global_cap = 'NA'
@@ -1153,7 +1202,7 @@ select
 	, a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -1218,7 +1267,7 @@ select
     , a.allw_amt_fnl
 	, a.net_pd_amt_fnl
 from fichsrv.dcsp_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on substring(a.tin, 1 , 9) = b.tin
 where a.brand_fnl = 'C&S'
 	and a.global_cap = 'NA'
@@ -1287,7 +1336,7 @@ select
 	, a.calc_allw as allw_amt_fnl
 	, a.calc_net_pd as net_pd_amt_fnl
 from fichsrv.nce_pr_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -1351,7 +1400,7 @@ select
 	, a.allw_amt as allw_amt_fnl
 	, a.net_pd_amt as net_pd_amt_fnl
 from fichsrv.nce_op_f as a
-left join tmp_1y.cl_therapy_optum_tins_202602 as b
+left join tmp_1y.kn_therapy_optum_tins_202603 as b
     on a.tin = b.tin
 where a.brand_fnl = 'M&R'
 	and a.plan_level_2_fnl not in ('PFFS')
@@ -1659,6 +1708,82 @@ where fst_srvc_year = '2025'
 group by 1
 order by 1
 ;
+
+select
+	a.mbi_key
+	, a.ep_start_dt as no_denied_ep_start
+	, b.ep_start_dt as with_denied_ep_start
+	, a.allowed as no_denied_allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru} as a
+join tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_with_denied_${paid_thru} as b
+	on a.mbi_key = b.mbi_key
+	and a.visit_id = b.visit_id
+	and a.fst_srvc_dt = b.fst_srvc_dt
+	and a.clm_dnl_f = b.clm_dnl_f
+where to_char(a.ep_start_dt, 'yyyyMM') >= '202501' and to_char(b.ep_start_dt, 'yyyyMM') < '202501'
+
+
+
+select
+	'no_denied' as tablename
+	, mbi_key
+	, visit_id
+	, ep_start_dt
+	, ep_flag
+	, fst_srvc_dt
+	, category_1
+	, prov_tin
+	, clm_dnl_f
+	, allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru}
+where mbi_key = '6H09TD1FK56-OP_REHAB' and ep_start_dt >= '2024-06-01' 
+order by ep_start_dt, fst_srvc_dt
+;
+
+select
+	'with_denied' as tablename
+	, mbi_key
+	, visit_id
+	, ep_start_dt
+	, ep_flag
+	, fst_srvc_dt
+	, category_1
+	, prov_tin
+	, clm_dnl_f
+	, allowed
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_with_denied_${paid_thru}
+where mbi_key = '6H09TD1FK56-OP_REHAB' and ep_start_dt >= '2024-06-01' 
+order by ep_start_dt, fst_srvc_dt
+;
+
+
+select
+    tablename
+    , ep_start_year
+    , sum(allowed) as total_allowed
+from (
+    select
+        'no_denied' as tablename
+        , to_char(ep_start_dt, 'yyyy') as ep_start_year
+        , allowed
+    from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_no_denied_${paid_thru}
+    where mbi_key = '6H09TD1FK56-OP_REHAB'
+      and to_char(ep_start_dt, 'yyyy') in ('2024', '2025')
+
+    union all
+
+    select
+        'with_denied' as tablename
+        , to_char(ep_start_dt, 'yyyy') as ep_start_year
+        , allowed
+    from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_with_denied_${paid_thru}
+    where mbi_key = '6H09TD1FK56-OP_REHAB'
+      and to_char(ep_start_dt, 'yyyy') in ('2024', '2025')
+) x
+group by tablename, ep_start_year
+order by ep_start_year, tablename
+;
+
 
 
 
