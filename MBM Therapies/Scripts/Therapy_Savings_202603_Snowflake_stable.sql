@@ -86,10 +86,10 @@ group by
 ;
 
 -- QA: kn_mbm_mshp | expected ~10K rows (prev run: 10428)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_${previous_month}
+--;
 
 create or replace table tmp_1q.kn_mbm_mshp_sum1_${current_month} as
 select
@@ -113,14 +113,12 @@ group by
 ;
 
 -- QA: kn_mbm_mshp_sum1 | expected ~144 rows (prev run: 144)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_mshp_sum1_${previous_month}
+--;
 
 
-select ep_start_mo, sum(mms) from tmp_1q.kn_mbm_mshp_sum1_${current_month}
-group by 1
 
 --_____________[ END OF MEMBERSHIP ]_____________________________________
 
@@ -142,10 +140,10 @@ from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
 ;
 
 -- QA: kn_lopa_op_1 | expected ~2.9M+ rows (prev run: 2981365)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_1_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_1_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_1_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_1_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_lopa_op_${current_month} as
@@ -156,10 +154,10 @@ from tmp_1q.kn_lopa_op_1_${current_month}
 ;
 
 -- QA: kn_lopa_op | expected ~2.9M+ rows (prev run: 2981365)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_lopa_pr_1_${current_month} as
@@ -172,10 +170,10 @@ from HCE_OPS_STAGE.PA_TRCKNG_PR_EVNT_LOPA_DTL
 ;
 
 -- QA: kn_lopa_pr_1 | expected ~4.7M+ rows (prev run: 4790609)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_1_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_1_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_1_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_1_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_lopa_pr_${current_month} as
@@ -186,10 +184,10 @@ from tmp_1q.kn_lopa_pr_1_${current_month}
 ;
 
 -- QA: kn_lopa_pr | expected ~4.7M+ rows (prev run: 4790609)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_lopa_pr_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -290,10 +288,10 @@ group by
 ;
 
 -- QA: kn_mbm_episode_pr | expected ~69M+ rows (prev run: 69597958)
-select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_pr_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_pr_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_pr_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_pr_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -325,8 +323,8 @@ from (
 ;
 
 -- QA: kn_mbm_op_claims | unversioned table, no previous_month comparison. Expected ~82M+ rows (prev run: 82571364)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_op_claims
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_op_claims
+--;
 
 
 create or replace table tmp_1q.kn_mbm_episode_op_${current_month} as
@@ -426,10 +424,10 @@ group by
 ;
 
 -- QA: kn_mbm_episode_op | expected ~42M+ rows (prev run: 42475737)
-select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_op_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_op_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_op_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_op_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -442,10 +440,10 @@ select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from
 create or replace table tmp_1y.kn_mbm_episode_pr_2018_2020 as
 select * from tmp_1y.kn_mbm_episode_1_2018_2020
 ;
-
+--
 -- QA: kn_mbm_episode_pr_2018_2020 | static table, expected 21694518
-select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_pr_2018_2020
-;
+--select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_pr_2018_2020
+--;
 
 -- Refresh 2018-2020 OP table
 create or replace table tmp_1y.kn_mbm_episode_op_2018_2020 as
@@ -453,8 +451,8 @@ select * from tmp_1y.kn_mbm_episode_1b_2018_2020
 ;
 
 -- QA: kn_mbm_episode_op_2018_2020 | static table, expected 16546489
-select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_op_2018_2020
-;
+--select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_op_2018_2020
+--;
 
 
 -- Stack OP + PR Episodes from 2018 to current
@@ -469,10 +467,10 @@ select * from tmp_1y.kn_mbm_episode_op_2018_2020
 ;
 
 -- QA: kn_mbm_episode_1c | expected ~149M+ rows (prev run: 149390036)
-select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_1c_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_1c_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_1c_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_1c_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_mbm_episode_2_${current_month} as
@@ -506,21 +504,21 @@ from joined
 ;
 
 -- QA: kn_mbm_episode_2 | expected ~151M+ rows (prev run: 151638417)
-select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_2_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_2_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_2_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_2_${previous_month}
+--;
 
 -- QA: distribution checks
-select claim_status, mbm_deploy_dt, count(*) as n
-from tmp_1q.kn_mbm_episode_2_${current_month}
-group by 1, 2
-;
-
-select optum_flg, mbmserv_dtl, count(*) as n
-from tmp_1q.kn_mbm_episode_2_${current_month}
-group by 1, 2
-;
+--select claim_status, mbm_deploy_dt, count(*) as n
+--from tmp_1q.kn_mbm_episode_2_${current_month}
+--group by 1, 2
+--;
+--
+--select optum_flg, mbmserv_dtl, count(*) as n
+--from tmp_1q.kn_mbm_episode_2_${current_month}
+--group by 1, 2
+--;
 
 
 /*==============================================================================
@@ -566,10 +564,10 @@ order by mbi, mbmserv, start_dt, id
 ;
 
 -- QA: kn_mbm_episode_3 | expected ~70M+ rows (prev run: 70228347)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_3_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_3_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_3_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_3_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_mbm_episode_4_${current_month} as
@@ -597,10 +595,10 @@ from tmp_1q.kn_mbm_episode_3_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_4 | expected ~70M+ rows (prev run: 70228347)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_4_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_4_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_4_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_4_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -640,10 +638,10 @@ left join tmp_1q.kn_mbm_episode_4_${current_month} as b
 ;
 
 -- QA: kn_mbm_episode_lag | expected ~70M+ rows (prev run: 70228347)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_lag_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_lag_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_lag_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_lag_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -725,18 +723,18 @@ group by
 ;
 
 -- QA: kn_mbm_episode_smry | expected ~1.5M+ rows (prev run: 1509656)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_smry_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_smry_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_smry_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_smry_${previous_month}
+--;
 
 -- QA: spot check recent ep_start_mo totals
-select ep_start_mo, sum(allw) as allw, sum(visits) as visits, sum(episodes) as episodes
-from tmp_1q.kn_mbm_episode_smry_${current_month}
-where ep_start_mo >= '202401'
-group by 1
-order by 1
-;
+--select ep_start_mo, sum(allw) as allw, sum(visits) as visits, sum(episodes) as episodes
+--from tmp_1q.kn_mbm_episode_smry_${current_month}
+--where ep_start_mo >= '202401'
+--group by 1
+--order by 1
+--;
 
 
 /*==============================================================================
@@ -777,10 +775,10 @@ from tmp_1q.kn_mbm_episode_vst_ep_2_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_ro_lag | expected ~70M+ rows (prev run: 70228347)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_mbm_episode_ro_lag2_${current_month} as
@@ -810,10 +808,10 @@ from tmp_1q.kn_mbm_episode_ro_lag_${current_month} as a
 ;
 
 -- QA: kn_mbm_episode_ro_lag2 | expected ~70M+ rows (prev run: 70228347)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag2_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag2_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag2_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_ro_lag2_${previous_month}
+--;
 
 
 create or replace table tmp_1q.kn_mbm_episode_agg6_ep_${current_month} as
@@ -845,10 +843,10 @@ group by
 ;
 
 -- QA: kn_mbm_episode_agg6_ep | expected ~47K+ rows (prev run: 47476)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_ep_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_ep_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_ep_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_ep_${previous_month}
+--;
 
 
 /*==============================================================================
@@ -887,32 +885,33 @@ group by
 	, visit_ep_lag
 ;
 
--- QA: kn_mbm_episode_agg6 visits-only pre-insert | expected ~2.2M+ rows (prev run: 2242957)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_${previous_month}
-;
-
 alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
   alter column data_type set data type varchar(50);
 
+-- Stacking Visits and Episodes
 insert into tmp_1q.kn_mbm_episode_agg6_${current_month}
 select * from tmp_1q.kn_mbm_episode_agg6_ep_${current_month} as a;
 
-alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
-  alter column data_type    set data type varchar(50);
+-- QA: kn_mbm_episode_agg6 visits-only pre-insert | expected ~2.2M+ rows (prev run: 2242957)
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_${previous_month}
+--;
 
-alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
-  alter column claim_status set data type varchar(50);
+--alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
+--  alter column data_type    set data type varchar(50);
+--
+--alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
+--  alter column claim_status set data type varchar(50);
 
 --alter table tmp_1q.kn_mbm_episode_agg6_${current_month}
 --  alter column category     set data type varchar(50);
 
 -- QA: kn_mbm_episode_agg6 final visits+episodes | expected ~2.3M+ rows (prev run: 2324504)
-select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_agg6_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_agg6_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_agg6_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_agg6_${previous_month}
+--;
 
 -- QA: recent ep_start_mo breakdown
 select ep_start_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
@@ -922,13 +921,20 @@ group by 1
 order by 1
 ;
 
--- QA: recent visit_mo breakdown
-select visit_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
-from tmp_1q.kn_mbm_episode_agg6_${current_month}
-where visit_mo >= '202401'
+select ep_start_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
+from tmp_1q.kn_mbm_episode_agg6_${previous_month}
+where ep_start_mo >= '202401'
 group by 1
 order by 1
 ;
+
+-- QA: recent visit_mo breakdown
+--select visit_mo, sum(allowed) as allowed, sum(visits) as visits, sum(episodes) as episodes
+--from tmp_1q.kn_mbm_episode_agg6_${current_month}
+--where visit_mo >= '202401'
+--group by 1
+--order by 1
+--;
 
 
 /*___________________[ SUMARIZING DATA FOR EXCEL ]_________________________________________________*/
@@ -984,51 +990,12 @@ select
 from tmp_1q.kn_mbm_mshp_sum1_${current_month}
 ;
 
--- Stack claims and mm
-create or replace table tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month} as
-select
-	data_type
-	, ep_start_mo
-	, substring(ep_start_mo, 0, 4) as ep_year
-	, substring(ep_start_mo, 5, 2) as ep_month
-	, visit_mo
-	, case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end as pilot_nat
-	, category
-	, visit_ep_lag
-	, visit_runout_mo
-	, sum(episodes) as ep_cnt
-	, sum(visits) as visit_cnt
-	, sum(allowed) as allowed_amt
-	, sum(mm) as mms
-from tmp_1q.kn_mbm_episode_agg6_${current_month}
-where ep_start_mo >= '202301'
-group by
-	data_type
-	, ep_start_mo
-	, substring(ep_start_mo, 0, 4)
-	, substring(ep_start_mo, 5, 2)
-	, visit_mo
-	, case when mbm_deploy_dt = 'National' then 'National' else 'Pilot' end
-	, category
-	, claim_status
-	, visit_ep_lag
-	, visit_runout_mo
-union
-select
-	data_type
-	, ep_start_mo
-	, substring(ep_start_mo, 0, 4) as ep_year
-	, substring(ep_start_mo, 5, 2) as ep_month
-	, visit_mo
-	, pilot_nat
-	, category
-	, visit_ep_lag
-	, visit_runout_mo
-	, ep_cnt
-	, visit_cnt
-	, allowed_amt
-	, mms
-from tmp_1q.kn_mbm_mshp_sum1_${current_month}
+create or replace table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month} as
+select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
+;
+
+create or replace table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${previous_month} as
+select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
 ;
 
 -- Final Excel table
@@ -1038,50 +1005,33 @@ union all
 select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
 ;
 
-
-select sum(mms), sum(allowed_amt) from tmp_1q.kn_mbm_202602
-where ep_start_mo = '202509'
-
-
-
-
+select count(*) from tmp_1q.kn_mbm_${current_month};
 
 
 
 -- QA: after2023 summary | expected ~94K+ rows (prev run: 94756)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${previous_month}
+--;
 
 
-create or replace table tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month} as
-select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023
-;
+
 
 -- QA: before2023 | static table, expected 176560
-select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
+--;
 
-
-create or replace table tmp_1q.kn_mbm_${current_month} as
-select * from tmp_1q.kn_mbm_episode_agg6_sum1_after2023_${current_month}
-union all
-select * from tmp_1y.kn_mbm_episode_agg6_sum1_before2023_${current_month}
-;
-
-
-select count(*) from tmp_1q.kn_mbm_202601
 
 
 
 
 
 -- QA: kn_mbm FINAL | expected ~275K+ rows (prev run: 275176)
-select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_${current_month}
-union all
-select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_${previous_month}
-;
+--select '${current_month}' as month, count(*) as n from tmp_1q.kn_mbm_${current_month}
+--union all
+--select '${previous_month}' as month, count(*) as n from tmp_1q.kn_mbm_${previous_month}
+--;
 
 -- QA: final ep_start_mo spot check
 select ep_start_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes, sum(mms) as mbr_count
@@ -1090,6 +1040,7 @@ where ep_start_mo >= '202401'
 group by 1
 order by 1
 ;
+
 
 select ep_start_mo, sum(allowed_amt) as allowed, sum(visit_cnt) as visits, sum(ep_cnt) as episodes, sum(mms) as mbr_count
 from tmp_1q.kn_mbm_${previous_month}
@@ -1106,6 +1057,20 @@ where visit_mo >= '202401'
 group by 1
 order by 1
 ;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- QA: AVTAR max admit date check
 select max(admit_dt_act)
@@ -1192,4 +1157,4 @@ where to_varchar(ep_start_dt, 'yyyymm') >= '202401'
 
 
 
-           
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
