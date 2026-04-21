@@ -36,34 +36,6 @@
 @set current_month = 202603
 show variables;
 
-
-and (
-    a.proc_cd in (
-        -- PT / OT
-         '97012','97016','97018','97022','97024','97026','97028','97032'
-         ,'97033','97034','97035','97036','97039','97110','97112','97113'
-         ,'97116','97124','97139','97140','97150','97164','97168','97530'
-         ,'97533','97535','97537','97542','97545','97546','97750','97755'
-         ,'97760','97761','97799','G0283'
-
-        -- ST
-         ,'92507','92508','92526'
-
-        -- CHIRO
-         ,'98940','98941','98942'
-    )
-    or a.rvnu_cd in (
-         '0430','0431','0432','0433','0434','0439','0420','0421','0422'
-         ,'0423','0424','0429','0440','0441','0442','0443','0444','0449'
-    )
-)
-and a.proc_cd not in (
-     '92630','92633','97001','97002','97003','97004','97545','97546','98943'
-    ,'G0129','G0151','G0152','G9041','G9043','G9044','S9128','S9129','S9131'
-)
-
-
-
 /*==============================================================================
  * Claims
  *==============================================================================*/
@@ -826,37 +798,6 @@ select
 from cte_union;
 
 
-
-select 
-	population
-	, oah_flag
-	, cns_DSNP_flag
-	, mnr_DSNP_flag
-	, mnr_isnp_flag
-	, mnr_ffs_nodsnp_flag
-	, count(distinct mbi)
-from  tmp_1m.knd_mbm_cosmos_csp_nice_claims_${current_month}
-where fst_srvc_month = '202509'
-group by 1,2,3,4,5,6
-
-
-
-
-select
-	total_oah_flag
-	, cns_dual_flag
-	, mnr_dual_flag
-	, institutional_flag
-	, mnr_total_ffs_flag
-	, sum(membership)
-from tmp_1m.ec_ip_dataset_04012026_mm_od
-where fin_inc_month = '202509'
-group by 1,2,3,4,5
-
-
-
-
-
 -- Aggregate to sum(allowed) and sum(paid) before VpE analysis
 -- Adding claim_status
 drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${current_month};
@@ -973,7 +914,6 @@ group by
     , population
     , claim_status
 ;
-
 
 -- Flag new episode
 drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_${current_month};
@@ -1391,7 +1331,8 @@ group by
 
 
 /*==============================================================================
- * Episodes
+ * Episodes-level summary
+ * For ad-hoc requests to look at prov_tin at the episodes level 
  *==============================================================================*/
 create or replace table tmp_1m.knd_mbm_episodes_agg_test_${current_month} as
 with first_tin as (
@@ -1482,75 +1423,6 @@ group by 1,2,3,4,5,6
 ;
 
 select distinct population from tmp_1m.knd_mbm_outlier_202603
-
-
-select 
-	ep_start_month
-	, prov_tin
-	, category_1
-	, sum(n_visits) as n_visits
-	, count(*) as episodes
-	, sum(allowed) as allowed
-	, sum(n_visits) / count(*) as VpE
-	, sum(allowed) / count(*) as CpE
-	, sum(allowed) / sum(n_visits) as CpV
-from tmp_1m.knd_mbm_episodes_agg_test_202602
-where population != 'N/A' and ep_start_month >= '202501' and category_1 in ('PT-OT', 'ST')
-group by 1,2,3
-order by 1,2,3
-;
-
-select 
-	ep_start_month
-	, prov_tin
-	, category_1
-	, sum(total_visits) as n_visits
-	, sum(total_episodes) as n_episodes
-	, sum(allowed) as allowed
-	, sum(total_visits) / sum(total_episodes) as vpe
-	, sum(allowed) / sum(total_episodes) as cpe
-	, sum(allowed) / sum(total_visits) as cpv
-from tmp_1m.knd_mbm_vpe_summary_202602
-where population != 'N/A' and ep_start_month >= '202501' and category_1 in ('PT-OT', 'ST')
-group by 1,2,3
-order by 1,2,3
-;
-
-
-
-
-
-select 
-	ep_start_month
-	, prov_tin
-	, category_1
-	, sum(total_visits) as n_visits
-	, sum(total_episodes) as n_episodes
-	, sum(allowed) as allowed
-	, sum(total_visits) / sum(total_episodes) as vpe
-	, sum(allowed) / sum(total_episodes) as cpe
-	, sum(allowed) / nullif(sum(total_visits),0)  as cpv
-from tmp_1m.knd_mbm_vpe_summary_202602
-where population != 'N/A' and ep_start_month >= '202501' and category_1 in ('PT-OT', 'ST')
-group by 1,2,3
-order by 1,2,3
-;
-
-select
-	*
-from tmp_1m.knd_mbm_vpe_summary_202602 
-where prov_tin = '010718731' and ep_start_month = '202501' and category_1 in ('PT-OT', 'ST')
-
-select
-	*
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602 
-where mbi_key = '6AT6WC1AN63-Office'
-order by mbi_key, fst_srvc_dt
-
-
-
-
-
 
 
 
