@@ -38,3 +38,67 @@ See `_templates/claims_template.sql`.
 ### Membership
 Pull from `fichsrv.tre_membership`.
 See `_templates/membership_template.sql`.
+
+---
+
+## Isolation Forest — Therapy Provider Anomaly Detection
+
+### Objective
+Identify therapy providers whose behavioral patterns are unusual relative to peers
+in the same specialty, market, and network. This is an unsupervised model — there
+is no Y variable. The anomaly score is an output of the algorithm, not a trained
+prediction.
+
+### Unit of Analysis
+One row = one unique `prov_tin × category_1 × market` combination.
+Each row is one observation fed into the model as X variables.
+
+### Stratification
+Run separate Isolation Forest models for each `optum_tin_flag` population:
+- `optum_tin_flag = 1` — Optum providers compared to other Optum providers
+- `optum_tin_flag = 0` — UHC providers compared to other UHC providers
+
+Do not mix populations in the same model.
+
+### Identifiers (not X variables)
+| Variable | Description |
+|---|---|
+| `prov_tin` | Provider identifier |
+| `category_1` | Specialty — PT, OT, ST, Chiro |
+| `market` | Geographic market |
+| `optum_tin_flag` | Stratification variable — defines which model the row goes into |
+
+### Filters (not X variables — used for data quality only)
+| Variable | Rule |
+|---|---|
+| `episode_count` | Exclude prov_tin × category_1 × market rows with fewer than 30 episodes |
+| `member_count` | Exclude rows with fewer than 10 distinct members |
+
+Threshold TBD — adjust based on data distribution.
+
+### Features (X variables — behavioral metrics only)
+| Feature | SQL Expression | Notes |
+|---|---|---|
+| `avg_visits_per_ep` | SUM(n_visits) / episode_count | Core utilization intensity signal |
+| `avg_allowed_per_visit` | SUM(allowed) / SUM(n_visits) | Unit price signal |
+| `avg_allowed_per_ep` | SUM(allowed) / episode_count | Episode cost signal |
+| `allowed_per_member` | SUM(allowed) / member_count | Member-level cost signal |
+| `denial_rate` | COUNT(denied claims) / COUNT(total claims) | Auth/billing behavior signal |
+| `market_count` | COUNT(DISTINCT market_fnl) | Provider geographic spread — property of prov_tin not the market row |
+| `diag_diversity` | COUNT(DISTINCT ahrq_diag_dtl_catgy_desc) / episode_count | Include only if diagnosis field is reliable |
+
+### Model Specs
+- Algorithm: `IsolationForest` (sklearn)
+- Scale all continuous features with `StandardScaler` before fitting
+- `contamination=0.05` (adjustable — this is a business decision not a statistical one)
+- Output: `raw_score` from `decision_function` (continuous ranking, not binary predict)
+- Final output: provider-market rows ranked by anomaly score descending
+
+### Output Table
+Save scored results as `tmp_1m.knd_mbm_tin_features_<YYYYMM>` (e.g., `202604`)
+Columns: `prov_tin, category_1, market, optum_tin_flag, all features, raw_score`
+
+### Narrative Output
+For the top 20 flagged providers per model run, generate a plain English paragraph
+per provider explaining what is unusual about their pattern relative to peers in the
+same category and market.
