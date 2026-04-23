@@ -7,4 +7,4 @@ dtdSymbol=\#B3B784 | null | false | null | null | null
 dtdTag=\#D4C4A9 | null | false | null | null | null
 dtdTagName=\#D4C4A9 | null | false | null | null | null
 eclipse.preferences.version=1
-overriddenByCSS=,dtdKeyword,dtdTag,dtdString,dtdTagName,dtdDefault,dtdData,dtdSymbol,dtdComment,
+overriddenByCSS=,dtdDefault,dtdData,dtdKeyword,dtdTag,dtdString,dtdTagName,dtdSymbol,dtdComment,

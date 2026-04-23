@@ -6,7 +6,7 @@
  * Output: tmp_1m.knd_mbm_tin_features_202604
  *==============================================================================*/
 
-create or replace table tmp_1m.knd_mbm_tin_features_202604 as
+create or replace table tmp_1m.knd_mbm_tin_features_202602 as
 
 with denial_rates as (
     select

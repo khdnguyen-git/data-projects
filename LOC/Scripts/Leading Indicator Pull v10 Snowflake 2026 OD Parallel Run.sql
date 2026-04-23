@@ -2,26 +2,26 @@
 --Step 0.a: Update to the new date & if a monthly claims run; update tre copy cosmos tab 
 /*Every week*/
 --Find and change date for notifications + claims
-@set notifications_date = 02182026
-@set claims_date = 01282026
---2/18/26: done--
+@set notifications_date = 04222026
+@set claims_date = 04012026
+--4/22/26: done--
 
 --Step 0.b: check to see if current month membership is available
-select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202602; --make sure this IS CURRENT MONTH-- 
-@set membership_month = 202602
+select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202604; --make sure this IS CURRENT MONTH-- 
+@set membership_month = 202604
 --CHECK WITH PRADEEPA THAT THE ENROLLMENT TABLE IS TRULY UPDATED--
---2/18/26: done--
+--4/22/26: done; new April enrollment table confirmed by Pradeepa--
 
 --monthly ish
 --Step 0.c Uncomment out most recent roster month from Completion Step 9: tmp_1m.ec_ip_mm_2026 IF 0.B SHOWS NEXT MONTH MEMBERSHIP AVAILABLE
 --Don't forget to update roster month in Notification Completion Model
---2/18/26: done--
+--4/22/26: done; no new enrollment table--
 
 /*Monthly claims update*/
 --Step 0.d: change claims month
---Change Tre Copy Table: tadm_tre_cpy.glxy_ip_admit_f_202512
-@set claims_month = 202601
---2/18/26: done--
+@set claims_month = 202603
+--4/22/26: done no new claims--
+--REMEMBER TO UPDATE SEASONALITY FACTORS TOO--
 
 --Step 1: Check that AvTar was Updated with this query to check latest date (should be day of or day before run)
 select max(admit_dt_act) from HCE_OPS_FNL.HCE_ADR_AVTAR_Like_25_26_f 
@@ -282,6 +282,7 @@ from tmp_1m.ec_avtar_23_1_od
 ;
 
 
+
 --Step 2.5: Add week & hce_month variable
 drop table if exists tmp_1m.ec_avtar_23_3_od;
 create table tmp_1m.ec_avtar_23_3_od as
@@ -291,7 +292,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.ec_avtar_23_2_od as a 
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 on a.hcedt=c.date
 ;
 
@@ -556,7 +557,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.ec_avtar_24_2_od as a 
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 on a.hcedt=c.date 
 ;
 
@@ -762,7 +763,7 @@ select
 FROM
 	HCE_OPS_FNL.HCEOPS_TRS_DATA_SET_FNL as a
 left outer join
-	HCE_OPS_FNL.HCE_ADR_AVTAR_Like_25_26_F as b
+		HCE_OPS_FNL.HCE_ADR_AVTAR_Like_25_26_F as b
 on  b.transplant_flag='Y'
 and a.fin_mbi_hicn_fnl = b.fin_mbi_hicn_fnl
 where b.fin_mbi_hicn_fnl is null and year(TRY_TO_DATE(a.transplantdate))>2024
@@ -824,7 +825,7 @@ select
 	,cast(hcedt as date) as hce_dt
 	,c.week as admit_week
 from tmp_1m.ec_avtar_25_26_2_od as a 
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 on a.hcedt=c.date 
 ;
 
@@ -1836,7 +1837,7 @@ union all select
 ------------------------------------------------If this is a monthly claims update, proceed to STEP 11--------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 /************************************************************************************************************************************************************/
-
+/*
 --Step 11.1: Grabbing archived 2022 (already run, no need to run again)
 drop table if exists tmp_1y.ec_ip_dataset_claims_cosmos_2022;
 create table tmp_1y.ec_ip_dataset_claims_cosmos_2022 as				
@@ -1962,7 +1963,7 @@ SELECT
 	,a.ip_status_code
 	,case when dateadd(day,-10, last_day(a.adjd_dt))>=a.adjd_dt then TO_VARCHAR(a.adjd_dt,'yyyyMM') else TO_VARCHAR(add_months(a.adjd_dt,1),'yyyyMM') end as adjd_yrmonth
 	,TO_VARCHAR(a.pd_dn_ol_admit_start_dt,'yyyyMM') as pd_dn_ol_admit_yrmonth
-from HCE_OPS_ARCHV.GLXY_IP_ADMIT_F_${claims_month} as a
+from HCE_OPS_ARCHV.GLXY_IP_ADMIT_F_202601 as a --KEEP this a STATIC TABLE we dont want this TO CHANGE EVERY MONTH (was HCE_OPS_ARCHV.GLXY_IP_ADMIT_F_${claims_month} before) 
 left join tmp_2y.ec_glxy_drg_cd_2026 as b
 	on a.FNL_DRG_CD=b.DRG_CD
 	and CASE WHEN a.ADMIT_START_DT BETWEEN '2021-10-01' AND '2022-09-30' THEN '2022'
@@ -1971,13 +1972,13 @@ left join tmp_2y.ec_glxy_drg_cd_2026 as b
 		WHEN a.ADMIT_START_DT BETWEEN '2024-10-01' AND '2025-09-30' THEN '2025'
 		WHEN a.ADMIT_START_DT BETWEEN '2025-10-01' AND '2026-09-30' THEN '2026'
 		WHEN a.ADMIT_START_DT BETWEEN '2026-10-01' AND '2027-09-30' THEN '2027' ELSE 'NA' END =b.FY
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 	on a.pd_dn_ol_admit_start_dt =c.date 
 where year(a.pd_dn_ol_admit_start_dt)='2022'
 ;
-
+*/
 --QA Check that only 2022 is in the table above 
-select distinct year(pd_dn_ol_admit_start_dt) from tmp_1y.ec_ip_dataset_claims_cosmos_2022;
+--select distinct year(pd_dn_ol_admit_start_dt) from tmp_1y.ec_ip_dataset_claims_cosmos_2022;
 
 
 
@@ -2123,7 +2124,7 @@ left join tmp_2y.ec_glxy_drg_cd_2026 as b
 		WHEN a.ADMIT_START_DT BETWEEN '2024-10-01' AND '2025-09-30' THEN '2025'
 		WHEN a.ADMIT_START_DT BETWEEN '2025-10-01' AND '2026-09-30' THEN '2026'
 		WHEN a.ADMIT_START_DT BETWEEN '2026-10-01' AND '2027-09-30' THEN '2027' ELSE 'NA' END =b.FY
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 	on a.pd_dn_ol_admit_start_dt =c.date
 where year(a.pd_dn_ol_admit_start_dt)>'2022'
 ;
@@ -2452,8 +2453,15 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 95,970,964,466.46
 -- Units: 6,572,434
 -- Days: 57,216,203
-		
-
+--NOVEMBER-JANUARY ARE IN OTHER ARCHIVED CODE
+-- FEBRUARY
+-- Paid: 88,455,325,258.56
+-- Units: 5,996,850
+-- Days: 51,622,421
+-- MARCH
+-- Paid: 91,006,586,745.05
+-- Units: 6,156,717
+-- Days: 52,976,960
 
 select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , sum(days_franky) as days_franky from tmp_1m.ec_ip_dataset_claims_franky7;
 --NOVEMBER
@@ -2495,6 +2503,15 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 95,977,733,957.69
 -- Units: 6,572,497
 -- Days: 57,221,737
+--NOVEMBER-JANUARY ARE IN OTHER ARCHIVED CODE
+-- FEBRUARY
+-- Paid: 88,460,713,703.88
+-- Units: 5,996,899
+-- Days: 51,626,935
+-- MARCH
+-- Paid: 91,012,166,331.16
+-- Units: 6,156,775
+-- Days: 52,981,712
 
 
 --Step 21: COSMOS After Franky adjustment
@@ -2848,7 +2865,7 @@ SELECT
 from fichsrv.NCE_IP_ADMIT_F as a
 left join fichsrv.tadm_glxy_drg_code as b
 	on a.fnl_drg_cd = b.drg_cd
-left join tmp_2y.ec_loc_week_assign as c 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as c 
 on a.admit_start_dt =c.date
 ;
 
@@ -2926,7 +2943,7 @@ left join fichsrv.tre_membership as b
     and a.admit_yr_month = b.fin_inc_month
 left join fichsrv.tadm_glxy_drg_code as c
     on a.fnl_drg_cd = c.drg_cd
-left join tmp_2y.ec_loc_week_assign as d 
+left join tmp_2y.EC_LOC_WEEK_ASSIGN as d 
 	on a.admit_start_dt =d.date
 ;
 
@@ -3267,14 +3284,33 @@ union all select
 	from tmp_1m.ec_ip_dataset_claims_triangle_${claims_date}_od
 	; 
 
-SELECT sum(franky_allw), hce_admit_month FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_od GROUP BY hce_admit_month ORDER BY hce_admit_month asc;
---checking that most recent claims month is populating--
+
+--creates a view for the AI/ML so they can use our data in their work
+CREATE OR replace VIEW HCE_MISC.EC_IP_DATASET_ALL_TRS as
+	select *
+	,current_date() AS refreshed_date  
+FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_od;
 
 --QA check for newest week (should be one higher than what is written below, also make sure to change and save the code when you are checking this)
+--newest week is partial, most recent full week is max(admit_week) - 1
 select max(admit_week) from tmp_1m.ec_ip_dataset_all_${notifications_date}_od where ipa_pac_flag ='IPA' and loc_flag=1;
---2/11/26: 202607
---2/18/26: 202608
+--3/11/26: 202611
+--3/18/26: 202612
+--3/25/26: 202613
+--4/1/26: 202614
+--4/8/26: 202615
+--4/15/26: 202616.0
+--4/22/26: 202617.0
 
+--QA check for newest week's OD data, most recent full week should populate
+SELECT sum(MEMBER_APPEAL_OVTN_CNT), admit_week from tmp_1m.ec_ip_dataset_all_${notifications_date}_od where ipa_pac_flag ='IPA' and loc_flag=1 GROUP BY admit_week order BY admit_week desc;
+--4/1/26: 202613 week populated
+--4/8/26: 202614 week populated
+--4/15/26: 202615 week populated
+--4/22/26: 202616 week populated
+
+--QA check to see that most recent claims month is populating--
+SELECT sum(franky_allw), hce_admit_month FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_od GROUP BY hce_admit_month ORDER BY hce_admit_month asc;
 
 
 /************************************************************************************************************************************************************/
@@ -3723,7 +3759,6 @@ from tmp_1m.ec_ip_dataset_all_${notifications_date}_od
 		AND tfm_include_flag=1
 		AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
 		and admit_type <> 'Other'
-		and (hce_admit_month > '202306')
 group by hce_admit_month
 	,fst_srvc_month
 	,adjd_yrmonth
@@ -3761,7 +3796,6 @@ from tmp_1m.ec_ip_dataset_all_${notifications_date}_od
 		and fin_product_level_3 <>'INSTITUTIONAL'
 		AND tfm_include_flag=1
 		AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
-		and (hce_admit_month > '202306') -- OR fst_srvc_month > '202206')
 group by hce_admit_month
 	,fst_srvc_month
 	,adjd_yrmonth
@@ -4154,7 +4188,6 @@ where fin_inc_year in ('2025','2026')
 	AND fin_product_level_3 <>'INSTITUTIONAL'
 	AND tfm_include_flag=1 
  	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- /*
  union all	
  select distinct fin_mbi_hicn_fnl
 	,'202603' as roster_month
@@ -4181,6 +4214,7 @@ where fin_inc_year in ('2025','2026')
 	AND fin_product_level_3 <>'INSTITUTIONAL'
 	AND tfm_include_flag=1 
  	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
+ /*
 union all	
 select distinct fin_mbi_hicn_fnl
 	,'202605' as roster_month
@@ -4408,16 +4442,16 @@ union all
 
 --libname HCX_EC "/hpsasfin/int/projects/hcemrn/ec/prod/data/";
 /*
-data hcx_ec.LOC_IP_2_18_26_OD (compress=yes); 
-set TMP_1M.EC_IP_DATASET_LOC_02182026_OD
+data hcx_ec.LOC_IP_4_22_26_OD (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LOC_04222026_OD
 ;run;
 
-data hcx_ec.ec_ip_dataset_2_18_26_OD (compress=yes); 
-set TMP_1M.EC_IP_DATASET_LI_02182026_3_OD
+data hcx_ec.ec_ip_dataset_4_22_26_OD (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LI_04222026_3_OD
 ;run;
 
-data hcx_ec.ec_ip_comp_02182026_OD (compress=yes); 
-set TMP_1M.EC_IP_COMP_02182026_OD 
+data hcx_ec.ec_ip_comp_04222026_OD (compress=yes); 
+set TMP_1M.EC_IP_COMP_04222026_OD 
 ;run;
 */
 

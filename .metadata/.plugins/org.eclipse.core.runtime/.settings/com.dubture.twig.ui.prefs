@@ -13,4 +13,4 @@ editorColorString=\#CC9393 | null | null | null | null | null
 editorColorTask=\#ACC1AC | null | false | null | null | null
 editorColorVariable=\#D4C4A9 | null | null | null | null | null
 editorStmtColorBoundarymaker=\#F6F3E8 | null | null | null | null | null
-overriddenByCSS=,editorColorHeredoc,editorColorPhpdoc,codeStyleNormal,editorColorComment,editorColorTask,editorColorVariable,editorBlocknameColor,editorColorBoundarymaker,editorColorPHPDocComment,editorColorString,editorStmtColorBoundarymaker,editorColorKeyword,editorColorLineComment,editorColorNumber,
+overriddenByCSS=,editorColorHeredoc,editorColorPhpdoc,codeStyleNormal,editorColorVariable,editorColorBoundarymaker,editorColorPHPDocComment,editorStmtColorBoundarymaker,editorColorComment,editorColorTask,editorBlocknameColor,editorColorString,editorColorKeyword,editorColorLineComment,editorColorNumber,

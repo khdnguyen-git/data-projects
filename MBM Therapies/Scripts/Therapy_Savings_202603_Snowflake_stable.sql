@@ -139,6 +139,9 @@ select
 from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
 ;
 
+select * from hce_ops_stage.pa_trckng_op_evnt_lopa_dtl
+;
+
 -- QA: kn_lopa_op_1 | expected ~2.9M+ rows (prev run: 2981365)
 --select '${current_month}' as month, count(*) as n from tmp_1q.kn_lopa_op_1_${current_month}
 --union all
@@ -422,6 +425,26 @@ group by
         else 'Other'
 	end
 ;
+
+
+select mbi, still_lopa
+from  tmp_1q.kn_mbm_episode_op_202603
+where mbi = '26148361'
+and serv_month = '202504'
+
+
+-- LOPA
+-- OP
+
+select * from fichsrv.glxy_op_f
+where fst_srvc_month = '202504'
+and proc_cd = '97110'
+and fnl_rsn_cd_sys_id = '26'
+
+
+-- still_LOPA; same member, dos, proc_cd, latest submission date has rsn_cd = '26'
+
+
 
 -- QA: kn_mbm_episode_op | expected ~42M+ rows (prev run: 42475737)
 --select '${current_month}' as month, count(*) as n, sum(allowed) as allowed from tmp_1q.kn_mbm_episode_op_${current_month}

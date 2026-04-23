@@ -1426,6 +1426,7 @@ select distinct population from tmp_1m.knd_mbm_outlier_202603
 
 
 
+
 -- Episodes summary
 create or replace table tmp_1m.knd_mbm_episodes_summary1_202602 as
 select 

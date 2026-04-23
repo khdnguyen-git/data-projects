@@ -1,7 +1,9 @@
 approved.defs.file.last.changed.time=1693315978000
 codetogether.hooks.enabled=false
+configurationInstallLocation=/C\:/Program Files/DBeaver/
 eclipse.preferences.version=1
 includeThemingInOomph=false
-last.download.attempt.time=1773923129715
-lastConfiguration=1776434628250
+last.download.attempt.time=1776801040641
+lastConfiguration=1776801017339
 newinstall=true
+workbench.theme=Dark Windows 11
