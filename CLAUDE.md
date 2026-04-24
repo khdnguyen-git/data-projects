@@ -1,105 +1,155 @@
 # UHC Project — Claude Code Guidelines
 
+
+
 ## SQL Formatting Rules
 
-1. **Table creation**: always use `create or replace table`, never `drop table if exists` + `create table`
+
+
+1. **Table creation**: always use
+`create or replace table`, never
+`drop table if exists` +
+`create table`
+
 2. **Commas**: leading commas (`, column_name`), never trailing
-3. **Aliases**: lowercase single-letter aliases with `as` — e.g., `left join <table> as a`
-4. **Keywords**: all SQL syntax in lowercase (`select`, `from`, `left join`, `where`, `group by`, etc.)
-5. **`case` statements**: single space before `then`, no column-aligning padding — `when x = 1 then 'y'`, not `when x = 1          then 'y'`
-6. **Inequality operator**: use `!=`, never `<>`
+
+3. **Aliases**: lowercase single-letter aliases with
+`as` — e.g., 
+`left join <table> as a`
+
+4. **Keywords**: all SQL syntax in lowercase (`select`,
+`from`, `left join`,
+`where`, `group by`, etc.)
+
+5. **`case` statements**: single space before
+`then`, no column-aligning padding —
+`when x = 1 then 'y'`, not
+`when x = 1          then 'y'`
+
+6. **Inequality operator**: use
+`!=`, never `<>`
+
+
 
 See `_templates/` for canonical examples of these patterns.
 
+
+
 ## Table Naming Convention
 
-```
-<schema>.<initials>_<projectname>_<topic>_<YYYYMM>
+
+
 ```
 
-- **Schema**: `tmp_1m` (preferred write target)
-- **Initials**: `kn` for prod, `knd` for dev
-- **Example**: `tmp_1m.kn_loc_valuation_202604`
+<schema>.<initials>_<projectname>_<topic>_<YYYYMM>
+
+```
+
+
+
+- **Schema**:
+`tmp_1m` (preferred write target)
+
+- **Initials**:
+`kn` for prod, 
+`knd` for dev
+
+- **Example**:
+`tmp_1m.kn_loc_valuation_202604`
+
+
 
 The date suffix uses the run/notification month in `YYYYMM` format.
 
+
+
 ## Canonical Table Sources
 
+
+
 ### Claims
-Pull from `fichsrv.*` tables. Use `union all` across entities as needed:
+
+Pull from `fichsrv.*` tables. Use
+`union all` across entities as needed:
+
 - `fichsrv.glxy_op_f`  — COSMOS outpatient
-- `fichsrv.glxy_pr_f`  — COSMOS professional
+
+- `fichsrv.glxy_pr_f`  — COSMOS provider
+
 - `fichsrv.dcsp_op_f`  — CSP outpatient
-- `fichsrv.dcsp_pr_f`  — CSP professional
+
+- `fichsrv.dcsp_pr_f`  — CSP provider
+
 - `fichsrv.nce_op_f`   — NICE outpatient
-- `fichsrv.nce_pr_f`   — NICE professional
+
+- `fichsrv.nce_pr_f`   — NICE provider
+
+
 
 See `_templates/claims_template.sql`.
 
+
+
 ### Membership
+
 Pull from `fichsrv.tre_membership`.
+
 See `_templates/membership_template.sql`.
+
+
 
 ---
 
-## Isolation Forest — Therapy Provider Anomaly Detection
 
-### Objective
-Identify therapy providers whose behavioral patterns are unusual relative to peers
-in the same specialty, market, and network. This is an unsupervised model — there
-is no Y variable. The anomaly score is an output of the algorithm, not a trained
-prediction.
 
-### Unit of Analysis
-One row = one unique `prov_tin × category_1 × market` combination.
-Each row is one observation fed into the model as X variables.
+## Python / Data Science Coding Style
 
-### Stratification
-Run separate Isolation Forest models for each `optum_tin_flag` population:
-- `optum_tin_flag = 1` — Optum providers compared to other Optum providers
-- `optum_tin_flag = 0` — UHC providers compared to other UHC providers
 
-Do not mix populations in the same model.
 
-### Identifiers (not X variables)
-| Variable | Description |
-|---|---|
-| `prov_tin` | Provider identifier |
-| `category_1` | Specialty — PT, OT, ST, Chiro |
-| `market` | Geographic market |
-| `optum_tin_flag` | Stratification variable — defines which model the row goes into |
+### General philosophy: data analyst, not software engineer
 
-### Filters (not X variables — used for data quality only)
-| Variable | Rule |
-|---|---|
-| `episode_count` | Exclude prov_tin × category_1 × market rows with fewer than 30 episodes |
-| `member_count` | Exclude rows with fewer than 10 distinct members |
 
-Threshold TBD — adjust based on data distribution.
 
-### Features (X variables — behavioral metrics only)
-| Feature | SQL Expression | Notes |
-|---|---|---|
-| `avg_visits_per_ep` | SUM(n_visits) / episode_count | Core utilization intensity signal |
-| `avg_allowed_per_visit` | SUM(allowed) / SUM(n_visits) | Unit price signal |
-| `avg_allowed_per_ep` | SUM(allowed) / episode_count | Episode cost signal |
-| `allowed_per_member` | SUM(allowed) / member_count | Member-level cost signal |
-| `denial_rate` | COUNT(denied claims) / COUNT(total claims) | Auth/billing behavior signal |
-| `market_count` | COUNT(DISTINCT market_fnl) | Provider geographic spread — property of prov_tin not the market row |
-| `diag_diversity` | COUNT(DISTINCT ahrq_diag_dtl_catgy_desc) / episode_count | Include only if diagnosis field is reliable |
+- Write flat, linear, sequential code by default — no wrapping things into functions unless explicitly asked or logic truly repeats 3+ times
 
-### Model Specs
-- Algorithm: `IsolationForest` (sklearn)
-- Scale all continuous features with `StandardScaler` before fitting
-- `contamination=0.05` (adjustable — this is a business decision not a statistical one)
-- Output: `raw_score` from `decision_function` (continuous ranking, not binary predict)
-- Final output: provider-market rows ranked by anomaly score descending
+- No classes, no modules, no software architecture patterns
 
-### Output Table
-Save scored results as `tmp_1m.knd_mbm_tin_features_<YYYYMM>` (e.g., `202604`)
-Columns: `prov_tin, category_1, market, optum_tin_flag, all features, raw_score`
+- Minimal functions — only when the same logic genuinely repeats
 
-### Narrative Output
-For the top 20 flagged providers per model run, generate a plain English paragraph
-per provider explaining what is unusual about their pattern relative to peers in the
-same category and market.
+- No excessive print statements narrating progress — use them sparingly and only when output is actually meaningful to inspect
+
+- No logging setup, no argparse, no
+`if __name__ == "__main__"` boilerplate
+
+- Comments should explain
+*why* or *what we're seeing*, not just restate what the code does
+
+- Notebook-friendly style — code should read top to bottom like a coherent analysis, not like a library someone would import
+
+- Prefer readability over cleverness — avoid chained one-liners or list comprehensions when a simple loop or intermediate variable is clearer
+
+- When in doubt, break steps into separate blocks with a short comment header, not a function
+
+
+
+### Piping and chaining
+
+
+
+- Pandas method chaining is welcome — use
+`df = (df\n    .method()\n    .method()\n)` style when it flows naturally
+
+- Don't force it — if a lambda or
+`pipe()` makes it convoluted just to avoid a separate line, write the separate line
+
+- A plain `df2 = df[df['col'] > 0]` is better than a tortured chain
+
+- Intermediate named variables are fine and often preferred for complex steps — clarity over style points
+
+
+
+### Background
+
+
+
+Experienced in R, SAS, SQL — translate concepts to Python in ways that map to that mental model when helpful. When explaining something, leading with the R/SAS equivalent first is useful.
