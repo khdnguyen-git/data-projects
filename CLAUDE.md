@@ -7,6 +7,7 @@
 3. **Aliases**: lowercase single-letter aliases with `as` — e.g., `left join <table> as a`
 4. **Keywords**: all SQL syntax in lowercase (`select`, `from`, `left join`, `where`, `group by`, etc.)
 5. **`case` statements**: single space before `then`, no column-aligning padding — `when x = 1 then 'y'`, not `when x = 1          then 'y'`
+6. **Inequality operator**: use `!=`, never `<>`
 
 See `_templates/` for canonical examples of these patterns.
 
