@@ -1424,7 +1424,7 @@ group by 1,2,3,4,5,6
 
 select distinct population from tmp_1m.knd_mbm_outlier_202603
 
-
+select distinct ahrq_diag_dtl_catgy_desc from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602
 
 
 -- Episodes summary

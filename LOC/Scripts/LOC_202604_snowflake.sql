@@ -1,12 +1,15 @@
-@set notifications_date = 04222026
-@set membership_month = 202603   -- update if newer month is available
+/*==============================================================================
+ * LOC Valuation — April 2026
+ * notifications_date = 04222026
+ * membership_month   = 202603
+ *==============================================================================*/
 
 
 /*==============================================================================
  * Step 1: _4_od — roll up auths before join to member months
- * Source: tmp_1m.ec_ip_dataset_${notifications_date}_3_od  (IPA's table)
+ * Source: tmp_1m.ec_ip_dataset_04222026_3_od  (IPA's table)
  *==============================================================================*/
-create or replace table tmp_1m.kn_ip_dataset_${notifications_date}_4_od as
+create or replace table tmp_1m.kn_ip_dataset_04222026_4_od as
 select
     a.admit_week
     , a.hce_admit_month
@@ -88,7 +91,7 @@ select
     , 0 as franky_paid
     , 0 as franky_admits
     , 0 as franky_allw
-from tmp_1m.ec_ip_dataset_${notifications_date}_3_od as a
+from tmp_1m.ec_ip_dataset_04222026_3_od as a
 left join tmp_1y.tin_collection as d
     on a.prov_tin = d.tin
 group by
@@ -148,9 +151,9 @@ group by
 
 /*==============================================================================
  * Step 2: _mm_od — member months
- * Source: hce_ops_archv.gl_rstd_gpsgalnce_f_${membership_month}
+ * Source: hce_ops_archv.gl_rstd_gpsgalnce_f_202603
  *==============================================================================*/
-create or replace table tmp_1m.kn_loc_mm_${notifications_date}_od as
+create or replace table tmp_1m.kn_loc_mm_04222026_od as
 select
     000000 as fin_inc_week
     , a.fin_inc_month
@@ -278,7 +281,7 @@ select
     , 0 as franky_paid
     , 0 as franky_admits
     , 0 as franky_allw
-from hce_ops_archv.gl_rstd_gpsgalnce_f_${membership_month} as a
+from hce_ops_archv.gl_rstd_gpsgalnce_f_202603 as a
 left join fichsrv.group_crosswalk as b
     on a.tadm_group_nbr_consist = b.group_number
     and a.fin_inc_year = b.year
@@ -362,17 +365,17 @@ group by
 /*==============================================================================
  * Step 3: _notif_od — auths + member months
  *==============================================================================*/
-create or replace table tmp_1m.kn_loc_notif_${notifications_date}_od as
-select * from tmp_1m.kn_ip_dataset_${notifications_date}_4_od
+create or replace table tmp_1m.kn_loc_notif_04222026_od as
+select * from tmp_1m.kn_ip_dataset_04222026_4_od
 union all
-select * from tmp_1m.kn_loc_mm_${notifications_date}_od
+select * from tmp_1m.kn_loc_mm_04222026_od
 ;
 
 
 /*==============================================================================
  * Step 4: LOC Valuation Table
  *==============================================================================*/
-create or replace table tmp_1m.kn_ip_dataset_loc_${notifications_date}_od as
+create or replace table tmp_1m.kn_ip_dataset_loc_04222026_od as
 with loc_base as (
     select
         admit_week
@@ -414,7 +417,7 @@ with loc_base as (
         , sum(member_appeal_cnt) as member_appeal_cnt
         , sum(member_appeal_ovtn_cnt) as member_appeal_ovtn_cnt
         , sum(membership) as membership
-    from tmp_1m.kn_loc_notif_${notifications_date}_od
+    from tmp_1m.kn_loc_notif_04222026_od
     where ipa_pac_flag in ('IPA', 'MM')
         and hce_admit_month > '202212'
         and loc_flag = 1

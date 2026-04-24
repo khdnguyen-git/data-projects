@@ -1,9 +1,14 @@
 # LOC Anomaly Detection — Session Handoff
 
 ## What This Project Is
-Monthly pipeline that detects anomalous LOC (Level of Care) KPI patterns across
+Monthly pipeline that identifies unusual LOC (Level of Care) KPI patterns across
 multiple grouping dimensions (provider, market, hospital group, etc.) for three
-populations (M&R FFS, C&S DSNP, OAH). Uses Isolation Forest + z-score explanation.
+populations (M&R FFS, C&S DSNP, OAH). Uses a tiered approach:
+
+1. **Tier 1 — Percentile flagging** (primary): flags entities in the top/bottom 10th
+   percentile of each rate feature within their dimension. Directly actionable, no model.
+2. **Tier 2 — Isolation Forest** (secondary sweep): catches entities that don't trigger
+   any single-KPI flag but have an unusual *combination* of rates.
 
 ---
 
@@ -11,20 +16,39 @@ populations (M&R FFS, C&S DSNP, OAH). Uses Isolation Forest + z-score explanatio
 
 | File | Purpose |
 |---|---|
-| `loc_anomaly.py` | Main Python pipeline — loads data, runs Isolation Forest, exports results |
+| `loc_anomaly.ipynb` | Main notebook — Tier 1 percentile flagging, Tier 2 Isolation Forest, narratives, exports |
+| `loc_anomaly.py` | Legacy Python script (Isolation Forest only — superseded by the notebook) |
 | `loc_agg.sql` | Snowflake SQL that pre-aggregates raw data and computes all rates, one table per population |
 | `loc_anomaly_guide.md` | Beginner-friendly walkthrough of the Python script with R↔Python equivalents |
 
 ---
 
-## Architecture Decisions Made This Session
+## Pipeline Architecture
+
+### Tiered detection (what the notebook does)
+
+**Tier 1 — Percentile flagging** runs first. For each dimension × rate feature:
+- Compute percentile rank within the dimension's peer group
+- Flag entities in the top 10th or bottom 10th percentile
+- Record `peer_median`, `percentile`, `flag_high`, `flag_low`
+- Output: long-format table (one row per entity × feature × dimension)
+
+This directly answers "who has a high overturn rate" — immediately usable in VP meetings.
+
+**Tier 2 — Isolation Forest** runs second on the same data. Its role is catching
+entities whose *combination* of rates is unusual even when no single rate is extreme.
+- Fit per dimension, `StandardScaler` + `contamination=0.05`
+- Z-scores added for interpretability; top 3 reasons per flagged entity
+- Output: scored table + narrative paragraphs for top 20 anomalies per dimension
+
+**Combined output**: a `tier` column marks each flag's origin (`"percentile"`,
+`"isolation_forest"`, or `"both"`) so stakeholders can prioritize.
 
 ### SQL does aggregation + rate calculation (not Python)
 - `loc_agg.sql` creates 3 population-specific tables — see naming below
 - One `UNION ALL` block per dimension (prov_tin, svc_setting, fin_market, etc.)
 - Each block: `GROUP BY` that dimension, `HAVING case_count >= 30`, rates computed via `/ NULLIF(..., 0)`
-- Python `build_rates()` and `aggregate_dimension()` functions were removed — SQL replaces them entirely
-- Python now only connects, reads the pre-aggregated table, and runs the model
+- Python only connects, reads the pre-aggregated table, and runs the detection tiers
 
 ### Why separate UNION ALL blocks instead of one GROUP BY
 Each dimension answers a different question. `GROUP BY prov_tin` collapses across
@@ -33,10 +57,11 @@ cannot come from a single GROUP BY — you'd get the cross-product, not per-dime
 The `global` block at the bottom does the all-dimensions-combined version intentionally.
 
 ### Three separate population tables (not one combined)
-IF models within each population compare peers to peers. Mixing populations would
-cause OAH providers to be flagged simply for being OAH, not for being unusual within OAH.
+Both tiers run within each population — peers compared to peers only. Mixing
+populations would cause OAH providers to be flagged simply for being OAH, not for
+being unusual within OAH.
 
-### Global model
+### Global dimension block
 The last UNION ALL block in each table groups by ALL dimensions simultaneously —
 catches anomalies that only appear when dimensions interact (e.g., a provider that
 looks normal overall but is anomalous within a specific market + product combination).
@@ -53,65 +78,31 @@ Exploratory surveillance — no hypothesis. Looking for:
 
 Across dimensions: markets, providers (`prov_tin`), hospital groups, service settings, etc.
 
-### Statistical critique of current approach
+### Why Tier 1 percentile flagging is the primary approach
 Isolation Forest has limitations for this use case:
 1. **Subpopulation blindness** — no concept of groups; SNF providers flagged just for being SNFs
 2. **Multivariate black box** — VP can't act on a score of -0.043
 3. **Wrong tool for no-hypothesis surveillance** — percentile ranking is more actionable
 
+Percentile flagging solves all three: it's within-dimension, single-KPI, and
+produces "top 10% of appeal overturn rate among prov_tins" — a sentence a VP can act on.
+
 ---
 
-## Recommended Next Steps (priority order)
+## Future Enhancements (not yet implemented)
 
-### 1. Add Tier 1 percentile flagging (highest business value, no model needed)
-For each dimension × rate feature combination, compute:
-- Entity's rate value
-- Peer median within that dimension
-- Percentile rank within that dimension
-- Flag if top/bottom 10th percentile
-
-This directly answers "who has a high overturn rate" and is immediately usable in VP meetings.
-
-```python
-def percentile_flags(df, rate_features, top_pct = 0.10, bottom_pct = 0.10):
-    """
-    For each dimension group, rank all entities on each rate feature.
-    Flag top/bottom percentile. Returns long-format table.
-    """
-    rows = []
-    for dim, group in df.groupby("_dimension"):
-        for feat in rate_features:
-            if feat not in group.columns:
-                continue
-            ranked = group[["_dim_value", "case_count", feat]].dropna(subset = [feat]).copy()
-            ranked["percentile"]  = ranked[feat].rank(pct = True)
-            ranked["peer_median"] = ranked[feat].median()
-            ranked["flag_high"]   = ranked["percentile"] >= (1 - top_pct)
-            ranked["flag_low"]    = ranked["percentile"] <= bottom_pct
-            ranked["_dimension"]  = dim
-            ranked["_feature"]    = feat
-            rows.append(ranked)
-    return pd.concat(rows, ignore_index = True)
-```
-
-### 2. Keep Isolation Forest as Tier 2 (secondary sweep only)
-Run after percentile flagging. Its legitimate role is catching entities that don't
-trigger any single-KPI flag but have an unusual *combination* of rates. Re-frame
-output to stakeholders as "flagged for unusual pattern, see z-scores for detail"
-rather than presenting the raw score.
-
-### 3. Add trend layer (Tier 3)
+### Tier 3 — Trend layer
 Month-over-month delta is often more actionable than the level.
 A provider jumping from 8% to 22% appeal rate is more urgent than one stable at 22%.
 Requires storing prior month output — add a `prior_month_table` parameter and join on
 `_dimension` + `_dim_value` to compute deltas.
 
-### 4. Within-group Isolation Forest (statistical upgrade)
+### Within-group Isolation Forest (statistical upgrade)
 Instead of one model per dimension, run one model per dimension *value* for large
 dimensions like `svc_setting`. This ensures SNFs are only compared to SNFs, acute
 to acute. Only worth doing if Tier 1 flags are producing too many false positives.
 
-### 5. Consider CUSUM control charts (longer term)
+### CUSUM control charts (longer term)
 Standard methodology in health plan quality surveillance (same family as HEDIS
 outlier reporting). Flags when a metric crosses a statistically meaningful threshold
 relative to its own historical baseline. More credible to clinical/actuarial audience
@@ -129,13 +120,14 @@ than Isolation Forest scores.
 
 ---
 
-## Model Parameters (loc_anomaly.py)
+## Parameters (loc_anomaly.ipynb)
 
 | Parameter | Value | Notes |
 |---|---|---|
-| `CONTAMINATION` | 0.05 | Expected 5% anomaly rate — business decision, not statistical |
-| `TOP_N` | 20 | Narratives written for top 20 most anomalous per dimension |
-| `n_estimators` | 200 | More trees = more stable scores |
+| `TOP_PCT` / `BOTTOM_PCT` | 0.10 | Tier 1: flag top/bottom 10th percentile |
+| `CONTAMINATION` | 0.05 | Tier 2: expected 5% anomaly rate — business decision, not statistical |
+| `TOP_N` | 20 | Tier 2: narratives written for top 20 most anomalous per dimension |
+| `n_estimators` | 200 | Tier 2: more trees = more stable scores |
 | `random_state` | 42 | Reproducibility within a run |
 | Volume filter | `HAVING case_count >= 30` | Applied in SQL, not Python |
 
@@ -147,8 +139,10 @@ than Isolation Forest scores.
 |---|---|---|---|
 | SQL filter | `mnr_total_ffs_flag = 1` | `cns_dual_flag = 1` | `total_oah_flag = 'OAH'` |
 | Prep table | `kn_loc_mnr_agg_04152026` | `kn_loc_cns_agg_04152026` | `kn_loc_oah_agg_04152026` |
-| Scored CSV | `loc_anomaly_mnr_202604.csv` | `loc_anomaly_cns_202604.csv` | `loc_anomaly_oah_202604.csv` |
-| Narratives CSV | `loc_anomaly_mnr_narratives_202604.csv` | `loc_anomaly_cns_narratives_202604.csv` | `loc_anomaly_oah_narratives_202604.csv` |
+| Tier 1 CSV | `loc_pctl_{pop}_202604.csv` | `loc_pctl_{pop}_202604.csv` | `loc_pctl_{pop}_202604.csv` |
+| Tier 2 scored CSV | `loc_if_{pop}_202604.csv` | `loc_if_{pop}_202604.csv` | `loc_if_{pop}_202604.csv` |
+| Narratives CSV | `loc_narratives_{pop}_202604.csv` | `loc_narratives_{pop}_202604.csv` | `loc_narratives_{pop}_202604.csv` |
+| Combined CSV | `loc_combined_{pop}_202604.csv` | `loc_combined_{pop}_202604.csv` | `loc_combined_{pop}_202604.csv` |
 
 Source table: `tmp_1m.kn_loc_notif_${notifications_date}_od`
 All prep tables written to schema: `tmp_1m`
@@ -158,6 +152,6 @@ All prep tables written to schema: `tmp_1m`
 ## Run Order
 
 ```
-1. Run loc_agg.sql in Snowflake   (creates the 3 kn_loc_*_agg tables)
-2. Run loc_anomaly.py             (reads those tables, outputs 6 CSVs)
+1. Run loc_agg.sql in Snowflake       (creates the 3 kn_loc_*_agg tables)
+2. Run loc_anomaly.ipynb              (Tier 1 percentile → Tier 2 IF → combined export)
 ```
