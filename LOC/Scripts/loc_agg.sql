@@ -14,14 +14,6 @@
  * Filter:  mnr_total_ffs_flag = 1
  *==============================================================================*/
 
-select * from tmp_1m.kn_loc_mnr_agg_04222026
-;
-
-select *
-    from tmp_1m.kn_loc_notif_04222026_od
-;
-
-
 create or replace table tmp_1m.kn_loc_mnr_agg_04222026 as
 
 with base as (

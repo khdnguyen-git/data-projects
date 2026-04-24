@@ -199,11 +199,11 @@ select
     , 'MM' as respiratory_flag
     , 'MM' as ipa_li_split
     , case when a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
         then 1 else 0
       end as mnr_cosmos_ffs_flag
     , case when a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
             and a.fin_tfm_product_new in ('HMO', 'PPO', 'NPPO', 'DUAL_CHRONIC')
         then 1 else 0
       end as leading_ind_pop
@@ -213,7 +213,7 @@ select
       end as mnr_nice_ffs_flag
     , case when (
             a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
         ) or (
             a.fin_brand = 'M&R' and a.sgr_source_name = 'NICE'
             and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')
@@ -228,7 +228,7 @@ select
       end as cns_oah_flag
     , case when a.fin_brand = 'M&R' and a.fin_product_level_3 = 'DUAL' then 1 else 0 end as mnr_dual_flag
     , case when (
-            a.fin_brand = 'C&S' and a.migration_source <> 'OAH' and a.global_cap = 'NA'
+            a.fin_brand = 'C&S' and a.migration_source != 'OAH' and a.global_cap = 'NA'
             and a.fin_product_level_3 = 'DUAL' and a.sgr_source_name in ('COSMOS', 'CSP')
         ) or (
             a.fin_inc_year = '2024' and a.fin_brand = 'C&S' and a.global_cap = 'NA'
@@ -238,14 +238,14 @@ select
       end as cns_dual_flag
     , 'NA' as ocm_migration
     , 0 as swgbed
-    , case when a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+    , case when a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
             and ((a.global_cap = 'NA' and a.sgr_source_name in ('COSMOS', 'CSP'))
                 or (a.sgr_source_name = 'NICE' and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')))
             and a.fin_brand = 'M&R' then 'M&R'
         when a.fin_product_level_3 = 'DUAL' and a.tfm_include_flag = 0
             and ((a.global_cap = 'NA' and a.sgr_source_name in ('COSMOS', 'CSP'))
                 or (a.sgr_source_name = 'NICE' and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')))
-            and (a.migration_source <> 'OAH' or a.migration_source is null)
+            and (a.migration_source != 'OAH' or a.migration_source is null)
             and a.fin_brand = 'C&S' then 'C&S'
         else 'Other'
       end as mr_cs_other
@@ -311,11 +311,11 @@ group by
         ) then 0 else 1
       end
     , case when a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
         then 1 else 0
       end
     , case when a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
             and a.fin_tfm_product_new in ('HMO', 'PPO', 'NPPO', 'DUAL_CHRONIC')
         then 1 else 0
       end
@@ -325,7 +325,7 @@ group by
       end
     , case when (
             a.fin_brand = 'M&R' and a.global_cap = 'NA' and a.sgr_source_name = 'COSMOS'
-            and a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+            and a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
         ) or (
             a.fin_brand = 'M&R' and a.sgr_source_name = 'NICE'
             and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')
@@ -340,7 +340,7 @@ group by
       end
     , case when a.fin_brand = 'M&R' and a.fin_product_level_3 = 'DUAL' then 1 else 0 end
     , case when (
-            a.fin_brand = 'C&S' and a.migration_source <> 'OAH' and a.global_cap = 'NA'
+            a.fin_brand = 'C&S' and a.migration_source != 'OAH' and a.global_cap = 'NA'
             and a.fin_product_level_3 = 'DUAL' and a.sgr_source_name in ('COSMOS', 'CSP')
         ) or (
             a.fin_inc_year = '2024' and a.fin_brand = 'C&S' and a.global_cap = 'NA'
@@ -348,14 +348,14 @@ group by
             and a.fin_state = 'MD'
         ) then 1 else 0
       end
-    , case when a.fin_product_level_3 <> 'INSTITUTIONAL' and a.tfm_include_flag = 1
+    , case when a.fin_product_level_3 != 'INSTITUTIONAL' and a.tfm_include_flag = 1
             and ((a.global_cap = 'NA' and a.sgr_source_name in ('COSMOS', 'CSP'))
                 or (a.sgr_source_name = 'NICE' and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')))
             and a.fin_brand = 'M&R' then 'M&R'
         when a.fin_product_level_3 = 'DUAL' and a.tfm_include_flag = 0
             and ((a.global_cap = 'NA' and a.sgr_source_name in ('COSMOS', 'CSP'))
                 or (a.sgr_source_name = 'NICE' and a.nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')))
-            and (a.migration_source <> 'OAH' or a.migration_source is null)
+            and (a.migration_source != 'OAH' or a.migration_source is null)
             and a.fin_brand = 'C&S' then 'C&S'
         else 'Other'
       end
