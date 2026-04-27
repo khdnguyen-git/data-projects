@@ -3,10 +3,10 @@
  * 04/09: changed cmltv_episodes to ep_num for clarification
  * 04/08: changed population definition
  * 04/07: added separate episode-analysis for CpE; now computing VpE/CpE at the episodes level for TIN and market
- * 03/23: added category_2 for TIN-summary analysis
+ * 03/23: added mbm_category for TIN-summary analysis
  * 03/16: removed tin_owner, re-added clm_dnl_f filter + remove claim_status = 'Denied'
  * 03/13: changed optum_tin_flag to Y/N instead of 1/0
- * 03/12: added _${current_month} suffix to ALL tables, category_1, ahrq, optum_tin_flag + tin_owner
+ * 03/12: added _${current_month} suffix to ALL tables, therapy_category, ahrq, optum_tin_flag + tin_owner
  *        via LEFT JOIN to tmp_1y.cl_therapy_optum_tins_202602
  *        renamed mbm_deploy_dt -> national_pilot_flag
  *        final table: tmp_1m.knd_mbm_visits_episodes_extract_${current_month}
@@ -41,8 +41,7 @@ show variables;
  *==============================================================================*/
 
 -- COSMOS claims
-drop table if exists tmp_1m.knd_mbm_cosmos_claims_${current_month};
-create table tmp_1m.knd_mbm_cosmos_claims_${current_month} as
+create or replace table tmp_1m.knd_mbm_cosmos_claims_${current_month} as
 select
 	'COSMOS' as entity
 	, a.component
@@ -60,7 +59,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
     , case
         when a.proc_cd in ('98940','98941','98942') then 'Chiro'
         when a.proc_cd in (
@@ -75,9 +74,9 @@ select
             ,'92630','92633','96105','97129','97130','S9128'
         ) then 'ST'
         else 'Other'
-    end as category_1
+    end as therapy_category
     , a.prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
     , a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -150,7 +149,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
     , case
         when a.proc_cd in ('98940','98941','98942') then 'Chiro'
         when a.proc_cd in (
@@ -165,9 +164,9 @@ select
             ,'92630','92633','96105','97129','97130','S9128'
         ) then 'ST'
         else 'Other'
-    end as category_1
+    end as therapy_category
     , a.prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
  	, a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -225,8 +224,7 @@ and (
 ;
 
 -- CSP claims
-drop table if exists tmp_1m.knd_mbm_csp_claims_${current_month};
-create table tmp_1m.knd_mbm_csp_claims_${current_month} as
+create or replace table tmp_1m.knd_mbm_csp_claims_${current_month} as
 select
 	'CSP' as entity
 	, a.component
@@ -244,7 +242,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
 	, case
 	    when a.proc_cd in ('98940','98941','98942') then 'Chiro'
 	    when a.proc_cd in (
@@ -259,9 +257,9 @@ select
 	        ,'92630','92633','96105','97129','97130','S9128'
 	    ) then 'ST'
 	    else 'Other'
-	end as category_1
+	end as therapy_category
     , a.tin as prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
     , a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -334,7 +332,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
 	, case
 	    when a.proc_cd in ('98940','98941','98942') then 'Chiro'
 	    when a.proc_cd in (
@@ -349,9 +347,9 @@ select
 	        ,'92630','92633','96105','97129','97130','S9128'
 	    ) then 'ST'
 	    else 'Other'
-	end as category_1
+	end as therapy_category
     , a.tin as prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
     , a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -411,8 +409,7 @@ where a.brand_fnl = 'C&S'
 -- NICE claims
 -- special_network doesn't exist in NCE; ericksonflag doesn't work
 
-drop table if exists tmp_1m.knd_mbm_nice_claims_${current_month};
-create table tmp_1m.knd_mbm_nice_claims_${current_month} as
+create or replace table tmp_1m.knd_mbm_nice_claims_${current_month} as
 select
 	'NICE' as entity
 	, a.component
@@ -430,7 +427,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
 	, case
 	    when a.proc_cd in ('98940','98941','98942') then 'Chiro'
 	    when a.proc_cd in (
@@ -445,9 +442,9 @@ select
 	        ,'92630','92633','96105','97129','97130','S9128'
 	    ) then 'ST'
 	    else 'Other'
-	end as category_1
+	end as therapy_category
     , a.tin as prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
     , a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -520,7 +517,7 @@ select
         when a.ama_pl_of_srvc_cd in ('11','49') then 'Office'
         when a.ama_pl_of_srvc_cd in ('22','62','19','24') and a.component = 'OP' then 'OP_REHAB'
         else 'Other'
-      end as category_2
+      end as mbm_category
 	, case
 	    when a.proc_cd in ('98940','98941','98942') then 'Chiro'
 	    when a.proc_cd in (
@@ -535,9 +532,9 @@ select
 	        ,'92630','92633','96105','97129','97130','S9128'
 	    ) then 'ST'
 	    else 'Other'
-	end as category_1
+	end as therapy_category
     , a.tin as prov_tin
-    , case when b.tin is not null then 1 else 0 end as optum_tin_flag
+    , case when b.tin is not null then 'Y' else 'N' end as optum_tin_flag
     , a.primary_diag_cd
     , a.ahrq_diag_genl_catgy_desc
     , a.ahrq_diag_dtl_catgy_desc
@@ -596,8 +593,7 @@ where a.brand_fnl = 'M&R'
 
 -- Stack COSMOS + CSP + NICE claims
 -- Make flags for population
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_${current_month};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_${current_month} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_${current_month} as
 with cte_union as (
 select
 	entity
@@ -611,8 +607,8 @@ select
     , fst_srvc_year
 	, mbi
 	, proc_cd
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
     , primary_diag_cd
@@ -673,8 +669,8 @@ select
     , fst_srvc_year
 	, mbi
 	, proc_cd
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
     , primary_diag_cd
@@ -735,8 +731,8 @@ select
     , fst_srvc_year
 	, mbi
 	, proc_cd
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
     , primary_diag_cd
@@ -800,8 +796,7 @@ from cte_union;
 
 -- Aggregate to sum(allowed) and sum(paid) before VpE analysis
 -- Adding claim_status
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${current_month};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${current_month} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${current_month} as
 with aggregated as (
 select
 	population
@@ -816,8 +811,8 @@ select
 	, fst_srvc_year
 	, mbi
 	, proc_cd
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, primary_diag_cd
@@ -848,8 +843,8 @@ group by
 	, fst_srvc_year
 	, mbi
 	, proc_cd
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, primary_diag_cd
@@ -867,25 +862,24 @@ group by
 )
 select
 	*
-	, iff(sum(allw_amt_fnl) over (partition by visit_id, fst_srvc_dt, category_2)  > 0.01, 'Paid', 'Denied') as claim_status -- reserving logic from original script
+	, iff(sum(allw_amt_fnl) over (partition by visit_id, fst_srvc_dt, mbm_category)  > 0.01, 'Paid', 'Denied') as claim_status -- reserving logic from original script
 from aggregated
 ;
 
 
 -- Defining visits grouping structure
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_${current_month};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_${current_month} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_${current_month} as
 select 
     entity
-    , concat(mbi, '-', category_2) as mbi_key
+    , concat(mbi, '-', mbm_category) as mbi_key
 	, component
 	, visit_id
 	, fst_srvc_dt
     , fst_srvc_month
     , min(hcta_paid_dt) as min_hcta_paid_dt
     , fst_srvc_year
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -898,14 +892,14 @@ select
 from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_${current_month}
 group by
     entity
-    , concat(mbi, '-', category_2)
+    , concat(mbi, '-', mbm_category)
 	, component
 	, visit_id
 	, fst_srvc_dt
     , fst_srvc_month
     , fst_srvc_year
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -916,7 +910,6 @@ group by
 ;
 
 -- Flag new episode
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_${current_month};
 create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_${current_month} as
 select
 	mbi_key
@@ -927,8 +920,8 @@ select
     , fst_srvc_month
     , min_hcta_paid_dt
     , fst_srvc_year
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -976,8 +969,8 @@ select
     , fst_srvc_month
     , min_hcta_paid_dt
     , fst_srvc_year
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1001,8 +994,8 @@ select
 	, cast(null as varchar) as visit_paid_month
 	, ep_hcta_paid_dt as ep_paid_month
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1025,8 +1018,8 @@ group by
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
 	, ep_hcta_paid_dt
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1048,8 +1041,8 @@ select
     , min_hcta_paid_dt as visit_paid_month
     , cast(null as varchar) as ep_paid_month
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1073,8 +1066,8 @@ group by
     , fst_srvc_year
     , min_hcta_paid_dt
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1100,8 +1093,8 @@ from (select
     , min_hcta_paid_dt as visit_paid_month
     , cast(null as varchar) as ep_paid_month
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1125,8 +1118,8 @@ group by
     , fst_srvc_year
     , min_hcta_paid_dt
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1152,8 +1145,8 @@ from (select
     , min_hcta_paid_dt as visit_paid_month
     , cast(null as varchar) as ep_paid_month
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
     , market_fnl
@@ -1176,8 +1169,8 @@ group by
     , fst_srvc_year
     , min_hcta_paid_dt
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
     , market_fnl
@@ -1215,8 +1208,8 @@ select
     , visit_paid_month
     , ep_paid_month
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1242,8 +1235,8 @@ group by
     , visit_paid_month
     , ep_paid_month
     , entity
-    , category_2
-    , category_1
+    , mbm_category
+    , therapy_category
     , prov_tin
     , optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
@@ -1260,9 +1253,9 @@ create or replace table tmp_1m.knd_mbm_visits_episodes_extract_${current_month} 
 select
 	population
 	, prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
+	, optum_tin_flag
     , ahrq_diag_dtl_catgy_desc
-    , category_1 as category
+    , therapy_category as category
     , market_fnl
     , sum(mbr_count) as unique_member_count
     , sum(total_episodes) as episode_count
@@ -1273,9 +1266,9 @@ where ep_start_month >= '202501'
 group by 
 	population
 	, prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N') 
+	, optum_tin_flag 
     , ahrq_diag_dtl_catgy_desc
-    , category_1
+    , therapy_category
     , market_fnl
 ;
 
@@ -1286,8 +1279,8 @@ select
     population
     , prov_tin
     , ep_start_month
-    , iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
-    , category_1 as category
+    , optum_tin_flag
+    , therapy_category as category
     , ahrq_diag_dtl_catgy_desc
     , market_fnl    
     , sum(n_episodes) as total_episodes
@@ -1301,8 +1294,8 @@ group by
     population
     , prov_tin
     , ep_start_month
-    , iff(optum_tin_flag = 1, 'Y', 'N')
-    , category_1
+    , optum_tin_flag
+    , therapy_category
     , ahrq_diag_dtl_catgy_desc
     , market_fnl
 )
@@ -1357,8 +1350,8 @@ select
 	, a.market_fnl
 	, a.ep_start_dt
 	, to_char(a.ep_start_dt, 'yyyymm') as ep_start_month
-	, a.category_2
-	, a.category_1
+	, a.mbm_category
+	, a.therapy_category
 	, a.population
 	, b.prov_tin as first_tin
 	, b.optum_tin_flag
@@ -1380,8 +1373,8 @@ group by
 	, a.market_fnl
 	, a.ep_start_dt
 	, to_char(a.ep_start_dt, 'yyyymm')
-	, a.category_2
-	, a.category_1
+	, a.mbm_category
+	, a.therapy_category
 	, a.population
 	, b.prov_tin
 	, b.optum_tin_flag
@@ -1396,16 +1389,16 @@ select
 	population
 	, mbi_key
 	, cast(first_tin as varchar) as prov_tin
-	, iff(optum_tin_flag = 1, 'Y', 'N') as optum_tin_flag
+	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
-	, category_1 as category
+	, therapy_category as category
 	, market_fnl
 	, n_visits
 	, allowed
 from tmp_1m.knd_mbm_episodes_agg_test_${current_month}
 where population != 'N/A'
 	and ep_start_month >= '202501'
-	and category_1 != 'Other'
+	and therapy_category != 'Other'
 )
 select
 	population
@@ -1439,8 +1432,8 @@ select
 	, cast(null as varchar) as visit_paid_month
 	, ep_hcta_paid_dt as ep_paid_month
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1462,8 +1455,8 @@ group by
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
 	, ep_hcta_paid_dt
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1486,8 +1479,8 @@ select
 	, cast(null as varchar) as visit_paid_month
 	, ep_hcta_paid_dt as ep_paid_month
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1509,8 +1502,8 @@ group by
 	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
 	, ep_hcta_paid_dt
 	, entity
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, ahrq_diag_dtl_catgy_desc
@@ -1600,8 +1593,7 @@ select
 from mm_flag;
 
 
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_mm_${current_month}; 
-create table tmp_1m.knd_mbm_cosmos_csp_nice_mm_${current_month} as 
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_${current_month} as 
 with cte_union as (
 select
 	entity
@@ -1781,8 +1773,7 @@ group by 1, 2
 
 
 
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_${current_month}; 
-create table tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_${current_month} as 
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_${current_month} as 
 select 
 	entity
 	, population
@@ -1823,8 +1814,7 @@ group by
 /*==============================================================================
  * Union Claims and Membership
  *==============================================================================*/
-drop table if exists tmp_1m.knd_mbm_cosmos_csp_nice_claims_mm_summary_${current_month};
-create table tmp_1m.knd_mbm_cosmos_csp_nice_claims_mm_summary_${current_month} as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_mm_summary_${current_month} as
 select
 	'Claims' as data_type
 	, entity
@@ -1910,8 +1900,8 @@ select
 	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
 	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt) as ep_start_qtr
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -1930,8 +1920,8 @@ group by
 	, to_char(ep_start_dt, 'yyyyMM')
 	, to_char(ep_start_dt, 'yyyy') || 'Q' || extract(quarter from ep_start_dt)
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -1949,11 +1939,11 @@ with pct_mnr as (
     select
         *
         , percentile_cont(0.25) within group (order by n_visits)
-            over (partition by national_pilot_flag, category_2) as p25
+            over (partition by national_pilot_flag, mbm_category) as p25
         , percentile_cont(0.50) within group (order by n_visits)
-            over (partition by national_pilot_flag, category_2) as p50
+            over (partition by national_pilot_flag, mbm_category) as p50
         , percentile_cont(0.75) within group (order by n_visits)
-            over (partition by national_pilot_flag, category_2) as p75
+            over (partition by national_pilot_flag, mbm_category) as p75
     from tmp_1m.knd_mbm_vpe_aggregated_${current_month}
     where population = 'M&R FFS (excl. DSNP)'
 )
@@ -1992,8 +1982,8 @@ select
 	, cast(null as varchar) as visit_month
 	, cast(null as varchar) as visit_paid_month
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2013,8 +2003,8 @@ from tmp_1m.knd_mbm_vpe_aggregated_category_mnr_${current_month}
 group by
 	ep_start_month
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2038,8 +2028,8 @@ select
 	, ep_start_dt
 	, national_pilot_flag
 	, ep_num
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2058,8 +2048,8 @@ group by
 	, ep_start_dt
 	, national_pilot_flag
 	, ep_num
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2074,8 +2064,8 @@ select
 	, a.fst_srvc_month as visit_month
 	, a.min_hcta_paid_dt as visit_paid_month
 	, a.national_pilot_flag
-	, a.category_2
-	, a.category_1
+	, a.mbm_category
+	, a.therapy_category
 	, a.prov_tin
 	, a.optum_tin_flag
 	, a.tin_owner
@@ -2102,8 +2092,8 @@ group by
 	, a.fst_srvc_month
 	, a.min_hcta_paid_dt
 	, a.national_pilot_flag
-	, a.category_2
-	, a.category_1
+	, a.mbm_category
+	, a.therapy_category
 	, a.prov_tin
 	, a.optum_tin_flag
 	, a.tin_owner
@@ -2135,8 +2125,8 @@ select
 	, vpe_buckets_10
 	, vpe_buckets_stat
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2158,8 +2148,8 @@ group by
 	, vpe_buckets_10
 	, vpe_buckets_stat
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2176,8 +2166,8 @@ select
 	, ep_start_month
 	, ep_hcta_paid_dt
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
@@ -2197,8 +2187,8 @@ group by
 	, ep_start_month
 	, ep_hcta_paid_dt
 	, national_pilot_flag
-	, category_2
-	, category_1
+	, mbm_category
+	, therapy_category
 	, prov_tin
 	, optum_tin_flag
 	, tin_owner
