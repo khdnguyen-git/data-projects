@@ -4,7 +4,10 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(git mv *)",
+      "Bash(gh pr create --title 'Claude Code setup overhaul: CLAUDE.md, project context, archived projects' --body ' *)",
+      "Bash(python generate_data.py)"
     ]
   }
 }
