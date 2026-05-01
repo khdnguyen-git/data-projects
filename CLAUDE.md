@@ -26,6 +26,17 @@ The date suffix uses the run/notification month in `YYYYMM` format.
 
 ## Canonical Table Sources
 
+### Read-Only Schemas (NEVER write to these)
+
+The following schemas are **read-only** source data. Never `create`, `replace`, `alter`, `insert`, `update`, `delete`, or `drop` any object in these schemas:
+
+- `fichsrv` — claims fact tables (`glxy_pr_f`, `glxy_op_f`, `dcsp_*`, `nce_*`, `tre_membership`, `tadm_glxy_reason_code`, etc.)
+- `hce_ops_archv` — archived membership snapshots (`gl_rstd_gpsgalnce_f_YYYYMM`)
+- `hce_ops_stage` — staging tables (LOPA: `pa_trckng_op_evnt_lopa_dtl`, `pa_trckng_pr_evnt_lopa_dtl`, etc.)
+- `hce_ops_fnl` — finalized operational tables (`hce_adr_avtar_like_25_26_f`, etc.)
+
+**Write targets**: Only write to `tmp_*` schemas (`tmp_1m`, `tmp_1q`, `tmp_1y`). All created tables must have the `kn_` (prod) or `knd_` (dev) prefix.
+
 ### Claims
 
 Pull from `fichsrv.*` tables. Use `union all` across entities as needed:
