@@ -87,13 +87,15 @@ Query with `pd.read_sql("select ...", engine)`. Dispose with `engine.dispose()` 
 
 ### Notebook workflow structure
 
-Write notebooks sequentially, one block per step — mirrors R/SAS workflow:
+Write notebooks as exploratory, reactive, top-to-bottom scripts — like peeling an onion. Start with a vague question, load the data, look at it, and let each cell follow from what the previous one revealed. Do not plan the whole analysis upfront or impose a rigid structure.
 
-1. **Load** — imports, connection, raw data pull
-2. **EDA** — shape, dtypes, missing values, distributions
-3. **Transform** — filters, derived columns, merges, reshaping
-4. **Analyze** — aggregations, stats, model if applicable
-5. **Visualize / Report** — charts, tables, exports
+All imports go in a single cell at the top. After that: load → look → react. No prescribed order beyond that. The structure emerges from the data.
+
+Do not create a dedicated config cell. Only truly run-specific values that change every month (e.g., a run date) warrant a line at the top. Feature lists, thresholds, model parameters — define them inline in the cell where they are used.
+
+### File format
+
+Write analysis scripts as `.py` files with `# %%` cell markers — not `.ipynb` notebooks. Each `# %%` is a runnable cell in VS Code's interactive window. Use `# %% [markdown]` for section headers. This gives the same cell-by-cell execution experience as a notebook but in a plain text file.
 
 ### Code style
 
@@ -102,8 +104,8 @@ Write notebooks sequentially, one block per step — mirrors R/SAS workflow:
 - No classes, modules, logging setup, argparse, or `if __name__ == "__main__"` boilerplate
 - Keep it simple and readable; only reach for complex patterns when genuinely required
 - Comments explain *why* or *what we're seeing*, not what the code does
-- Sparse print statements — only when output is meaningful to inspect
-- **Spacing**: spaces around `=` (`x = 1`, not `x=1`); space after commas (`a, b`, not `a,b` or `a ,b`)
+- Sparse print statements — only when output is meaningful to inspect (e.g., shape, counts). Never print fallback/warning messages like `"no results found"` or `"check thresholds"` — just let the empty output speak for itself
+- **Spacing**: spaces around `=` in all contexts — assignments and keyword arguments (`x = 1`, `IsolationForest(n_estimators = 200)`). Space after commas (`a, b`). **Never** add extra spaces to align `=` signs across lines — `x = 1` / `long_name = 2`, not `x        = 1` / `long_name = 2`.
 
 ### Piping / method chaining
 

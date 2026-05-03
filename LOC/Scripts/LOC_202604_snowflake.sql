@@ -6,6 +6,19 @@
 
 
 /*==============================================================================
+ * Step 0: _3_od — case-level auths with hospital_group added (kn_ mirror of IPA's ec_ 3_od)
+ *==============================================================================*/
+create or replace table tmp_1m.kn_ip_dataset_04222026_3_od as
+select
+    a.*
+    , d.collection as hospital_group
+from tmp_1m.ec_ip_dataset_04222026_3_od as a
+left join tmp_1y.tin_collection as d
+    on a.prov_tin = d.tin
+;
+
+
+/*==============================================================================
  * Step 1: _4_od — roll up auths before join to member months
  * Source: tmp_1m.ec_ip_dataset_04222026_3_od  (IPA's table)
  *==============================================================================*/
