@@ -400,6 +400,7 @@ with loc_base as (
         , ip_type
         , svc_setting
         , prov_tin
+        , hospital_group
         , sum(case_count) as case_count
         , sum(initial_adr_cnt) as initial_adr_cnt
         , sum(persistent_adr_cnt) as persistent_adr_cnt
@@ -444,6 +445,7 @@ with loc_base as (
         , ip_type
         , svc_setting
         , prov_tin
+        , hospital_group
 )
 select
     *
