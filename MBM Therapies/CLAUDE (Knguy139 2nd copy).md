@@ -52,3 +52,4 @@ M&R DSNP          → mnr_dual_flag = 1
 
 - **"refresh Affordability for yyyymm"** — run `therapy_savings_yyyymm_Snowflake_stable.sql` with `yyyymm` replaced by the requested month; execute directly
 - **"get VpE for yyyymm"** — run the latest `Therapy_PMPM+VpE_yyyymm.sql` script with `yyyymm` replaced by the requested month, execute the full analysis, then filter and return the VpE results for that specific month
+- **"Affordability"** — always refers to the latest `Therapy_Savings_yyyymm_Snowflake_stable.sql` script (highest `yyyymm` suffix in `Scripts/`)

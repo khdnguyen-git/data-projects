@@ -1,18 +1,17 @@
 /*==============================================================================
  * LOC Valuation — April 2026
- * notifications_date = 04222026
+ * notifications_date = 05132026
  * membership_month   = 202603
  *==============================================================================*/
-
 
 /*==============================================================================
  * Step 0: _3_od — case-level auths with hospital_group added (kn_ mirror of IPA's ec_ 3_od)
  *==============================================================================*/
-create or replace table tmp_1m.kn_ip_dataset_04222026_3_od as
+create or replace table tmp_1m.kn_ip_dataset_05132026_3_od as
 select
     a.*
     , d.collection as hospital_group
-from tmp_1m.ec_ip_dataset_04222026_3_od as a
+from tmp_1m.ec_ip_dataset_05132026_3_od as a
 left join tmp_1y.tin_collection as d
     on a.prov_tin = d.tin
 ;
@@ -20,9 +19,9 @@ left join tmp_1y.tin_collection as d
 
 /*==============================================================================
  * Step 1: _4_od — roll up auths before join to member months
- * Source: tmp_1m.ec_ip_dataset_04222026_3_od  (IPA's table)
+ * Source: tmp_1m.ec_ip_dataset_05132026_3_od  (IPA's table)
  *==============================================================================*/
-create or replace table tmp_1m.kn_ip_dataset_04222026_4_od as
+create or replace table tmp_1m.kn_ip_dataset_05132026_4_od as
 select
     a.admit_week
     , a.hce_admit_month
@@ -54,7 +53,7 @@ select
     , a.do_ind
     , a.par_nonpar
     , a.prov_tin
-    , d.collection as hospital_group
+    , a.hospital_group
     , a.capitated
     , a.los_categories
     , a.los_exp
@@ -104,9 +103,7 @@ select
     , 0 as franky_paid
     , 0 as franky_admits
     , 0 as franky_allw
-from tmp_1m.ec_ip_dataset_04222026_3_od as a
-left join tmp_1y.tin_collection as d
-    on a.prov_tin = d.tin
+from tmp_1m.kn_ip_dataset_05132026_3_od as a
 group by
     a.admit_week
     , a.hce_admit_month
@@ -136,7 +133,7 @@ group by
     , a.do_ind
     , a.par_nonpar
     , a.prov_tin
-    , d.collection
+    , a.hospital_group
     , a.capitated
     , a.los_categories
     , a.los_exp
@@ -166,7 +163,7 @@ group by
  * Step 2: _mm_od — member months
  * Source: hce_ops_archv.gl_rstd_gpsgalnce_f_202603
  *==============================================================================*/
-create or replace table tmp_1m.kn_loc_mm_04222026_od as
+create or replace table tmp_1m.kn_loc_mm_05132026_od as
 select
     000000 as fin_inc_week
     , a.fin_inc_month
@@ -294,7 +291,7 @@ select
     , 0 as franky_paid
     , 0 as franky_admits
     , 0 as franky_allw
-from hce_ops_archv.gl_rstd_gpsgalnce_f_202603 as a
+from hce_ops_archv.gl_rstd_gpsgalnce_f_202605 as a
 left join fichsrv.group_crosswalk as b
     on a.tadm_group_nbr_consist = b.group_number
     and a.fin_inc_year = b.year
@@ -378,17 +375,16 @@ group by
 /*==============================================================================
  * Step 3: _notif_od — auths + member months
  *==============================================================================*/
-create or replace table tmp_1m.kn_loc_notif_04222026_od as
-select * from tmp_1m.kn_ip_dataset_04222026_4_od
+create or replace table tmp_1m.kn_loc_notif_05132026_od as
+select * from tmp_1m.kn_ip_dataset_05132026_4_od
 union all
-select * from tmp_1m.kn_loc_mm_04222026_od
+select * from tmp_1m.kn_loc_mm_05132026_od
 ;
-
 
 /*==============================================================================
  * Step 4: LOC Valuation Table
  *==============================================================================*/
-create or replace table tmp_1m.kn_ip_dataset_loc_04222026_od as
+create or replace table tmp_1m.KN_IP_DATASET_LOC_05132026_OD as
 with loc_base as (
     select
         admit_week
@@ -413,9 +409,8 @@ with loc_base as (
         , cns_dual_flag
         , ocm_migration
         , component
-        , ip_type
-        , svc_setting
         , prov_tin
+        , hospital_group
         , sum(case_count) as case_count
         , sum(initial_adr_cnt) as initial_adr_cnt
         , sum(persistent_adr_cnt) as persistent_adr_cnt
@@ -430,7 +425,7 @@ with loc_base as (
         , sum(member_appeal_cnt) as member_appeal_cnt
         , sum(member_appeal_ovtn_cnt) as member_appeal_ovtn_cnt
         , sum(membership) as membership
-    from tmp_1m.kn_loc_notif_04222026_od
+    from tmp_1m.kn_loc_notif_05132026_od
     where ipa_pac_flag in ('IPA', 'MM')
         and hce_admit_month > '202212'
         and loc_flag = 1
@@ -457,9 +452,8 @@ with loc_base as (
         , cns_dual_flag
         , ocm_migration
         , component
-        , ip_type
-        , svc_setting
         , prov_tin
+        , hospital_group
 )
 select
     *
@@ -471,4 +465,112 @@ select
         when mnr_dual_flag = 1 then 'M&R DSNP'
       end as population
 from loc_base
+;
+
+select 
+    admit_act_month
+    , sum(membership) 
+from tmp_1m.KN_IP_DATASET_LOC_05132026_OD
+where mnr_total_ffs_flag = 1 and admit_act_month >= '202501'
+group by 1
+order by 1
+;
+
+select 
+    admit_act_month
+    , sum(membership) 
+from tmp_1m.EC_IP_DATASET_LOC_05132026_OD
+where mnr_total_ffs_flag = 1 and admit_act_month >= '202501'
+group by 1
+order by 1
+;
+
+select 
+    hce_admit_month
+    , sum(membership) 
+from tmp_1m.kn_loc_notif_05132026_od
+where mnr_total_ffs_flag = 1 and hce_admit_month >= '202501'
+group by 1
+order by 1
+;
+
+
+
+
+select 
+    hce_admit_month
+    , sum(membership) 
+from tmp_1m.ec_ip_dataset_notif_05132026_od
+where mnr_total_ffs_flag = 1 and hce_admit_month >= '202501'
+group by 1
+order by 1
+;
+
+
+select 
+    hospital_group
+    , sum(case_count)
+from tmp_1m.ec_ip_dataset_notif_05132026_od
+where fin_market = 'LA' and admit_act_month >= '2025'
+group by 1
+;
+
+
+select count (distinct d.collection) 
+from tmp_1m.ec_avtar_25_26_3_od as a
+    left join tmp_1y.tin_collection as d
+        on substr(a.fa_prov_id, 2, 9) = d.tin
+    where fin_brand in ('M&R', 'C&S')
+        and (
+            (ip_type in ('Medical', 'Surgical', 'Transplant')
+             and to_varchar(admit_dt_act, 'MM/dd/yyyy') is not null)
+            or ip_type in ('LTAC', 'SNF', 'AIR')
+        )
+        and fin_brand = 'M&R'
+        and loc_flag = 1
+        and (
+            (global_cap = 'NA' and sgr_source_name = 'COSMOS'
+             and fin_product_level_3 != 'INSTITUTIONAL' and tfm_include_flag = 1)
+            or (sgr_source_name = 'NICE' and nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN'))
+        )
+        and hce_admit_month between '202501' and '202512'
+;
+
+
+
+
+
+with base as (
+select
+        d.collection as hospital_group
+        , count(*) as case_count_2025
+        , sum(a.initialfulladr_cases) as initial_adr_cnt_2025
+        , sum(a.persistentfulladr_cases) as persistent_adr_cnt
+        , sum(a.p2p_full_ovtn) as p2p_ovrtn_cnt
+        , sum(a.appeal_ovrtn_ind) as appeal_ovrtn_cnt
+        , sum(a.mcr_ovtrn_ind) as mcr_ovrtn_cnt
+        , sum(a.icm_md_reviewed_ind) as md_reviewed_cnt
+    from tmp_1m.ec_avtar_25_26_3_od as a
+    left join tmp_1y.tin_collection as d
+        on substr(a.fa_prov_id, 2, 9) = d.tin
+    where fin_brand in ('M&R', 'C&S')
+        and (
+            (ip_type in ('Medical', 'Surgical', 'Transplant')
+             and to_varchar(admit_dt_act, 'MM/dd/yyyy') is not null)
+            or ip_type in ('LTAC', 'SNF', 'AIR')
+        )
+        and fin_brand = 'M&R'
+        and loc_flag = 1
+        and (
+            (global_cap = 'NA' and sgr_source_name = 'COSMOS'
+             and fin_product_level_3 != 'INSTITUTIONAL' and tfm_include_flag = 1)
+            or (sgr_source_name = 'NICE' and nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN'))
+        )
+        and hce_admit_month between '202501' and '202512'
+    group by 1
+    having count(*) >= 30
+)
+select 
+    count(*)
+from base
 ;

@@ -2,25 +2,25 @@
 --Step 0.a: Update to the new date & if a monthly claims run; update tre copy cosmos tab 
 /*Every week*/
 --Find and change date for notifications + claims
-@set notifications_date = 04222026
-@set claims_date = 04012026
---4/22/26: done--
+@set notifications_date = 05132026
+@set claims_date = 04292026
+--5/13/26: done--
 
 --Step 0.b: check to see if current month membership is available
-select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202604; --make sure this IS CURRENT MONTH-- 
+--select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202605; --make sure this IS CURRENT MONTH-- 
 @set membership_month = 202604
 --CHECK WITH PRADEEPA THAT THE ENROLLMENT TABLE IS TRULY UPDATED--
---4/22/26: done; new April enrollment table confirmed by Pradeepa--
+--5/13/26: done; no new enrollment table--
 
 --monthly ish
 --Step 0.c Uncomment out most recent roster month from Completion Step 9: tmp_1m.ec_ip_mm_2026 IF 0.B SHOWS NEXT MONTH MEMBERSHIP AVAILABLE
 --Don't forget to update roster month in Notification Completion Model
---4/22/26: done; no new enrollment table--
+--5/13/26: done; no new enrollment table--
 
 /*Monthly claims update*/
 --Step 0.d: change claims month
-@set claims_month = 202603
---4/22/26: done no new claims--
+@set claims_month = 202604
+--5/13/26: done; no May claims yet--
 --REMEMBER TO UPDATE SEASONALITY FACTORS TOO--
 
 --Step 1: Check that AvTar was Updated with this query to check latest date (should be day of or day before run)
@@ -2462,6 +2462,10 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 91,006,586,745.05
 -- Units: 6,156,717
 -- Days: 52,976,960
+-- APRIL
+-- paid: 93,214,206,027.61
+-- units: 6,294,990
+-- days: 54,192,606
 
 select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , sum(days_franky) as days_franky from tmp_1m.ec_ip_dataset_claims_franky7;
 --NOVEMBER
@@ -2512,6 +2516,10 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- Paid: 91,012,166,331.16
 -- Units: 6,156,775
 -- Days: 52,981,712
+-- APRIL
+-- paid: 93,219,794,737.47
+-- units: 6,295,043
+-- days: 54,197,442
 
 
 --Step 21: COSMOS After Franky adjustment
@@ -3301,6 +3309,9 @@ select max(admit_week) from tmp_1m.ec_ip_dataset_all_${notifications_date}_od wh
 --4/8/26: 202615
 --4/15/26: 202616.0
 --4/22/26: 202617.0
+--4/29/26: 202618
+--5/6/26: 202619
+--5/13/26: 202620
 
 --QA check for newest week's OD data, most recent full week should populate
 SELECT sum(MEMBER_APPEAL_OVTN_CNT), admit_week from tmp_1m.ec_ip_dataset_all_${notifications_date}_od where ipa_pac_flag ='IPA' and loc_flag=1 GROUP BY admit_week order BY admit_week desc;
@@ -3308,6 +3319,9 @@ SELECT sum(MEMBER_APPEAL_OVTN_CNT), admit_week from tmp_1m.ec_ip_dataset_all_${n
 --4/8/26: 202614 week populated
 --4/15/26: 202615 week populated
 --4/22/26: 202616 week populated
+--4/29/26: 202617 week populated
+--5/6/26: 202618 week populated
+--5/13/26: 202619 week populated
 
 --QA check to see that most recent claims month is populating--
 SELECT sum(franky_allw), hce_admit_month FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_od GROUP BY hce_admit_month ORDER BY hce_admit_month asc;
@@ -3802,6 +3816,8 @@ group by hce_admit_month
 	,fin_tfm_product_new
 	,ipa_pac_flag
 ;
+
+
 
 drop table if exists tmp_1m.ec_ip_dataset_comp_${notifications_date}_7_od;
 create table tmp_1m.ec_ip_dataset_comp_${notifications_date}_7_od AS
@@ -4442,18 +4458,18 @@ union all
 
 --libname HCX_EC "/hpsasfin/int/projects/hcemrn/ec/prod/data/";
 /*
-data hcx_ec.LOC_IP_4_22_26_OD (compress=yes); 
+data hcx_ec.LOC_IP_5_13_26_OD (compress=yes); 
 set TMP_1M.EC_IP_DATASET_LOC_04222026_OD
 ;run;
 
-data hcx_ec.ec_ip_dataset_4_22_26_OD (compress=yes); 
-set TMP_1M.EC_IP_DATASET_LI_04222026_3_OD
+data hcx_ec.ec_ip_dataset_5_13_26_OD (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LI_05132026_3_OD
 ;run;
 
-data hcx_ec.ec_ip_comp_04222026_OD (compress=yes); 
-set TMP_1M.EC_IP_COMP_04222026_OD 
+data hcx_ec.ec_ip_comp_05132026_OD (compress=yes); 
+set TMP_1M.EC_IP_COMP_05132026_OD 
 ;run;
-*/
+*/ b
 
 
 

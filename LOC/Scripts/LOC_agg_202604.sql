@@ -14,14 +14,17 @@
  * Filter:  mnr_total_ffs_flag = 1
  *==============================================================================*/
 
-create or replace table tmp_1m.kn_loc_mnr_agg_04222026 as
+select * from tmp_1m.kn_loc_mnr_agg_04222026
+;
 
+create or replace table tmp_1m.kn_loc_mnr_agg_04222026 as
 with base as (
     select *
     from tmp_1m.kn_loc_notif_04222026_od
     where ipa_pac_flag in ('IPA', 'MM')
         and loc_flag = 1
         and mnr_total_ffs_flag = 1
+        and hce_admit_month between '202501' and '202512'
 )
 
 -- prov_tin -----------------------------------------------------------------
@@ -42,7 +45,7 @@ select
     , sum(mcr_ovrtn_case_cnt)           / nullif(sum(initial_adr_cnt), 0) as mcr_overturn_rate
     , sum(member_appeal_cnt)            / nullif(sum(initial_adr_cnt), 0) as member_appeal_rate
     , sum(member_appeal_ovtn_cnt)       / nullif(sum(initial_adr_cnt), 0) as member_appeal_overturn_rate
-    , sum(pre_auth_cases)     / nullif(sum(case_count), 0)             as pre_auth_rate
+
     , sum(case_count) * 1000.0 / nullif(sum(membership), 0)            as auth_per_k
 from base
 group by prov_tin
@@ -294,7 +297,7 @@ select
     , sum(mcr_ovrtn_case_cnt)           / nullif(sum(initial_adr_cnt), 0) as mcr_overturn_rate
     , sum(member_appeal_cnt)            / nullif(sum(initial_adr_cnt), 0) as member_appeal_rate
     , sum(member_appeal_ovtn_cnt)       / nullif(sum(initial_adr_cnt), 0) as member_appeal_overturn_rate
-    , sum(pre_auth_cases)     / nullif(sum(case_count), 0)             as pre_auth_rate
+
     , sum(case_count) * 1000.0 / nullif(sum(membership), 0)            as auth_per_k
 from base
 group by prov_tin
@@ -547,7 +550,7 @@ select
     , sum(mcr_ovrtn_case_cnt)           / nullif(sum(initial_adr_cnt), 0) as mcr_overturn_rate
     , sum(member_appeal_cnt)            / nullif(sum(initial_adr_cnt), 0) as member_appeal_rate
     , sum(member_appeal_ovtn_cnt)       / nullif(sum(initial_adr_cnt), 0) as member_appeal_overturn_rate
-    , sum(pre_auth_cases)     / nullif(sum(case_count), 0)             as pre_auth_rate
+
     , sum(case_count) * 1000.0 / nullif(sum(membership), 0)            as auth_per_k
 from base
 group by prov_tin

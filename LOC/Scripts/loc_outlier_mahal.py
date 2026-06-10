@@ -21,10 +21,12 @@ engine = create_engine(URL(
     schema = "TMP_1M"
 ))
 
-mnr = pd.read_sql("select * from tmp_1m.kn_loc_mnr_agg_202604", engine)
+mnr = pd.read_sql("select * from tmp_1m.kn_loc_mnr_agg_04222026", engine)
+print(mnr.shape)
+
+
 
 engine.dispose()
-print(mnr.shape)
 
 # %%
 mnr["_dimension"].value_counts()
@@ -73,29 +75,37 @@ all_features = util_features + pers_features
 
 # %% mahalanobis — utilization
 X = mnr_tin[util_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(util_features))
-
-mnr_tin["mahal_dist_util"] = dists
-mnr_tin["chi2_pval_util"] = pvals
-mnr_tin["mahal_flag_util"] = pvals < 0.05
+if len(X) > len(util_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(util_features))
+    mnr_tin["mahal_dist_util"] = dists
+    mnr_tin["chi2_pval_util"] = pvals
+    mnr_tin["mahal_flag_util"] = pvals < 0.05
+else:
+    print(f"Skipping mahal util for prov_tin — only {len(X)} rows after dropna")
+    mnr_tin["mahal_dist_util"] = np.nan
+    mnr_tin["chi2_pval_util"] = np.nan
+    mnr_tin["mahal_flag_util"] = False
 
 mnr_tin["mahal_flag_util"].value_counts()
 
 # %% mahalanobis — persistency
 X = mnr_tin[pers_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(pers_features))
-
-mnr_tin["mahal_dist_pers"] = dists
-mnr_tin["chi2_pval_pers"] = pvals
-mnr_tin["mahal_flag_pers"] = pvals < 0.05
+if len(X) > len(pers_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(pers_features))
+    mnr_tin["mahal_dist_pers"] = dists
+    mnr_tin["chi2_pval_pers"] = pvals
+    mnr_tin["mahal_flag_pers"] = pvals < 0.05
+else:
+    print(f"Skipping mahal pers for prov_tin — only {len(X)} rows after dropna")
+    mnr_tin["mahal_dist_pers"] = np.nan
+    mnr_tin["chi2_pval_pers"] = np.nan
+    mnr_tin["mahal_flag_pers"] = False
 
 mnr_tin["mahal_flag_pers"].value_counts()
 
@@ -182,29 +192,37 @@ plt.show()
 
 # %% mahalanobis — utilization
 X = mnr_hosp[util_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(util_features))
-
-mnr_hosp["mahal_dist_util"] = dists
-mnr_hosp["chi2_pval_util"] = pvals
-mnr_hosp["mahal_flag_util"] = pvals < 0.05
+if len(X) > len(util_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(util_features))
+    mnr_hosp["mahal_dist_util"] = dists
+    mnr_hosp["chi2_pval_util"] = pvals
+    mnr_hosp["mahal_flag_util"] = pvals < 0.05
+else:
+    print(f"Skipping mahal util for hospital_group — only {len(X)} rows after dropna")
+    mnr_hosp["mahal_dist_util"] = np.nan
+    mnr_hosp["chi2_pval_util"] = np.nan
+    mnr_hosp["mahal_flag_util"] = False
 
 mnr_hosp["mahal_flag_util"].value_counts()
 
 # %% mahalanobis — persistency
 X = mnr_hosp[pers_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(pers_features))
-
-mnr_hosp["mahal_dist_pers"] = dists
-mnr_hosp["chi2_pval_pers"] = pvals
-mnr_hosp["mahal_flag_pers"] = pvals < 0.05
+if len(X) > len(pers_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(pers_features))
+    mnr_hosp["mahal_dist_pers"] = dists
+    mnr_hosp["chi2_pval_pers"] = pvals
+    mnr_hosp["mahal_flag_pers"] = pvals < 0.05
+else:
+    print(f"Skipping mahal pers for hospital_group — only {len(X)} rows after dropna")
+    mnr_hosp["mahal_dist_pers"] = np.nan
+    mnr_hosp["chi2_pval_pers"] = np.nan
+    mnr_hosp["mahal_flag_pers"] = False
 
 mnr_hosp["mahal_flag_pers"].value_counts()
 
@@ -270,29 +288,37 @@ plt.show()
 
 # %% mahalanobis — utilization
 X = mnr_mkt[util_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(util_features))
-
-mnr_mkt["mahal_dist_util"] = dists
-mnr_mkt["chi2_pval_util"] = pvals
-mnr_mkt["mahal_flag_util"] = pvals < 0.05
+if len(X) > len(util_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(util_features))
+    mnr_mkt["mahal_dist_util"] = dists
+    mnr_mkt["chi2_pval_util"] = pvals
+    mnr_mkt["mahal_flag_util"] = pvals < 0.05
+else:
+    print(f"Skipping mahal util for fin_market — only {len(X)} rows after dropna")
+    mnr_mkt["mahal_dist_util"] = np.nan
+    mnr_mkt["chi2_pval_util"] = np.nan
+    mnr_mkt["mahal_flag_util"] = False
 
 mnr_mkt["mahal_flag_util"].value_counts()
 
 # %% mahalanobis — persistency
 X = mnr_mkt[pers_features].dropna()
-mu = X.mean().values
-VI = np.linalg.pinv(np.cov(X.values.T))
-
-dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
-pvals = chi2.sf(dists ** 2, df = len(pers_features))
-
-mnr_mkt["mahal_dist_pers"] = dists
-mnr_mkt["chi2_pval_pers"] = pvals
-mnr_mkt["mahal_flag_pers"] = pvals < 0.05
+if len(X) > len(pers_features) + 1:
+    mu = X.mean().values
+    VI = np.linalg.pinv(np.cov(X.values.T))
+    dists = X.apply(lambda row: mahalanobis(row.values, mu, VI), axis = 1)
+    pvals = chi2.sf(dists ** 2, df = len(pers_features))
+    mnr_mkt["mahal_dist_pers"] = dists
+    mnr_mkt["chi2_pval_pers"] = pvals
+    mnr_mkt["mahal_flag_pers"] = pvals < 0.05
+else:
+    print(f"Skipping mahal pers for fin_market — only {len(X)} rows after dropna")
+    mnr_mkt["mahal_dist_pers"] = np.nan
+    mnr_mkt["chi2_pval_pers"] = np.nan
+    mnr_mkt["mahal_flag_pers"] = False
 
 mnr_mkt["mahal_flag_pers"].value_counts()
 

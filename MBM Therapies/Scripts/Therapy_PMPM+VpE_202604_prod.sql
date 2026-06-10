@@ -6,10 +6,10 @@
  * 03/23: added mbm_category for TIN-summary analysis
  * 03/16: removed tin_owner, re-added clm_dnl_f filter + remove claim_status = 'Denied'
  * 03/13: changed optum_tin_flag to Y/N instead of 1/0
- * 03/12: added _202603 suffix to ALL tables, therapy_category, ahrq, optum_tin_flag + tin_owner
+ * 03/12: added _202604 suffix to ALL tables, therapy_category, ahrq, optum_tin_flag + tin_owner
  *        via LEFT JOIN to tmp_1y.cl_therapy_optum_tins_202602
  *        renamed mbm_deploy_dt -> national_pilot_flag
- *        final table: tmp_1m.knd_mbm_visits_episodes_extract_202603
+ *        final table: tmp_1m.knd_mbm_visits_episodes_extract_202604
  * 03/12: added paidthru suffix + ahrq
  * 02/12: changed hctapaidmonth to hcta_paid_dt because of format
  * 02/11: added visit_paid_month to recalculate 2024Q1Q2 VpE with similar runout to 2025Q1Q2
@@ -38,7 +38,7 @@
  *==============================================================================*/
 
 -- COSMOS claims
-create or replace table tmp_1m.knd_mbm_cosmos_claims_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_claims_202604 as
 select
 	'COSMOS' as entity
 	, a.component
@@ -221,7 +221,7 @@ and (
 ;
 
 -- CSP claims
-create or replace table tmp_1m.knd_mbm_csp_claims_202603 as
+create or replace table tmp_1m.knd_mbm_csp_claims_202604 as
 select
 	'CSP' as entity
 	, a.component
@@ -406,7 +406,7 @@ where a.brand_fnl = 'C&S'
 -- NICE claims
 -- special_network doesn't exist in NCE; ericksonflag doesn't work
 
-create or replace table tmp_1m.knd_mbm_nice_claims_202603 as
+create or replace table tmp_1m.knd_mbm_nice_claims_202604 as
 select
 	'NICE' as entity
 	, a.component
@@ -590,7 +590,7 @@ where a.brand_fnl = 'M&R'
 
 -- Stack COSMOS + CSP + NICE claims
 -- Make flags for population
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_202604 as
 with cte_union as (
 select
 	entity
@@ -652,7 +652,7 @@ select
  	end as MnR_FFS_noDSNP_flag
 	, allw_amt_fnl
 	, net_pd_amt_fnl
-from tmp_1m.knd_mbm_cosmos_claims_202603
+from tmp_1m.knd_mbm_cosmos_claims_202604
 union all
 select
 	entity
@@ -714,7 +714,7 @@ select
  	end as MnR_FFS_noDSNP_flag
 	, allw_amt_fnl
 	, net_pd_amt_fnl
-from tmp_1m.knd_mbm_csp_claims_202603
+from tmp_1m.knd_mbm_csp_claims_202604
 union all
 select
 	entity
@@ -776,7 +776,7 @@ select
  	end as MnR_FFS_noDSNP_flag
 	, allw_amt_fnl
 	, net_pd_amt_fnl
-from tmp_1m.knd_mbm_nice_claims_202603
+from tmp_1m.knd_mbm_nice_claims_202604
 )
 select
     *
@@ -793,7 +793,7 @@ from cte_union;
 
 -- Aggregate to sum(allowed) and sum(paid) before VpE analysis
 -- Adding claim_status
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202604 as
 with aggregated as (
 select
 	population
@@ -826,7 +826,7 @@ select
 	, national_pilot_flag
     , sum(allw_amt_fnl) as allw_amt_fnl
     , sum(net_pd_amt_fnl) as net_pd_amt_fnl
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_202604
 group by
 	population
 	, entity
@@ -865,7 +865,7 @@ from aggregated
 
 
 -- Defining visits grouping structure
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_202604 as
 select 
     entity
     , concat(mbi, '-', mbm_category) as mbi_key
@@ -886,7 +886,7 @@ select
     , claim_status
     , sum(allw_amt_fnl) as allowed
     , sum(net_pd_amt_fnl) as paid
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202604
 group by
     entity
     , concat(mbi, '-', mbm_category)
@@ -907,7 +907,7 @@ group by
 ;
 
 -- Flag new episode
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_202604 as
 select
 	mbi_key
 	, entity
@@ -938,19 +938,19 @@ select
     		, lag(fst_srvc_dt) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt)
     		, fst_srvc_dt) > 30, 1 , 0) 
     as ep_start_flag
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_1_202604
 ;
 
 
 -- Count episodes per group + define episode boundary
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604 as
 with ep_numbering as 
 (
 select
 	*
   	, sum(iff(prev_srvc_dt is null, 1, ep_start_flag)) over (partition by mbi_key, national_pilot_flag order by fst_srvc_dt rows between unbounded preceding and current row) 
   	as ep_num
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_2_202604
 )
 select 
 	mbi_key
@@ -980,7 +980,7 @@ select
 from ep_numbering
 ;
 -- Episodes summary
-create or replace table tmp_1m.knd_mbm_episodes_summary_202603 as
+create or replace table tmp_1m.knd_mbm_episodes_summary_202604 as
 select 
 	'EPISODES' as data_type
 	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
@@ -1007,7 +1007,7 @@ select
 	, 0 as sum_allowed
 	, 0 as sum_paid
 	, 0 as mbr_count
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604
 where ep_start_flag = 1  -- Filter for only episode-starting visits
 group by 
 	to_char(ep_start_dt, 'yyyyMM')
@@ -1027,7 +1027,7 @@ group by
 ;
 
 -- Visits summary
-create or replace table tmp_1m.knd_mbm_visits_summary_202603 as
+create or replace table tmp_1m.knd_mbm_visits_summary_202604 as
 select
     'VISITS' as data_type
     , to_char(ep_start_dt, 'yyyyMM') as ep_start_month
@@ -1054,7 +1054,7 @@ select
     , sum(allowed) as sum_allowed
     , sum(paid) as sum_paid
     , count(distinct mbi_key) as mbr_count
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604
 group by
     to_char(ep_start_dt, 'yyyyMM')
     , to_char(ep_start_dt, 'yyyy')
@@ -1075,127 +1075,17 @@ group by
     , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
     , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5)
 ;
-
-
-
-select 
-	ep_start_month, sum(n_visits)
-from (select
-    'VISITS' as data_type
-    , to_char(ep_start_dt, 'yyyyMM') as ep_start_month
-    , to_char(ep_start_dt, 'yyyy') as ep_start_year
-    , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
-    , fst_srvc_month as visit_month
-    , fst_srvc_year as visit_year
-    , min_hcta_paid_dt as visit_paid_month
-    , cast(null as varchar) as ep_paid_month
-    , entity
-    , mbm_category
-    , therapy_category
-    , prov_tin
-    , optum_tin_flag
-    , ahrq_diag_dtl_catgy_desc
-    , market_fnl
-    , national_pilot_flag
-    , population
-    , claim_status
-    , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5) as visit_ep_runout_month
-    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5) as visit_runout_month
-    , 0 as n_episodes
-    , count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
-    , sum(allowed) as sum_allowed
-    , sum(paid) as sum_paid
-    , count(distinct mbi_key) as mbr_count
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602
-group by
-    to_char(ep_start_dt, 'yyyyMM')
-    , to_char(ep_start_dt, 'yyyy')
-    , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
-    , fst_srvc_month
-    , fst_srvc_year
-    , min_hcta_paid_dt
-    , entity
-    , mbm_category
-    , therapy_category
-    , prov_tin
-    , optum_tin_flag
-    , ahrq_diag_dtl_catgy_desc
-    , market_fnl
-    , national_pilot_flag
-    , population
-    , claim_status
-    , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
-    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5)
-)
-group by 1
-;
-
-select 
-	ep_start_month, sum(n_visits)
-from (select
-    'VISITS' as data_type
-    , to_char(ep_start_dt, 'yyyyMM') as ep_start_month
-    , to_char(ep_start_dt, 'yyyy') as ep_start_year
-    , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
-    , fst_srvc_month as visit_month
-    , fst_srvc_year as visit_year
-    , min_hcta_paid_dt as visit_paid_month
-    , cast(null as varchar) as ep_paid_month
-    , entity
-    , mbm_category
-    , therapy_category
-    , optum_tin_flag
-    , ahrq_diag_dtl_catgy_desc
-    , market_fnl
-    , national_pilot_flag
-    , population
-    , claim_status
-    , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5) as visit_ep_runout_month
-    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5) as visit_runout_month
-    , 0 as n_episodes
-    , count(distinct concat(visit_id, fst_srvc_dt, prov_tin)) as n_visits
-    , sum(allowed) as sum_allowed
-    , sum(paid) as sum_paid
-    , count(distinct mbi_key) as mbr_count
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602
-group by
-    to_char(ep_start_dt, 'yyyyMM')
-    , to_char(ep_start_dt, 'yyyy')
-    , substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
-    , fst_srvc_month
-    , fst_srvc_year
-    , min_hcta_paid_dt
-    , entity
-    , mbm_category
-    , therapy_category
-    , optum_tin_flag
-    , ahrq_diag_dtl_catgy_desc
-    , market_fnl
-    , national_pilot_flag
-    , population
-    , claim_status
-    , floor(datediff('day', ep_start_dt, fst_srvc_dt) / 30.5)
-    , floor((datediff('day', fst_srvc_dt, min_hcta_paid_dt) + 20) / 30.5)
-)
-group by 1
-
-
-
-
-
-
-
 
 
 -- Stack VISITS and EPISODES
-create or replace table tmp_1m.knd_mbm_visits_episodes_stacked_202603 as
-select * from tmp_1m.knd_mbm_visits_summary_202603
+create or replace table tmp_1m.knd_mbm_visits_episodes_stacked_202604 as
+select * from tmp_1m.knd_mbm_visits_summary_202604
 union all
-select * from tmp_1m.knd_mbm_episodes_summary_202603
+select * from tmp_1m.knd_mbm_episodes_summary_202604
 ;
 
 -- Summary 1
-create or replace table tmp_1m.knd_mbm_vpe_summary_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_summary_202604 as
 select
     ep_start_month
     , ep_start_year
@@ -1221,7 +1111,7 @@ select
     , sum(sum_allowed) as allowed
     , sum(sum_paid) as paid
     , sum(mbr_count) as mbr_count
-from tmp_1m.knd_mbm_visits_episodes_stacked_202603
+from tmp_1m.knd_mbm_visits_episodes_stacked_202604
 where population != 'NA'
 group by
     ep_start_month
@@ -1246,7 +1136,7 @@ group by
 ;
 
 -- Excel table 1
-create or replace table tmp_1m.knd_mbm_visits_episodes_extract_202603 as
+create or replace table tmp_1m.knd_mbm_visits_episodes_extract_202604 as
 select
 	population
 	, prov_tin
@@ -1258,7 +1148,7 @@ select
     , sum(total_episodes) as episode_count
     , sum(total_visits) as visit_count
     , sum(allowed) as allowed
-from tmp_1m.knd_mbm_vpe_summary_202603
+from tmp_1m.knd_mbm_vpe_summary_202604
 where ep_start_month >= '202501'
 group by 
 	population
@@ -1270,7 +1160,7 @@ group by
 ;
 
 -- Summary 2
-create or replace table tmp_1m.knd_mbm_vpe_tin_summary_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_tin_summary_202604 as
 with agg as (
 select
     population
@@ -1285,7 +1175,7 @@ select
     , sum(sum_allowed) as allowed
     , sum(sum_paid) as paid
     , sum(mbr_count) as mbr_count
-from tmp_1m.knd_mbm_visits_episodes_stacked_202603
+from tmp_1m.knd_mbm_visits_episodes_stacked_202604
 where population != 'NA'
 group by
     population
@@ -1324,7 +1214,7 @@ group by
  * Episodes-level summary
  * For ad-hoc requests to look at prov_tin at the episodes level 
  *==============================================================================*/
-create or replace table tmp_1m.knd_mbm_episodes_agg_test_202603 as
+create or replace table tmp_1m.knd_mbm_episodes_agg_test_202604 as
 with first_tin as (
 select
 	mbi_key
@@ -1335,7 +1225,7 @@ select
 	, row_number() over (partition by mbi_key, national_pilot_flag, ep_num
 						 order by visit_id, fst_srvc_dt)
 	as rn
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604
 )
 ,
 ep_agg as (
@@ -1356,7 +1246,7 @@ select
 	, count(distinct concat(a.visit_id, a.fst_srvc_dt)) as n_visits
 	, sum(a.allowed) as allowed
 	, count(distinct a.prov_tin) as tins_in_episodes
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603 as a
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604 as a
 join first_tin as b
 	on a.mbi_key = b.mbi_key
 	and a.national_pilot_flag = b.national_pilot_flag
@@ -1380,7 +1270,7 @@ group by
 select * from ep_agg
 ;
 
-create or replace table tmp_1m.knd_mbm_outlier_202603 as
+create or replace table tmp_1m.knd_mbm_outlier_202604 as
 with ep_2025 as (
 select
 	population
@@ -1392,7 +1282,7 @@ select
 	, market_fnl
 	, n_visits
 	, allowed
-from tmp_1m.knd_mbm_episodes_agg_test_202603
+from tmp_1m.knd_mbm_episodes_agg_test_202604
 where population != 'N/A'
 	and ep_start_month >= '202501'
 	and therapy_category != 'Other'
@@ -1411,10 +1301,6 @@ select
 from ep_2025
 group by 1,2,3,4,5,6
 ;
-
-select distinct population from tmp_1m.knd_mbm_outlier_202603
-
-select distinct ahrq_diag_dtl_catgy_desc from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602
 
 
 -- Episodes summary
@@ -1463,60 +1349,13 @@ group by
 	, claim_status
 ;
 
-6AT6WC1AN63-Office
-
-create or replace table tmp_1m.knd_mbm_episodes_summary2_202602 as
-select 
-	'EPISODES' as data_type
-	, to_char(ep_start_dt, 'yyyyMM') as ep_start_month
-	, to_char(ep_start_dt, 'yyyy') as ep_start_year
-	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2) as ep_start_month_num
-	, cast(null as varchar) as visit_month
-	, cast(null as varchar) as visit_year
-	, cast(null as varchar) as visit_paid_month
-	, ep_hcta_paid_dt as ep_paid_month
-	, entity
-	, mbm_category
-	, therapy_category
-	, prov_tin
-	, optum_tin_flag
-	, ahrq_diag_dtl_catgy_desc
-	, market_fnl
-	, national_pilot_flag
-	, population
-	, claim_status
-	, 0 as visit_ep_runout_month
-	, 0 as visit_runout_month
-	, count(distinct mbi_key, fst_srvc_dt) as n_visits
-	, sum(ep_start_flag) as n_episodes
-	, sum(allowed) as sum_allowed
-	, count(distinct mbi_key) as mbr_count
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202602
-where mbi_key = '6AT6WC1AN63-Office'
-group by 
-	to_char(ep_start_dt, 'yyyyMM')
-	, to_char(ep_start_dt, 'yyyy')
-	, substring(to_char(ep_start_dt, 'yyyyMM'), 5, 2)
-	, ep_hcta_paid_dt
-	, entity
-	, mbm_category
-	, therapy_category
-	, prov_tin
-	, optum_tin_flag
-	, ahrq_diag_dtl_catgy_desc
-	, market_fnl
-	, national_pilot_flag
-	, population
-	, claim_status
-;
-
 
 
 /*==============================================================================
  * Membership
  *==============================================================================*/
 -- COSMOS
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_202603 as 
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_202604 as 
 with mm_raw as (
 select
 	sgr_source_name as entity
@@ -1590,7 +1429,7 @@ select
 from mm_flag;
 
 
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_202603 as 
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_202604 as 
 with cte_union as (
 select
 	entity
@@ -1640,7 +1479,7 @@ select
  		 ) then 1 
  		else 0 
  	end as MnR_FFS_noDSNP_flag
-from tmp_1m.knd_mbm_cosmos_mm_202603
+from tmp_1m.knd_mbm_cosmos_mm_202604
 union all
 select
 	entity
@@ -1690,7 +1529,7 @@ select
  		 ) then 1 
  		else 0 
  	end as MnR_FFS_noDSNP_flag
-from tmp_1m.knd_mbm_csp_mm_202603
+from tmp_1m.knd_mbm_csp_mm_202604
 union all
 select
 	entity
@@ -1740,7 +1579,7 @@ select
  		 ) then 1 
  		else 0 
  	end as MnR_FFS_noDSNP_flag
-from tmp_1m.knd_mbm_nice_mm_202603
+from tmp_1m.knd_mbm_nice_mm_202604
 )
 select
     *
@@ -1760,7 +1599,7 @@ from cte_union;
 
 
 select fst_srvc_month, population, count(distinct fin_mbi_hicn_fnl)
-from tmp_1m.knd_mbm_cosmos_csp_nice_mm_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_mm_202604
 where population in ('M&R FFS', 'M&R DSNP', 'M&R FFS (excl. DSNP)') and fst_srvc_month = '202509'
 group by 1, 2
 
@@ -1770,7 +1609,7 @@ group by 1, 2
 
 
 
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_202603 as 
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_202604 as 
 select 
 	entity
 	, population
@@ -1788,7 +1627,7 @@ select
     , tfm_product_new_fnl
     , product_level_3_fnl
     , sum(fin_member_cnt) as sum_mm
-from tmp_1m.knd_mbm_cosmos_csp_nice_mm_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_mm_202604
 group by
 	entity
 	, population
@@ -1811,7 +1650,7 @@ group by
 /*==============================================================================
  * Union Claims and Membership
  *==============================================================================*/
-create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_mm_summary_202603 as
+create or replace table tmp_1m.knd_mbm_cosmos_csp_nice_claims_mm_summary_202604 as
 select
 	'Claims' as data_type
 	, entity
@@ -1829,7 +1668,7 @@ select
     , sum(allw_amt_fnl) as sum_allowed
     , sum(net_pd_amt_fnl) as sum_paid
     , 0 as sum_mm
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_aggregated_202604
 group by
 	entity
 	, population
@@ -1863,7 +1702,7 @@ select
     , 0 as sum_allowed
     , 0 as sum_paid
     , sum(sum_mm) as sum_mm
-from tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_mm_summary_202604
 group by
 	entity
 	, population
@@ -1887,7 +1726,7 @@ group by
  * VpE Tiers in Episodes
  * Separate analysis for Tim, unofficial
  *==============================================================================*/
-create or replace table tmp_1m.knd_mbm_vpe_aggregated_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_aggregated_202604 as
 with vpe as (
 select
 	mbi_key
@@ -1908,7 +1747,7 @@ select
 	, population
 	, count(distinct concat(visit_id, fst_srvc_dt)) as n_visits
 	, sum(allowed) as allowed
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604
 group by
 	mbi_key
 	, ep_num
@@ -1931,7 +1770,7 @@ select * from vpe;
 
 
 -- VpE in episodes with percentile categories
-create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202604 as
 with pct_mnr as (
     select
         *
@@ -1941,7 +1780,7 @@ with pct_mnr as (
             over (partition by national_pilot_flag, mbm_category) as p50
         , percentile_cont(0.75) within group (order by n_visits)
             over (partition by national_pilot_flag, mbm_category) as p75
-    from tmp_1m.knd_mbm_vpe_aggregated_202603
+    from tmp_1m.knd_mbm_vpe_aggregated_202604
     where population = 'M&R FFS (excl. DSNP)'
 )
 select
@@ -1972,7 +1811,7 @@ from pct_mnr
 
 
 -- Episodes summary for stacking, to count only episodes
-create or replace table tmp_1m.knd_mbm_vpe_with_runout_episodes_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_episodes_202604 as
 select
 	'EPISODES' as data_type
 	, ep_start_month
@@ -1996,7 +1835,7 @@ select
 	, 0 as n_visits
 	, 0 as allowed
 	, 0 as mm
-from tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202603
+from tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202604
 group by
 	ep_start_month
 	, national_pilot_flag
@@ -2014,7 +1853,7 @@ group by
 ;
 
 -- Visit summary for stacking
-create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_202604 as
 with visits_dedup as (
 select
 	mbi_key
@@ -2035,7 +1874,7 @@ select
 	, market_fnl
 	, population
 	, sum(allowed) as allowed
-from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202603
+from tmp_1m.knd_mbm_cosmos_csp_nice_claims_vpe_3_202604
 where population = 'M&R FFS (excl. DSNP)'
 group by
 	mbi_key
@@ -2079,7 +1918,7 @@ select
 	, sum(a.allowed) as allowed
 	, count(distinct a.mbi_key) as mm
 from visits_dedup as a
-join tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202603 as b
+join tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202604 as b
 	on a.mbi_key = b.mbi_key 
 	and a.national_pilot_flag = b.national_pilot_flag
 	and a.ep_num = b.ep_num
@@ -2105,14 +1944,14 @@ group by
 ;
 
 
-create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked_202603 as
-select * from tmp_1m.knd_mbm_vpe_with_runout_visits_202603
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked_202604 as
+select * from tmp_1m.knd_mbm_vpe_with_runout_visits_202604
 union all
-select * from tmp_1m.knd_mbm_vpe_with_runout_episodes_202603
+select * from tmp_1m.knd_mbm_vpe_with_runout_episodes_202604
 ;
 
 
-create or replace table tmp_1m.knd_mbm_vpe_with_runout_summary_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_with_runout_summary_202604 as
 select
 	ep_start_month
 	, visit_month
@@ -2135,7 +1974,7 @@ select
 	, sum(n_episodes) as n_episodes
 	, sum(allowed) as allowed
 	, sum(mm) as mm
-from tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked_202603
+from tmp_1m.knd_mbm_vpe_with_runout_visits_episodes_stacked_202604
 group by
 	ep_start_month
 	, visit_month
@@ -2157,7 +1996,7 @@ group by
 ;
 
 
-create or replace table tmp_1m.knd_mbm_vpe_category_mnr_summmary_202603 as
+create or replace table tmp_1m.knd_mbm_vpe_category_mnr_summmary_202604 as
 select	
 	ep_start_qtr
 	, ep_start_month
@@ -2178,7 +2017,7 @@ select
 	, sum(n_episodes) as n_episodes
 	, sum(n_visits) as n_visits
 	, sum(allowed) as allowed
-from tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202603
+from tmp_1m.knd_mbm_vpe_aggregated_category_mnr_202604
 group by
 	ep_start_qtr
 	, ep_start_month

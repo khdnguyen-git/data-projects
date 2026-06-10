@@ -1590,31 +1590,36 @@ select distinct
     , b.fin_tfm_product_new
     , b.fin_g_i
     , b.fin_member_cnt
-	, case when b.fin_brand = 'M&R' and b.global_cap = 'NA' and b.sgr_source_name = 'COSMOS' and b.fin_product_level_3 <> 'INSTITUTIONAL' and b.tfm_include_flag = 1 then 1 else 0 end as MnR_COSMOS_FFS_Flag
-	, case when b.fin_brand = 'M&R' and b.sgr_source_name = 'NICE' and b.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') then 1 else 0 end as MnR_NICE_FFS_Flag
-	, case when (b.fin_brand = 'M&R' and b.global_cap = 'NA' and b.sgr_source_name = 'COSMOS' and b.fin_product_level_3 <> 'INSTITUTIONAL' and b.tfm_include_flag = 1) 
-	    or (b.fin_brand = 'M&R' and b.sgr_source_name = 'NICE' and b.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end as MnR_FFS_FLAG
-	, case when b.fin_brand = 'M&R' and b.fin_product_level_3 = 'DUAL' then 1 else 0 end as MnR_Dual_flag
-	, case when ((b.fin_brand in ('C&S') and b.migration_source <> 'OAH' and b.global_cap = 'NA' and b.fin_product_level_3 = 'DUAL' and 
-	    b.sgr_source_name in ('COSMOS','CSP') and b.fin_state not in ('OK','NC','NM','NV','OH','TX')) or (b.fin_inc_year = '2024' and b.fin_brand in ('C&S')
-	    and b.global_cap = 'NA' and b.sgr_source_name in ('COSMOS','CSP') and b.migration_source = 'OAH' and b.fin_state = 'MD')) then 1 else 0 end as CnS_Dual_flag 
-	, case when b.migration_source = 'OAH' then 'OAH' else 'Non-OAH' end as total_OAH_flag
-	, case when b.fin_brand = 'M&R' and b.fin_product_level_3 = 'INSTITUTIONAL' then 1 else 0 end as ISNP_flag
 from tmp_1m.opr_mr_auth_202409_20251031_formatted as a
 left join fichsrv.tre_membership as b
-	on a.patient_id = substring(b.gal_sbscr_nbr, 3)
-	and a.auth_start_mth = b.fin_inc_month
+  on a.patient_id = substring(b.gal_sbscr_nbr, 3)
+  and a.auth_start_mth = b.fin_inc_month
 )
-select 
-	*
-	, case when MnR_COSMOS_FFS_Flag = 1 then 'MnR FFS'
-		   when MnR_NICE_FFS_Flag = 1 then 'MnR FFS'
-		   when MnR_FFS_FLAG = 1 then 'MnR FFS'
-		   when MnR_Dual_flag = 1 then 'MnR DSNP'
-		   when CnS_Dual_flag = 1 then 'CnS DSNP'
-		   when total_OAH_flag = 'OAH' then 'OAH'
-		   when ISNP_flag = 1 then 'ISNP'
-	end as population
+select
+  *
+  , case
+      when migration_source = 'OAH'
+          and not (fin_brand = 'C&S' and fin_inc_year = '2024' and fin_state = 'MD')
+          and not (fin_brand != 'C&S' and fin_inc_year = '2024' and fin_market = 'MD')
+      then 'OAH'
+      when fin_brand = 'M&R' and fin_product_level_3 = 'INSTITUTIONAL' then 'M&R ISNP'
+      when sgr_source_name in ('COSMOS', 'NICE')
+          and fin_brand = 'M&R'
+          and global_cap = 'NA'
+          and fin_product_level_3 not in ('DUAL', 'INSTITUTIONAL')
+          and tfm_include_flag = 1
+      then 'M&R FFS (excl. DSNP)'
+      when sgr_source_name in ('COSMOS', 'CSP')
+          and global_cap = 'NA'
+          and (
+              (fin_brand = 'C&S' and migration_source != 'OAH' and fin_product_level_3 = 'DUAL')
+              or (fin_brand = 'C&S' and fin_inc_year = '2024' and migration_source = 'OAH' and fin_state = 'MD')
+              or (fin_brand != 'C&S' and fin_inc_year = '2024' and migration_source = 'OAH' and fin_market = 'MD')
+          )
+      then 'C&S DSNP'
+      when fin_brand = 'M&R' and fin_product_level_3 = 'DUAL' then 'M&R DSNP'
+      else 'N/A'
+    end as population
 	, count(auth_id) as n_auth_id
 	, count(distinct auth_id) as n_distinct_auth_id
 from joined
@@ -1680,31 +1685,36 @@ select distinct
     , b.fin_tfm_product_new
     , b.fin_g_i
     , b.fin_member_cnt
-	, case when b.fin_brand = 'M&R' and b.global_cap = 'NA' and b.sgr_source_name = 'COSMOS' and b.fin_product_level_3 <> 'INSTITUTIONAL' and b.tfm_include_flag = 1 then 1 else 0 end as MnR_COSMOS_FFS_Flag
-	, case when b.fin_brand = 'M&R' and b.sgr_source_name = 'NICE' and b.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN') then 1 else 0 end as MnR_NICE_FFS_Flag
-	, case when (b.fin_brand = 'M&R' and b.global_cap = 'NA' and b.sgr_source_name = 'COSMOS' and b.fin_product_level_3 <> 'INSTITUTIONAL' and b.tfm_include_flag = 1) 
-	    or (b.fin_brand = 'M&R' and b.sgr_source_name = 'NICE' and b.nce_tadm_dec_risk_type in ('FFS','PHYSICIAN')) then 1 else 0 end as MnR_FFS_FLAG
-	, case when b.fin_brand = 'M&R' and b.fin_product_level_3 = 'DUAL' then 1 else 0 end as MnR_Dual_flag
-	, case when ((b.fin_brand in ('C&S') and b.migration_source <> 'OAH' and b.global_cap = 'NA' and b.fin_product_level_3 = 'DUAL' and 
-	    b.sgr_source_name in ('COSMOS','CSP') and b.fin_state not in ('OK','NC','NM','NV','OH','TX')) or (b.fin_inc_year = '2024' and b.fin_brand in ('C&S')
-	    and b.global_cap = 'NA' and b.sgr_source_name in ('COSMOS','CSP') and b.migration_source = 'OAH' and b.fin_state = 'MD')) then 1 else 0 end as CnS_Dual_flag 
-	, case when b.migration_source = 'OAH' then 'OAH' else 'Non-OAH' end as total_OAH_flag
-	, case when b.fin_brand = 'M&R' and b.fin_product_level_3 = 'INSTITUTIONAL' then 1 else 0 end as ISNP_flag
 from tmp_1m.opr_mr_auth_202409_20251031_v2_formatted as a
 left join fichsrv.tre_membership as b
-	on a.patient_id = substring(b.gal_sbscr_nbr, 3)
-	and a.auth_start_mth = b.fin_inc_month
+  on a.patient_id = substring(b.gal_sbscr_nbr, 3)
+  and a.auth_start_mth = b.fin_inc_month
 )
-select 
-	*
-	, case when MnR_COSMOS_FFS_Flag = 1 then 'MnR FFS'
-		   when MnR_NICE_FFS_Flag = 1 then 'MnR FFS'
-		   when MnR_FFS_FLAG = 1 then 'MnR FFS'
-		   when MnR_Dual_flag = 1 then 'MnR DSNP'
-		   when CnS_Dual_flag = 1 then 'CnS DSNP'
-		   when total_OAH_flag = 'OAH' then 'OAH'
-		   when ISNP_flag = 1 then 'ISNP'
-	end as population
+select
+  *
+  , case
+      when migration_source = 'OAH'
+          and not (fin_brand = 'C&S' and fin_inc_year = '2024' and fin_state = 'MD')
+          and not (fin_brand != 'C&S' and fin_inc_year = '2024' and fin_market = 'MD')
+      then 'OAH'
+      when fin_brand = 'M&R' and fin_product_level_3 = 'INSTITUTIONAL' then 'M&R ISNP'
+      when sgr_source_name in ('COSMOS', 'NICE')
+          and fin_brand = 'M&R'
+          and global_cap = 'NA'
+          and fin_product_level_3 not in ('DUAL', 'INSTITUTIONAL')
+          and tfm_include_flag = 1
+      then 'M&R FFS (excl. DSNP)'
+      when sgr_source_name in ('COSMOS', 'CSP')
+          and global_cap = 'NA'
+          and (
+              (fin_brand = 'C&S' and migration_source != 'OAH' and fin_product_level_3 = 'DUAL')
+              or (fin_brand = 'C&S' and fin_inc_year = '2024' and migration_source = 'OAH' and fin_state = 'MD')
+              or (fin_brand != 'C&S' and fin_inc_year = '2024' and migration_source = 'OAH' and fin_market = 'MD')
+          )
+      then 'C&S DSNP'
+      when fin_brand = 'M&R' and fin_product_level_3 = 'DUAL' then 'M&R DSNP'
+      else 'N/A'
+    end as population
 	, count(auth_id) as n_auth_id
 	, count(distinct auth_id) as n_distinct_auth_id
 from joined

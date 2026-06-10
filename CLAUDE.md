@@ -9,6 +9,19 @@
 5. **`case` statements**: single space before `then`, no column-aligning padding — `when x = 1 then 'y'`, not `when x = 1          then 'y'`
 6. **Inequality operator**: use `!=`, never `<>`
 7. **Spacing**: spaces around all operators (`=`, `!=`, `>=`, `<=`, `between`) — `col = 1` not `col=1`; space after leading comma — `, col` not `,col`
+8. **CTEs over subqueries**: always use `with ... as (` CTEs instead of inline subqueries. Makes queries readable and debuggable.
+9. **Indentation**: 1 tab (4 spaces) for all indented lines under `select`, `where`, `group by`, `order by`, and CTE bodies. Keyword goes on its own line, then each column/expression on a new line indented 4 spaces. Example:
+   ```sql
+   select
+       col_a
+       , col_b
+   from table
+   where col_a = 1
+       and col_b = 2
+   group by
+       col_a
+       , col_b
+   ```
 
 See `_templates/` for canonical examples of these patterns.
 
@@ -60,6 +73,12 @@ Pull from `hce_ops_fnl.hce_adr_avtar_like_25_26_f` (HCE ADR AVTAR-like table).
 
 See `_templates/auth_template.sql`.
 
+## Population Segmentation — Default Rules
+
+- **Default population**: `M&R FFS` — this includes DSNP members. Do NOT exclude DSNP unless explicitly told to.
+- **DSNP exclusion**: Only applies to **Therapies** projects (MBM Therapies). In Therapies, the default population is `M&R FFS (excl. DSNP)`.
+- When building population segments (OAH, M&R ISNP, M&R FFS, C&S DSNP, M&R DSNP, N/A), the `M&R FFS` bucket should NOT have a `fin_product_level_3 not in ('DUAL')` filter unless working on Therapies.
+
 ---
 
 ## Python / Data Science
@@ -85,17 +104,19 @@ engine = create_engine(URL(
 
 Query with `pd.read_sql("select ...", engine)`. Dispose with `engine.dispose()` when done.
 
+### CSV Export
+
+Default output directory: `C:\Users\knguy139\Documents\Projects\Data\Output`. Filename = table name (without schema) + `.csv`. See `_templates/export_to_csv.py` for the standard pattern.
+
 ### Notebook workflow structure
 
-Write notebooks as exploratory, reactive, top-to-bottom scripts — like peeling an onion. Start with a vague question, load the data, look at it, and let each cell follow from what the previous one revealed. Do not plan the whole analysis upfront or impose a rigid structure.
+Write notebooks sequentially, one block per step — mirrors R/SAS workflow:
 
-All imports go in a single cell at the top. After that: load → look → react. No prescribed order beyond that. The structure emerges from the data.
-
-Do not create a dedicated config cell. Only truly run-specific values that change every month (e.g., a run date) warrant a line at the top. Feature lists, thresholds, model parameters — define them inline in the cell where they are used.
-
-### File format
-
-Write analysis scripts as `.py` files with `# %%` cell markers — not `.ipynb` notebooks. Each `# %%` is a runnable cell in VS Code's interactive window. Use `# %% [markdown]` for section headers. This gives the same cell-by-cell execution experience as a notebook but in a plain text file.
+1. **Load** — imports, connection, raw data pull
+2. **EDA** — shape, dtypes, missing values, distributions
+3. **Transform** — filters, derived columns, merges, reshaping
+4. **Analyze** — aggregations, stats, model if applicable
+5. **Visualize / Report** — charts, tables, exports
 
 ### Code style
 
@@ -104,8 +125,19 @@ Write analysis scripts as `.py` files with `# %%` cell markers — not `.ipynb` 
 - No classes, modules, logging setup, argparse, or `if __name__ == "__main__"` boilerplate
 - Keep it simple and readable; only reach for complex patterns when genuinely required
 - Comments explain *why* or *what we're seeing*, not what the code does
-- Sparse print statements — only when output is meaningful to inspect (e.g., shape, counts). Never print fallback/warning messages like `"no results found"` or `"check thresholds"` — just let the empty output speak for itself
-- **Spacing**: spaces around `=` in all contexts — assignments and keyword arguments (`x = 1`, `IsolationForest(n_estimators = 200)`). Space after commas (`a, b`). **Never** add extra spaces to align `=` signs across lines — `x = 1` / `long_name = 2`, not `x        = 1` / `long_name = 2`.
+- Sparse print statements — only when output is meaningful to inspect
+- **No unnecessary intermediate variables** — write values inline where they're used:
+  - SQL strings go directly inside `pd.read_sql("""...""", engine)`, not assigned to a `query_xxx` variable first
+  - Column lists go directly inside the function call (e.g., `df[["col_a", "col_b"]].describe()`), not stored in a separate `features = [...]` variable unless reused 3+ times
+  - Same principle for any string/list/dict that's only used once — just inline it
+  - The goal: each cell is self-contained and readable top-to-bottom without scrolling up to find what a variable holds
+- **Spacing**: spaces around ALL `=` signs — assignments AND keyword arguments. This overrides PEP 8. Examples:
+  - `x = 1` not `x=1`
+  - `func(arg = 'value')` not `func(arg='value')`
+  - `df.sort_values('col', ascending = False)` not `ascending=False`
+  - `.rolling(window = 4, min_periods = 3)` not `window=4, min_periods=3`
+  - `.agg(n = ('col', 'count'))` not `n=('col', 'count')`
+  - Space after commas: `a, b` not `a,b` or `a ,b`
 
 ### Piping / method chaining
 
@@ -115,13 +147,36 @@ Pandas method chaining is strongly preferred — chain as much as naturally flow
 result = (
     df
     .query("year == 2024")
-    .assign(pmpm=lambda x: x["paid"] / x["members"])
+    .assign(pmpm = lambda x: x["paid"] / x["members"])
     .groupby("population")["pmpm"].mean()
     .reset_index()
 )
 ```
 
 Break into an intermediate variable only when the chain becomes hard to read. A plain `df2 = df[df["col"] > 0]` is better than a tortured lambda.
+
+### Creating multiple columns — use `.assign()`, not line-by-line
+
+When computing a batch of new columns (like R `mutate()`), use a single `.assign()` chain — NOT repeated `df["x"] = ...` lines:
+
+```python
+# good — one block, like mutate()
+df = (
+    df
+    .assign(
+        rate_a = lambda x: x.num_a / x.denom,
+        rate_b = lambda x: x.num_b / x.denom.replace(0, np.nan),
+        flag = lambda x: np.where(x.rate_a > 0.5, 1, 0)
+    )
+)
+
+# bad — repetitive, hard to scan
+df["rate_a"] = df["num_a"] / df["denom"]
+df["rate_b"] = df["num_b"] / df["denom"].replace(0, np.nan)
+df["flag"] = np.where(df["rate_a"] > 0.5, 1, 0)
+```
+
+Can chain `.dropna()` or other steps right after `.assign()` in the same block.
 
 ### Background
 
@@ -143,6 +198,20 @@ select count(*), count(distinct mbi) from <table>;
 select count(*) from <table> where mbi is null or prov_tin is null;
 ```
 
+**Domain-specific monthly validation** — run the appropriate query depending on pull type:
+
+```sql
+-- Claims: monthly allowed amount totals
+select <month_col>, sum(allowed) from <table> group by 1 order by 1;
+
+-- Authorizations: monthly case counts
+select <month_col>, count(case_id) from <table> group by 1 order by 1;
+
+-- Membership: monthly distinct member counts
+select <month_col>, count(distinct mbi) from <table> group by 1 order by 1;
+-- (use fin_mbi_hicn_fnl if mbi is not available)
+```
+
 Flag unexpected row counts or null IDs before continuing.
 
 ### After a major Python transform block
@@ -158,23 +227,23 @@ Suggest: `df.shape`, `df.head()`, and `df[col].value_counts()` on any new catego
 - **"claims template"** — read `_templates/claims_template.sql` and scaffold a new claims pull; ask table name, entities, month range, extra filters
 - **"membership template"** — read `_templates/membership_template.sql` and scaffold; ask table name, month(s), population filters
 - **"auth template"** — read `_templates/auth_template.sql` and scaffold; ask table name, date range, population/setting filters
+- **"export to csv"** — read `_templates/export_to_csv.py` and scaffold; ask table name, then export to `Data/Output/<table_name>.csv`
 
 ---
 
-## Outlier / Anomaly Detection
+## Session Variables
 
-When asked to run outlier or anomaly detection:
+These values change weekly with each notification cycle. State them at the start of a session
+or when they change. Claude substitutes them into all generated SQL (table names, date filters, etc.).
 
-**1. Clarify before writing any code:**
-- What entity to analyze (TIN, MBI, market, etc.)?
-- What metrics/features are available — and which should be *excluded* as irrelevant noise?
-- What's the actual question: "who is high/low on a specific metric" vs. "who has an unusual combination"?
+| Variable | Format | Example | Usage |
+|---|---|---|---|
+| `notifications_date` | `MMDDYYYY` | `05062026` | Table name suffix: `kn_*_<notifications_date>_od` |
+| `membership_month` | `YYYYMM` | `202603` | Membership archive table + filter: `gl_rstd_gpsgalnce_f_<membership_month>` |
+| `claims_month` | `YYYYMM` | `202603` | Claims date filter upper bound |
 
-**2. Suggest the appropriate method — do not default:**
+**How to set**: Just tell Claude, e.g.:
+- "notifications_date is 05202026, membership_month is 202604, claims_month is 202604"
+- "same as last week but bump notifications_date to 05272026"
 
-Before writing any code, reason about what statistical or ML approach best fits the question and data. Consider: number of features, data distribution, whether the result needs to be stakeholder-explainable, and what the question is actually asking. Present 2–3 options with trade-offs and let the user choose.
-
-**3. Output format — standard stats only:**
-Columns: metric value, z-score or IQR fence position, percentile rank, `is_outlier` flag. No narrative text, no "reasons for flagging", no plain-English summaries. Sort by most extreme first.
-
-**4. Do NOT use Tier 1 / Tier 2 as the default pattern.** That pipeline was built for LOC's 14-feature anomaly detection and is not a general template.
+Claude will ask for these if not provided when scaffolding from a template that needs them.

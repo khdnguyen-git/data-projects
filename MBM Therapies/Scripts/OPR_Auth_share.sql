@@ -46,3 +46,5 @@ from tmp_1m.opr_mr_auth_202409_20251031_v2
 
 select count(*) from tmp_1m.opr_mr_auth_202409_20251031_v2_formatted
 -- 2,571,817
+
+select count(*) from tmp_1y.kn_opr_mr_auth_202409_20251031_202511_raw

@@ -282,3 +282,5 @@ join fichsrv.cosmos_ip_w_dnls_clm as b
         and b.brand_fnl in ('M&R', 'C&S')
         and b.global_cap = 'NA'
 ;
+
+
