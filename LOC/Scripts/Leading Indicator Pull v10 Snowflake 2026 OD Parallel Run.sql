@@ -2,25 +2,25 @@
 --Step 0.a: Update to the new date & if a monthly claims run; update tre copy cosmos tab 
 /*Every week*/
 --Find and change date for notifications + claims
-@set notifications_date = 05132026
-@set claims_date = 04292026
---5/13/26: done--
+@set notifications_date = 06242026
+@set claims_date = 05272026
+--6/24/26: done--
 
 --Step 0.b: check to see if current month membership is available
---select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202605; --make sure this IS CURRENT MONTH-- 
-@set membership_month = 202604
+select count(*) from HCE_OPS_ARCHV.GL_RSTD_GPSGALNCE_F_202606; --make sure this IS CURRENT MONTH-- 
+@set membership_month = 202606
 --CHECK WITH PRADEEPA THAT THE ENROLLMENT TABLE IS TRULY UPDATED--
---5/13/26: done; no new enrollment table--
+--6/24/26: done; no new enrollment--
 
 --monthly ish
 --Step 0.c Uncomment out most recent roster month from Completion Step 9: tmp_1m.ec_ip_mm_2026 IF 0.B SHOWS NEXT MONTH MEMBERSHIP AVAILABLE
 --Don't forget to update roster month in Notification Completion Model
---5/13/26: done; no new enrollment table--
+--6/24/26: done; no new enrollment--
 
 /*Monthly claims update*/
 --Step 0.d: change claims month
-@set claims_month = 202604
---5/13/26: done; no May claims yet--
+@set claims_month = 202605
+--6/24/26: done; no June claims yet--
 --REMEMBER TO UPDATE SEASONALITY FACTORS TOO--
 
 --Step 1: Check that AvTar was Updated with this query to check latest date (should be day of or day before run)
@@ -2466,6 +2466,11 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- paid: 93,214,206,027.61
 -- units: 6,294,990
 -- days: 54,192,606
+-- MAY
+-- paid: 95,685,364,905.91
+-- units: 6,450,398
+-- days: 55,521,571
+
 
 select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , sum(days_franky) as days_franky from tmp_1m.ec_ip_dataset_claims_franky7;
 --NOVEMBER
@@ -2520,6 +2525,10 @@ select sum(allw_franky) as net_pd_franky, sum(units_franky) as units_franky , su
 -- paid: 93,219,794,737.47
 -- units: 6,295,043
 -- days: 54,197,442
+-- MAY
+-- paid: 95,679,713,895.94
+-- units: 6,450,347
+-- days: 55,516,578
 
 
 --Step 21: COSMOS After Franky adjustment
@@ -3312,6 +3321,11 @@ select max(admit_week) from tmp_1m.ec_ip_dataset_all_${notifications_date}_od wh
 --4/29/26: 202618
 --5/6/26: 202619
 --5/13/26: 202620
+--5/20/26: 202621
+--5/27/26: 202622
+--6/10/26: 202624
+--6/17/26: 202625
+--6/24/26: 202626
 
 --QA check for newest week's OD data, most recent full week should populate
 SELECT sum(MEMBER_APPEAL_OVTN_CNT), admit_week from tmp_1m.ec_ip_dataset_all_${notifications_date}_od where ipa_pac_flag ='IPA' and loc_flag=1 GROUP BY admit_week order BY admit_week desc;
@@ -3322,10 +3336,15 @@ SELECT sum(MEMBER_APPEAL_OVTN_CNT), admit_week from tmp_1m.ec_ip_dataset_all_${n
 --4/29/26: 202617 week populated
 --5/6/26: 202618 week populated
 --5/13/26: 202619 week populated
+--5/20/26: 202620 week populated
+--5/27/26: 202621 week populated
+--6/10/26: 202623 week populated
+--6/17/26: 202624 week populated
+--6/24/26: 202625 week populated
 
 --QA check to see that most recent claims month is populating--
 SELECT sum(franky_allw), hce_admit_month FROM tmp_1m.ec_ip_dataset_all_${notifications_date}_od GROUP BY hce_admit_month ORDER BY hce_admit_month asc;
-
+--5/27/26: 202605 populating
 
 /************************************************************************************************************************************************************/
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3429,6 +3448,9 @@ select
 --	,respiratory_flag
 	,case when admit_type in ('Transplant') then 'Surgical'
 		else admit_type end as admit_type
+--comment out the second admit type unless running new rolled up model
+--	,case when ipa_pac_flag='IPA' THEN 'IPA'
+--		else admit_type end as admit_type
 	,ipa_pac_flag
 --	,mnr_cosmos_ffs_flag
 --	,leading_ind_pop
@@ -3482,7 +3504,9 @@ group by
 --	,los_categories
 --	,respiratory_flag
 	,case when admit_type in ('Transplant') then 'Surgical'
-		else admit_type end
+		else admit_type END
+--	,case when ipa_pac_flag='IPA' THEN 'IPA'
+--		else admit_type end 
 	,ipa_pac_flag
 --	,mnr_cosmos_ffs_flag
 --	,leading_ind_pop
@@ -3594,6 +3618,8 @@ group by
 	,ipa_pac_flag
 	,component
 	;
+
+
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -4230,7 +4256,6 @@ where fin_inc_year in ('2025','2026')
 	AND fin_product_level_3 <>'INSTITUTIONAL'
 	AND tfm_include_flag=1 
  	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
- /*
 union all	
 select distinct fin_mbi_hicn_fnl
 	,'202605' as roster_month
@@ -4257,6 +4282,7 @@ where fin_inc_year in ('2025','2026')
 	AND fin_product_level_3 <>'INSTITUTIONAL'
 	AND tfm_include_flag=1 
 	AND fin_tfm_product_new in ('HMO','PPO','NPPO','DUAL_CHRONIC')
+/*
  union all	
  select distinct fin_mbi_hicn_fnl
 	,'202607' as roster_month
@@ -4458,18 +4484,18 @@ union all
 
 --libname HCX_EC "/hpsasfin/int/projects/hcemrn/ec/prod/data/";
 /*
-data hcx_ec.LOC_IP_5_13_26_OD (compress=yes); 
-set TMP_1M.EC_IP_DATASET_LOC_04222026_OD
+data hcx_ec.LOC_IP_6_24_26_OD (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LOC_06242026_OD
 ;run;
 
-data hcx_ec.ec_ip_dataset_5_13_26_OD (compress=yes); 
-set TMP_1M.EC_IP_DATASET_LI_05132026_3_OD
+data hcx_ec.ec_ip_dataset_6_24_26_OD (compress=yes); 
+set TMP_1M.EC_IP_DATASET_LI_06242026_3_OD
 ;run;
 
-data hcx_ec.ec_ip_comp_05132026_OD (compress=yes); 
-set TMP_1M.EC_IP_COMP_05132026_OD 
+data hcx_ec.ec_ip_comp_06242026_OD (compress=yes); 
+set TMP_1M.EC_IP_COMP_06242026_OD 
 ;run;
-*/ b
+*/
 
 
 

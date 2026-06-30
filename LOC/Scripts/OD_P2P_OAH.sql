@@ -182,3 +182,12 @@ select count(*) from tmp_1m.kn_loc_od_p2p_oah_05132026_ranked;
 
 select * from tmp_1m.kn_loc_od_p2p_oah_05132026_ranked
 limit 100;
+
+
+select distinct * from tmp_1m.kn_loc_if_outlier_hospitals_mnr
+where reason ilike 'md_%'
+;
+
+
+select * from tmp_1m.ec_ip_dataset_06102026_3_od
+limit 5;
