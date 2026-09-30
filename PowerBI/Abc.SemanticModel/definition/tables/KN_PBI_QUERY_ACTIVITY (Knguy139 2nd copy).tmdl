@@ -1,0 +1,649 @@
+table KN_PBI_QUERY_ACTIVITY
+	lineageTag: e739e76b-7080-4f26-8851-273d646462f8
+
+	column QUERY_ID
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 0b876364-84b1-4f15-b900-a22fedac0d64
+		summarizeBy: none
+		sourceColumn: QUERY_ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_TEXT
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: dd4a383c-befa-4016-9375-e76ab7811b7e
+		summarizeBy: none
+		sourceColumn: QUERY_TEXT
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_PREVIEW
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 97067f68-9b2d-42bf-8b58-0220b984b552
+		summarizeBy: none
+		sourceColumn: QUERY_PREVIEW
+
+		annotation SummarizationSetBy = Automatic
+
+	column DATABASE_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: e889397a-fb1f-424f-be17-9864fcd212e4
+		summarizeBy: none
+		sourceColumn: DATABASE_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column SCHEMA_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: c8083d3e-7931-4d98-a4a6-caf18f9626f8
+		summarizeBy: none
+		sourceColumn: SCHEMA_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_TYPE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: b6b953c7-b72e-4e8f-b8e6-a3abc6be355b
+		summarizeBy: none
+		sourceColumn: QUERY_TYPE
+
+		annotation SummarizationSetBy = Automatic
+
+	column SESSION_ID
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 71b6179f-c483-48cf-b5df-266d4e96d222
+		summarizeBy: count
+		sourceColumn: SESSION_ID
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column USER_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 99269fe8-7dd4-4236-b482-0ac7ad16f3d7
+		summarizeBy: none
+		sourceColumn: USER_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column ROLE_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: f392af80-985c-479d-bd3c-223ef82cce3c
+		summarizeBy: none
+		sourceColumn: ROLE_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column ROLE_TYPE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: bbdd6f3f-c107-4dd6-937c-49d0b6e235d6
+		summarizeBy: none
+		sourceColumn: ROLE_TYPE
+
+		annotation SummarizationSetBy = Automatic
+
+	column WAREHOUSE_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 96c193cd-5fc7-4b65-89da-9a75c64e936a
+		summarizeBy: none
+		sourceColumn: WAREHOUSE_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column WAREHOUSE_SIZE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: a36e7ba6-8e1d-4a68-b886-14f6c6432bd7
+		summarizeBy: none
+		sourceColumn: WAREHOUSE_SIZE
+
+		annotation SummarizationSetBy = Automatic
+
+	column WAREHOUSE_TYPE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 5095b0a1-2a32-4bfd-89a3-fa4a017fb44a
+		summarizeBy: none
+		sourceColumn: WAREHOUSE_TYPE
+
+		annotation SummarizationSetBy = Automatic
+
+	column CLUSTER_NUMBER
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 4ffa6bb3-19a9-4af6-88a4-6a0be524e18c
+		summarizeBy: sum
+		sourceColumn: CLUSTER_NUMBER
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_TAG
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: c3c0ef98-d236-43a7-9e4b-9dac238ca1d5
+		summarizeBy: none
+		sourceColumn: QUERY_TAG
+
+		annotation SummarizationSetBy = Automatic
+
+	column EXECUTION_STATUS
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: e67f4b9f-ab8c-4c7a-af6c-1f69e878bec9
+		summarizeBy: none
+		sourceColumn: EXECUTION_STATUS
+
+		annotation SummarizationSetBy = Automatic
+
+	column ERROR_CODE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 802f1780-30ac-4371-b577-2fedd712efb4
+		summarizeBy: none
+		sourceColumn: ERROR_CODE
+
+		annotation SummarizationSetBy = Automatic
+
+	column ERROR_MESSAGE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 99cae80f-4994-47a9-8ffa-47df7b8ca471
+		summarizeBy: none
+		sourceColumn: ERROR_MESSAGE
+
+		annotation SummarizationSetBy = Automatic
+
+	column START_TIME
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: d85bcbe8-c8fb-42bf-9b76-f51a8bc8ace0
+		summarizeBy: none
+		sourceColumn: START_TIME
+
+		annotation SummarizationSetBy = Automatic
+
+	column END_TIME
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: bc57fdd3-653c-4e3e-b591-024d48a4a568
+		summarizeBy: none
+		sourceColumn: END_TIME
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_DATE
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 9f22aa2c-3373-448b-8a6d-66ea92ba1746
+		summarizeBy: none
+		sourceColumn: QUERY_DATE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DAY_OF_WEEK
+		dataType: string
+		sourceProviderType: nvarchar(3)
+		lineageTag: 5ff6ff80-c323-4c4d-ba10-f604ef2dbac4
+		summarizeBy: none
+		sourceColumn: DAY_OF_WEEK
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_HOUR
+		dataType: double
+		sourceProviderType: decimal(2, 0)
+		lineageTag: 049173c5-6faa-4875-bed7-2b58101be243
+		summarizeBy: sum
+		sourceColumn: QUERY_HOUR
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_WEEK
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 260d9f5e-c14b-4152-afa8-59ffa45b0426
+		summarizeBy: none
+		sourceColumn: QUERY_WEEK
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column QUERY_MONTH
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: c792bd9a-2fcc-4e18-a00d-d3f2ebd059f8
+		summarizeBy: none
+		sourceColumn: QUERY_MONTH
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ELAPSED_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: 7cb48e86-a60c-44c9-87ab-1331d89424f7
+		summarizeBy: sum
+		sourceColumn: ELAPSED_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column COMPILATION_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: f1df8c83-40f5-4e0a-b305-268d587e8454
+		summarizeBy: sum
+		sourceColumn: COMPILATION_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column EXECUTION_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: 238d5c7a-5fa8-44f0-933e-9beda30c16de
+		summarizeBy: sum
+		sourceColumn: EXECUTION_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUEUED_PROVISIONING_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: 7b0e586a-c9e4-4c3c-a1a4-b6c9bc7d51ac
+		summarizeBy: sum
+		sourceColumn: QUEUED_PROVISIONING_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUEUED_OVERLOAD_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: 7854b24e-7e70-4903-8ee8-238a77fd979b
+		summarizeBy: sum
+		sourceColumn: QUEUED_OVERLOAD_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BLOCKED_SEC
+		dataType: double
+		sourceProviderType: decimal(38, 2)
+		lineageTag: 2cd5d761-ec85-42f3-b7f4-2923f3666a4d
+		summarizeBy: sum
+		sourceColumn: BLOCKED_SEC
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_SCANNED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 833bcb32-9cdc-439d-a3bc-c75316748491
+		summarizeBy: sum
+		sourceColumn: BYTES_SCANNED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column GB_SCANNED
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 5652dd4a-1ece-4de1-9d2c-476a30db0ff1
+		summarizeBy: sum
+		sourceColumn: GB_SCANNED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CACHE_HIT_PCT
+		dataType: double
+		isNullable: false
+		sourceProviderType: double
+		lineageTag: 3b41d322-280e-488a-a3d5-a58b1753705a
+		summarizeBy: sum
+		sourceColumn: CACHE_HIT_PCT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_WRITTEN
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 9f3f3cb8-997f-4385-8aec-c141a9371ccb
+		summarizeBy: sum
+		sourceColumn: BYTES_WRITTEN
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_WRITTEN_TO_RESULT
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 3adc6d98-1889-4b19-9801-f3f0c91b3b62
+		summarizeBy: sum
+		sourceColumn: BYTES_WRITTEN_TO_RESULT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ROWS_PRODUCED
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 98e88bb8-b818-4500-9170-120dcda60e57
+		summarizeBy: sum
+		sourceColumn: ROWS_PRODUCED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ROWS_INSERTED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 2f4ae4de-d02b-4f1f-8a0a-0d32f7cc697a
+		summarizeBy: sum
+		sourceColumn: ROWS_INSERTED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ROWS_UPDATED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 31a57d70-a832-42ce-a1c7-29d7346e59ff
+		summarizeBy: sum
+		sourceColumn: ROWS_UPDATED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ROWS_DELETED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 21fc3985-eafd-48d0-a6be-657ef3047be7
+		summarizeBy: sum
+		sourceColumn: ROWS_DELETED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PARTITIONS_SCANNED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 523d024e-cec6-42e5-9514-dde00788e0e1
+		summarizeBy: sum
+		sourceColumn: PARTITIONS_SCANNED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PARTITIONS_TOTAL
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: cd246d1a-e8d4-445a-ad90-3314b5b6560e
+		summarizeBy: sum
+		sourceColumn: PARTITIONS_TOTAL
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PARTITION_SCAN_PCT
+		dataType: double
+		sourceProviderType: decimal(38, 1)
+		lineageTag: 7f289b07-0476-47b2-bea9-b6bbec210431
+		summarizeBy: sum
+		sourceColumn: PARTITION_SCAN_PCT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_SPILLED_TO_LOCAL_STORAGE
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 7776c077-b0d9-4bf8-bb66-38ab4be9609d
+		summarizeBy: sum
+		sourceColumn: BYTES_SPILLED_TO_LOCAL_STORAGE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_SPILLED_TO_REMOTE_STORAGE
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 4ed7346d-9319-43ad-9ba0-dbc0cc927a45
+		summarizeBy: sum
+		sourceColumn: BYTES_SPILLED_TO_REMOTE_STORAGE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column GB_SPILLED_LOCAL
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 13ed5792-c7ef-47fc-b6f4-c99dffb16a6a
+		summarizeBy: sum
+		sourceColumn: GB_SPILLED_LOCAL
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column GB_SPILLED_REMOTE
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 2df3a8a2-171d-4965-ae34-1050061d6a33
+		summarizeBy: sum
+		sourceColumn: GB_SPILLED_REMOTE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CREDITS_USED_CLOUD_SERVICES
+		dataType: double
+		isNullable: false
+		sourceProviderType: double
+		lineageTag: 82bb5d89-8282-4872-a504-00728ec94fdb
+		summarizeBy: sum
+		sourceColumn: CREDITS_USED_CLOUD_SERVICES
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column IS_CLIENT_GENERATED_STATEMENT
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: b45fd5ef-1eb0-4f3c-8d84-1a83c67272d6
+		summarizeBy: none
+		sourceColumn: IS_CLIENT_GENERATED_STATEMENT
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_ACCELERATION_BYTES_SCANNED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 69c31697-4a1c-4640-b7e0-80e5fed28856
+		summarizeBy: sum
+		sourceColumn: QUERY_ACCELERATION_BYTES_SCANNED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_ACCELERATION_PARTITIONS_SCANNED
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: cf698c08-9566-4fa9-b7fb-9e5c26c13d62
+		summarizeBy: sum
+		sourceColumn: QUERY_ACCELERATION_PARTITIONS_SCANNED
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_ACCELERATION_UPPER_LIMIT_SCALE_FACTOR
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: d9be4744-411d-489a-9459-d1e1c5fcffcd
+		summarizeBy: sum
+		sourceColumn: QUERY_ACCELERATION_UPPER_LIMIT_SCALE_FACTOR
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES_SENT_OVER_THE_NETWORK
+		dataType: double
+		isNullable: false
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 4784b4ab-9cd1-4f51-bbcf-fcfc1be084e7
+		summarizeBy: sum
+		sourceColumn: BYTES_SENT_OVER_THE_NETWORK
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_RETRY_TIME
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 5e30ae6d-a914-4e43-8fda-3760a1fea5a0
+		summarizeBy: sum
+		sourceColumn: QUERY_RETRY_TIME
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_RETRY_CAUSE
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 353256af-708f-477b-ad8a-a8c0b9b04d95
+		summarizeBy: none
+		sourceColumn: QUERY_RETRY_CAUSE
+
+		annotation SummarizationSetBy = Automatic
+
+	column TRANSACTION_ID
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: e4b0149d-a4d2-462e-81b5-40368de5cb20
+		summarizeBy: count
+		sourceColumn: TRANSACTION_ID
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column QUERY_HASH
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 3a51860a-234f-4f10-89df-5d638fe31981
+		summarizeBy: none
+		sourceColumn: QUERY_HASH
+
+		annotation SummarizationSetBy = Automatic
+
+	column QUERY_PARAMETERIZED_HASH
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: fe71e05e-d21b-4604-945e-b0d5f8707a9c
+		summarizeBy: none
+		sourceColumn: QUERY_PARAMETERIZED_HASH
+
+		annotation SummarizationSetBy = Automatic
+
+	column RELEASE_VERSION
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 5bf9e693-6604-4238-b61a-0599bfb03d6a
+		summarizeBy: none
+		sourceColumn: RELEASE_VERSION
+
+		annotation SummarizationSetBy = Automatic
+
+	measure 'Total Queries' = COUNTROWS(KN_PBI_QUERY_ACTIVITY)
+		formatString: #,##0
+		lineageTag: dd000005-0005-0005-0005-000000000005
+
+	measure 'Avg Elapsed Sec' = AVERAGE(KN_PBI_QUERY_ACTIVITY[ELAPSED_SEC])
+		formatString: #,##0.00
+		lineageTag: dd000006-0006-0006-0006-000000000006
+
+	measure 'Avg GB Scanned' = AVERAGE(KN_PBI_QUERY_ACTIVITY[GB_SCANNED])
+		formatString: #,##0.000
+		lineageTag: dd000007-0007-0007-0007-000000000007
+
+	partition KN_PBI_QUERY_ACTIVITY = m
+		mode: directQuery
+		source =
+				let
+				    Source = Snowflake.Databases("uhg-uhgdwaas.snowflakecomputing.com","VING_PRD_MNR_HCE_DATAINFRA_WH",[Implementation="2.0"]),
+				    VING_PRD_TREND_DB_Database = Source{[Name="VING_PRD_TREND_DB",Kind="Database"]}[Data],
+				    TMP_1M_Schema = VING_PRD_TREND_DB_Database{[Name="TMP_1M",Kind="Schema"]}[Data],
+				    KN_PBI_QUERY_ACTIVITY_Table = TMP_1M_Schema{[Name="KN_PBI_QUERY_ACTIVITY",Kind="Table"]}[Data]
+				in
+				    KN_PBI_QUERY_ACTIVITY_Table
+

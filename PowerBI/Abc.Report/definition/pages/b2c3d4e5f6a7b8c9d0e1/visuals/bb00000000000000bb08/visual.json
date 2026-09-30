@@ -1,0 +1,154 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "bb00000000000000bb08",
+  "position": {
+    "x": 1300,
+    "y": 400,
+    "z": 1000,
+    "height": 300,
+    "width": 600,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "USER_NAME"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.USER_NAME",
+              "nativeQueryRef": "User",
+              "active": true,
+              "displayName": "User"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "MODEL_NAME"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.MODEL_NAME",
+              "nativeQueryRef": "Model",
+              "active": true,
+              "displayName": "Model"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "KN_PBI_COCO_USAGE"
+                        }
+                      },
+                      "Property": "USAGE_DATE"
+                    }
+                  },
+                  "Function": 4
+                }
+              },
+              "queryRef": "Max(KN_PBI_COCO_USAGE.USAGE_DATE)",
+              "nativeQueryRef": "Last Active",
+              "active": false,
+              "displayName": "Last Active"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'User Detail'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "a1d164575205b20c03b3",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_COCO_USAGE"
+              }
+            },
+            "Property": "USER_NAME"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "a8bb4676271d7a3b22bb",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_COCO_USAGE"
+              }
+            },
+            "Property": "MODEL_NAME"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "34b824c05a8e209e9dbd",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "KN_PBI_COCO_USAGE"
+                  }
+                },
+                "Property": "USAGE_DATE"
+              }
+            },
+            "Function": 4
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

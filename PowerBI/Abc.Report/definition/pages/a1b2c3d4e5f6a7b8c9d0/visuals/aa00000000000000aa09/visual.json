@@ -1,0 +1,121 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "aa00000000000000aa09",
+  "position": {
+    "x": 960,
+    "y": 220,
+    "z": 1000,
+    "height": 420,
+    "width": 940,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "USER_NAME"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.USER_NAME",
+              "nativeQueryRef": "User",
+              "active": true,
+              "displayName": "User"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "Total Credits"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.Total Credits",
+              "nativeQueryRef": "Total Credits"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Top Users by Credits'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "f27e3173ca02bce344b1",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_COCO_USAGE"
+              }
+            },
+            "Property": "USER_NAME"
+          }
+        },
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "k",
+              "Entity": "KN_PBI_COCO_USAGE",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "VisualTopN": {
+                  "ItemCount": 10
+                }
+              }
+            }
+          ]
+        },
+        "type": "TopN"
+      }
+    ]
+  }
+}

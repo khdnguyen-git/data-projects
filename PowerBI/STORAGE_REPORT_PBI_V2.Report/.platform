@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "STORAGE_REPORT_PBI_V2"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "20906fad-aaed-470e-b673-5cd783fd3653"
+  }
+}

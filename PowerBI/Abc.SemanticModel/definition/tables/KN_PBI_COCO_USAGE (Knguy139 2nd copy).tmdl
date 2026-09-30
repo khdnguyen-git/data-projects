@@ -1,0 +1,209 @@
+table KN_PBI_COCO_USAGE
+	lineageTag: 86d7c80d-827f-4b5a-b0d6-7ca1e47bb810
+
+	column USER_ID
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 26f12dd1-b10b-494d-acfe-31ae7ffb3c60
+		summarizeBy: count
+		sourceColumn: USER_ID
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column USER_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 88526774-6cb8-4039-8f67-4368e028cd56
+		summarizeBy: none
+		sourceColumn: USER_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column REQUEST_ID
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 3b7dd4d2-baa5-4703-84c8-28f6bf3d67cc
+		summarizeBy: none
+		sourceColumn: REQUEST_ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PARENT_REQUEST_ID
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: f8872e6e-60a7-4948-aad7-f10e9a691ab4
+		summarizeBy: none
+		sourceColumn: PARENT_REQUEST_ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column USAGE_TIME
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 0b213730-10c2-403d-852b-5b7ace97f17d
+		summarizeBy: none
+		sourceColumn: USAGE_TIME
+
+		annotation SummarizationSetBy = Automatic
+
+	column USAGE_DATE
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 392082f8-9854-4f0a-819d-8dcddbd4d6d5
+		summarizeBy: none
+		sourceColumn: USAGE_DATE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DAY_OF_WEEK
+		dataType: string
+		sourceProviderType: nvarchar(3)
+		lineageTag: 614e3833-d894-4e5a-b832-5531fb5fdd6a
+		summarizeBy: none
+		sourceColumn: DAY_OF_WEEK
+
+		annotation SummarizationSetBy = Automatic
+
+	column USAGE_HOUR
+		dataType: double
+		sourceProviderType: decimal(2, 0)
+		lineageTag: 676dc3c8-a013-4e92-8b44-f1a6ade44942
+		summarizeBy: sum
+		sourceColumn: USAGE_HOUR
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column USAGE_WEEK
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: a8674785-35d8-4397-9ead-e0ad59fb51c0
+		summarizeBy: none
+		sourceColumn: USAGE_WEEK
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column USAGE_MONTH
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 66c9d662-d2ff-415e-b1c5-58cdf6a0e17e
+		summarizeBy: none
+		sourceColumn: USAGE_MONTH
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column TOKEN_CREDITS
+		dataType: double
+		sourceProviderType: decimal(38, 9)
+		lineageTag: 26acefb9-8e7a-48b2-867b-43112c162df3
+		summarizeBy: sum
+		sourceColumn: TOKEN_CREDITS
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TOKENS
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 18f1bf4c-3054-4c55-b752-7b022756a6c0
+		summarizeBy: sum
+		sourceColumn: TOKENS
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column MODEL_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 85872f99-6a04-4635-aacf-8719f4bc5b51
+		summarizeBy: none
+		sourceColumn: MODEL_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column TOKENS_INPUT
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 467d7da7-c9f9-4153-9421-cbaaa7a684e7
+		summarizeBy: sum
+		sourceColumn: TOKENS_INPUT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TOKENS_OUTPUT
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: 0a753109-f823-4cdc-9cd6-31c83a234dec
+		summarizeBy: sum
+		sourceColumn: TOKENS_OUTPUT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TOKENS_CACHE_READ
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: f782f5fc-0793-4b2b-b0a0-ef76b3f58dba
+		summarizeBy: sum
+		sourceColumn: TOKENS_CACHE_READ
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TOKENS_CACHE_WRITE
+		dataType: double
+		sourceProviderType: decimal(38, 0)
+		lineageTag: d1b78b5b-5af3-4994-a463-2cc1f1a1a995
+		summarizeBy: sum
+		sourceColumn: TOKENS_CACHE_WRITE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Credits' = SUM(KN_PBI_COCO_USAGE[TOKEN_CREDITS])
+		formatString: #,##0.00
+		lineageTag: dd000001-0001-0001-0001-000000000001
+
+	measure 'Total Tokens' = SUM(KN_PBI_COCO_USAGE[TOKENS])
+		formatString: #,##0
+		lineageTag: dd000002-0002-0002-0002-000000000002
+
+	measure 'Unique Users' = DISTINCTCOUNT(KN_PBI_COCO_USAGE[USER_NAME])
+		formatString: #,##0
+		lineageTag: dd000003-0003-0003-0003-000000000003
+
+	measure 'Active Days' = DISTINCTCOUNT(KN_PBI_COCO_USAGE[USAGE_DATE])
+		formatString: #,##0
+		lineageTag: dd000004-0004-0004-0004-000000000004
+
+	partition KN_PBI_COCO_USAGE = m
+		mode: directQuery
+		source =
+				let
+				    Source = Snowflake.Databases("uhg-uhgdwaas.snowflakecomputing.com","VING_PRD_MNR_HCE_DATAINFRA_WH",[Implementation="2.0"]),
+				    VING_PRD_TREND_DB_Database = Source{[Name="VING_PRD_TREND_DB",Kind="Database"]}[Data],
+				    TMP_1M_Schema = VING_PRD_TREND_DB_Database{[Name="TMP_1M",Kind="Schema"]}[Data],
+				    KN_PBI_COCO_USAGE_Table = TMP_1M_Schema{[Name="KN_PBI_COCO_USAGE",Kind="Table"]}[Data]
+				in
+				    KN_PBI_COCO_USAGE_Table
+

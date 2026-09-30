@@ -1,0 +1,368 @@
+cultureInfo en-US
+
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "kn_pbi_coco_usage.usage_month": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "USAGE_MONTH"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Month": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.user_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "USER_NAME"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "User": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.usage_date": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "USAGE_DATE"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Date": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.model_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "MODEL_NAME"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Model": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.usage_hour": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "USAGE_HOUR"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Hour": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.total_requests": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "Total Requests"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Requests": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.total_credits": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "Total Credits"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Credits": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_coco_usage.total_tokens": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_COCO_USAGE",
+			          "ConceptualProperty": "Total Tokens"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tokens": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.query_date": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "QUERY_DATE"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Date": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.query_type": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "QUERY_TYPE"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Type": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.warehouse_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "WAREHOUSE_NAME"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Warehouse": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.user_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "USER_NAME"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "User": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.elapsed_sec": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "ELAPSED_SEC"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Elapsed (s)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.gb_scanned": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "GB_SCANNED"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "GB Scanned": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.cache_hit_pct": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "CACHE_HIT_PCT"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Cache Hit %": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.execution_status": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "EXECUTION_STATUS"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Status": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kn_pbi_query_activity.query_preview": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "KN_PBI_QUERY_ACTIVITY",
+			          "ConceptualProperty": "QUERY_PREVIEW"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "SQL Preview": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

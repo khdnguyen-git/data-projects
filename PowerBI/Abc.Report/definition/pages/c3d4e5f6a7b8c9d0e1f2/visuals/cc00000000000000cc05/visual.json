@@ -1,0 +1,136 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "cc00000000000000cc05",
+  "position": {
+    "x": 980,
+    "y": 80,
+    "z": 4000,
+    "height": 300,
+    "width": 920,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "stackedColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "QUERY_DATE"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.QUERY_DATE",
+              "nativeQueryRef": "Date",
+              "active": true,
+              "displayName": "Date"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "QUERY_TYPE"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.QUERY_TYPE",
+              "nativeQueryRef": "Type",
+              "active": true,
+              "displayName": "Type"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "Total Queries"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.Total Queries",
+              "nativeQueryRef": "Queries"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Query Type Mix'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "fbb137a2c0e9d93aca1c",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_QUERY_ACTIVITY"
+              }
+            },
+            "Property": "QUERY_DATE"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "982125b328be53034050",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_QUERY_ACTIVITY"
+              }
+            },
+            "Property": "QUERY_TYPE"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

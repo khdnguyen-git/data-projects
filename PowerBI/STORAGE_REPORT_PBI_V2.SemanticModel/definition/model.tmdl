@@ -1,0 +1,23 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["Query1"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table Query1
+ref table DateTableTemplate_c6b7a7b9-f4be-4225-b309-483a639b0ffd
+ref table LocalDateTable_aef7726e-1c95-47ea-8e9f-159fe865ae89
+ref table LocalDateTable_6e33a2d9-18d2-4f79-a9fe-289a29059e6e
+ref table LocalDateTable_beb77c7d-4cc0-4b7e-b7bc-c5cee90a725d
+ref table LocalDateTable_dbe8c05f-e473-4726-9c95-18c34030cee5
+
+ref cultureInfo en-US
+

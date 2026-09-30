@@ -159,3 +159,15 @@ select
 from yearly
 order by admit_yr
 ;
+
+
+select sum(member_appeal_ovtn_cnt) as sum_member_appeal_ovtn_cnt 
+from tmp_1m.ec_ip_dataset_loc_06242026_od 
+where admit_week = 202618
+;
+-- 380
+select sum(member_appeal_ovtn_cnt) as sum_member_appeal_ovtn_cnt 
+from tmp_1m.EC_IP_COMP_06242026_OD 
+where admit_week = 202618 and ipa_pac_flag = 'IPA'
+;
+-- 380

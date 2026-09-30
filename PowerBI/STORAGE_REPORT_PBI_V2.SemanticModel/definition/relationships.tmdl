@@ -1,0 +1,20 @@
+relationship 4a17d315-d8f1-4d42-9e18-b58f186a39ba
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Query1.SNAPSHOT_DATE
+	toColumn: LocalDateTable_aef7726e-1c95-47ea-8e9f-159fe865ae89.Date
+
+relationship 0d6853c0-2824-43b9-95e0-74aef26f653d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Query1.CREATED
+	toColumn: LocalDateTable_6e33a2d9-18d2-4f79-a9fe-289a29059e6e.Date
+
+relationship 69f11441-6442-4ba2-8e40-5c9c1cbd515d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Query1.LAST_ALTERED
+	toColumn: LocalDateTable_beb77c7d-4cc0-4b7e-b7bc-c5cee90a725d.Date
+
+relationship 7dddb87b-a2c3-454d-9230-72b3f890bdce
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Query1.LAST_DDL
+	toColumn: LocalDateTable_dbe8c05f-e473-4726-9c95-18c34030cee5.Date
+

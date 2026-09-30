@@ -1,0 +1,9 @@
+relationship 3a1b2c3d-0001-0001-0001-000000000001
+	fromColumn: KN_PBI_COCO_USAGE.USER_NAME
+	toColumn: KN_PBI_USER_LIST.USER_NAME
+	crossFilteringBehavior: oneDirection
+
+relationship 3a1b2c3d-0002-0002-0002-000000000002
+	fromColumn: KN_PBI_QUERY_ACTIVITY.USER_NAME
+	toColumn: KN_PBI_USER_LIST.USER_NAME
+	crossFilteringBehavior: oneDirection

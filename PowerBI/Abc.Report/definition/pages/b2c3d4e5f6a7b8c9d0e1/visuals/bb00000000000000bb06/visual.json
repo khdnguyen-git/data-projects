@@ -1,0 +1,150 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "bb00000000000000bb06",
+  "position": {
+    "x": 20,
+    "y": 400,
+    "z": 3000,
+    "height": 300,
+    "width": 620,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "stackedColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "USAGE_DATE"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.USAGE_DATE",
+              "nativeQueryRef": "Date",
+              "displayName": "Date",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "KN_PBI_COCO_USAGE"
+                        }
+                      },
+                      "Property": "TOKENS_INPUT"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(KN_PBI_COCO_USAGE.TOKENS_INPUT)",
+              "nativeQueryRef": "Input",
+              "displayName": "Input"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "KN_PBI_COCO_USAGE"
+                        }
+                      },
+                      "Property": "TOKENS_OUTPUT"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(KN_PBI_COCO_USAGE.TOKENS_OUTPUT)",
+              "nativeQueryRef": "Output",
+              "displayName": "Output"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "KN_PBI_COCO_USAGE"
+                        }
+                      },
+                      "Property": "TOKENS_CACHE_READ"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(KN_PBI_COCO_USAGE.TOKENS_CACHE_READ)",
+              "nativeQueryRef": "Cache Read",
+              "displayName": "Cache Read"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "KN_PBI_COCO_USAGE"
+                        }
+                      },
+                      "Property": "TOKENS_CACHE_WRITE"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(KN_PBI_COCO_USAGE.TOKENS_CACHE_WRITE)",
+              "nativeQueryRef": "Cache Write",
+              "displayName": "Cache Write"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Daily Token Breakdown'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

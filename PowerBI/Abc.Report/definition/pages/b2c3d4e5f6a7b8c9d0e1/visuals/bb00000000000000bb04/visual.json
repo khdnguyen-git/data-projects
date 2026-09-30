@@ -1,0 +1,120 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "bb00000000000000bb04",
+  "position": {
+    "x": 20,
+    "y": 80,
+    "z": 5000,
+    "height": 300,
+    "width": 940,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "areaChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "USAGE_DATE"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.USAGE_DATE",
+              "nativeQueryRef": "Date",
+              "active": true,
+              "displayName": "Date"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_COCO_USAGE"
+                    }
+                  },
+                  "Property": "Total Credits"
+                }
+              },
+              "queryRef": "KN_PBI_COCO_USAGE.Total Credits",
+              "nativeQueryRef": "Total Credits"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "KN_PBI_COCO_USAGE"
+                  }
+                },
+                "Property": "USAGE_DATE"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Daily Credits'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "9c863ff00d9a9e02e01e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "KN_PBI_COCO_USAGE"
+              }
+            },
+            "Property": "USAGE_DATE"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

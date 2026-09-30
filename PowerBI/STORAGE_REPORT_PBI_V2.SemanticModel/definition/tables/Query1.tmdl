@@ -1,0 +1,252 @@
+table Query1
+	lineageTag: d8812696-382a-4939-a429-27b133e05874
+
+	measure 'Earliest LAST_DDL max per Day' =
+			
+			MAXX(
+				KEEPFILTERS(VALUES('Query1'[LAST_DDL].[Day])),
+				CALCULATE(MIN('Query1'[LAST_DDL]))
+			)
+		formatString: General Date
+		lineageTag: d0694195-7501-4172-9ef9-c251572b2afa
+
+		extendedProperty MeasureTemplate =
+				{
+				  "version": 0,
+				  "daxTemplateName": "MaxPerCategory"
+				}
+
+		changedProperty = FormatString
+
+	measure 'Earliest LAST_DDL max per LAST_DDL' =
+			
+			MAXX(
+				KEEPFILTERS(VALUES('Query1'[LAST_DDL])),
+				CALCULATE(MIN('Query1'[LAST_DDL]))
+			)
+		formatString: General Date
+		lineageTag: bd5f5fa5-ac2e-4f4e-b490-0c486c9cde02
+
+		extendedProperty MeasureTemplate =
+				{
+				  "version": 0,
+				  "daxTemplateName": "MaxPerCategory"
+				}
+
+		changedProperty = FormatString
+
+	measure 'Earliest LAST_DDL min per LAST_DDL' =
+			
+			MINX(
+				KEEPFILTERS(VALUES('Query1'[LAST_DDL])),
+				CALCULATE(MIN('Query1'[LAST_DDL]))
+			)
+		formatString: General Date
+		lineageTag: 58afc022-0f4c-4e6d-a05c-85956b0d492b
+
+		extendedProperty MeasureTemplate =
+				{
+				  "version": 0,
+				  "daxTemplateName": "MinPerCategory"
+				}
+
+		changedProperty = FormatString
+
+	measure Oldest_DDL =
+			
+			VAR DaysDiff = DATEDIFF(MIN('Query1'[LAST_DDL]), TODAY(), DAY)
+			RETURN DaysDiff & " days"
+		lineageTag: 8462bfbb-5a42-4e76-8ee5-65d3ea338f10
+
+	column SNAPSHOT_DATE
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 5ecd6f4e-4cc4-48bd-88ad-3e53321416a6
+		summarizeBy: none
+		sourceColumn: SNAPSHOT_DATE
+
+		variation Variation
+			isDefault
+			relationship: 4a17d315-d8f1-4d42-9e18-b58f186a39ba
+			defaultHierarchy: LocalDateTable_aef7726e-1c95-47ea-8e9f-159fe865ae89.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column TABLE_CATALOG
+		dataType: string
+		lineageTag: ed53f987-d1c6-40fe-906b-82625445f8ae
+		summarizeBy: none
+		sourceColumn: TABLE_CATALOG
+
+		annotation SummarizationSetBy = Automatic
+
+	column TABLE_SCHEMA
+		dataType: string
+		lineageTag: 48e675eb-10d0-4afd-84c3-c7781d19a31a
+		summarizeBy: none
+		sourceColumn: TABLE_SCHEMA
+
+		annotation SummarizationSetBy = Automatic
+
+	column TABLE_NAME
+		dataType: string
+		lineageTag: f84858ea-7d90-4659-a583-3974fc6f9d38
+		summarizeBy: none
+		sourceColumn: TABLE_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column TABLE_OWNER
+		dataType: string
+		lineageTag: 58fa3db3-4e69-46b2-9186-3a9308acb04d
+		summarizeBy: none
+		sourceColumn: TABLE_OWNER
+
+		annotation SummarizationSetBy = Automatic
+
+	column TABLE_TYPE
+		dataType: string
+		lineageTag: df0faf6f-7b63-44d1-b912-6aa8ceb770a7
+		summarizeBy: none
+		sourceColumn: TABLE_TYPE
+
+		annotation SummarizationSetBy = Automatic
+
+	column ROW_COUNT
+		dataType: double
+		lineageTag: 76d4606a-9441-4eb1-a3f1-4d1bcbdd06ad
+		summarizeBy: sum
+		sourceColumn: ROW_COUNT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BYTES
+		dataType: double
+		lineageTag: 36dde6bc-6fe4-4fa6-95a6-7472f21651cf
+		summarizeBy: sum
+		sourceColumn: BYTES
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column GIGABYTES
+		dataType: double
+		formatString: #,0
+		lineageTag: 33d2d67a-bdb2-40b8-9970-03b5b3bacfd6
+		summarizeBy: sum
+		sourceColumn: GIGABYTES
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDecimal":true}
+
+	column CREATED
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 9178d191-9c89-4d38-bc7b-b185e716c6a5
+		summarizeBy: none
+		sourceColumn: CREATED
+
+		variation Variation
+			isDefault
+			relationship: 0d6853c0-2824-43b9-95e0-74aef26f653d
+			defaultHierarchy: LocalDateTable_6e33a2d9-18d2-4f79-a9fe-289a29059e6e.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column LAST_ALTERED
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 96d6119d-1f9b-4471-9e6b-276b5ab5d909
+		summarizeBy: none
+		sourceColumn: LAST_ALTERED
+
+		variation Variation
+			isDefault
+			relationship: 69f11441-6442-4ba2-8e40-5c9c1cbd515d
+			defaultHierarchy: LocalDateTable_beb77c7d-4cc0-4b7e-b7bc-c5cee90a725d.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column LAST_DDL
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e9a840ec-fc9b-492a-bbdb-aa71f3ace077
+		summarizeBy: none
+		sourceColumn: LAST_DDL
+
+		variation Variation
+			isDefault
+			relationship: 7dddb87b-a2c3-454d-9230-72b3f890bdce
+			defaultHierarchy: LocalDateTable_dbe8c05f-e473-4726-9c95-18c34030cee5.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column LAST_DDL_BY
+		dataType: string
+		lineageTag: fd432d8f-c8ff-4d29-a7ca-e28bccd75a3b
+		summarizeBy: none
+		sourceColumn: LAST_DDL_BY
+
+		annotation SummarizationSetBy = Automatic
+
+	column LAST_DDL_BY_NAME
+		dataType: string
+		lineageTag: acc461e3-9184-4ad7-b07f-8a6855649987
+		summarizeBy: none
+		sourceColumn: LAST_DDL_BY_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column LKUP_SCHEMA_NAME
+		dataType: string
+		lineageTag: 2a602385-b3b7-405f-af85-0dae0e78dc52
+		summarizeBy: none
+		sourceColumn: LKUP_SCHEMA_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column PROCESS_NAME
+		dataType: string
+		lineageTag: a77d5e1b-5f64-4265-b308-2f6346385268
+		summarizeBy: none
+		sourceColumn: PROCESS_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column REF_STRING
+		dataType: string
+		lineageTag: f20409e3-88d7-4c7f-b3a0-32c4a07c257f
+		summarizeBy: none
+		sourceColumn: REF_STRING
+
+		annotation SummarizationSetBy = Automatic
+
+	column TABLE_COUNT
+		dataType: double
+		formatString: #,0
+		lineageTag: abd90d1a-f52b-4ed2-a5f7-b13a274b1cf5
+		summarizeBy: sum
+		sourceColumn: TABLE_COUNT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDecimal":true}
+
+	partition Query1 = m
+		mode: import
+		source =
+				let
+				    Source = Value.NativeQuery(Snowflake.Databases("uhgdwaas.east-us-2.azure.snowflakecomputing.com","VING_PRD_MNR_HCE_DATAINFRA_WH",[Implementation="2.0", Role="AZU_SDRP_VING_PRD_DEVELOPER_ROLE"]){[Name="VING_PRD_TREND_DB"]}[Data], "SELECT * FROM HCE_OPS_FNL.SCHEMA_MONITORING_HISTORY_LOOKUP_ADDED", null, [EnableFolding=true])
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

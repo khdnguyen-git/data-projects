@@ -7,16 +7,19 @@ All tables live in `VING_PRD_TREND_DB` unless otherwise noted.
 
 ## Table of Contents
 
+- [Source-to-Table Map](#source-to-table-map)
 - [Fact Tables](#fact-tables)
   - [Claims (OP/PR)](#claims-oppr)
   - [Claims (IP)](#claims-ip)
   - [Claims (Dental)](#claims-dental)
+  - [Denials](#denials)
   - [Authorizations](#authorizations)
   - [Membership](#membership)
   - [PA Tracking / LOPA](#pa-tracking--lopa)
 - [Dimension & Reference Tables](#dimension--reference-tables)
+  - [FICHSRV Galaxy Dimensions](#fichsrv-galaxy-dimensions)
   - [HCE_OPS_LKUP](#hce_ops_lkup-lookupreference-schema)
-  - [FICHSRV](#fichsrv-enterprise-reference-data)
+  - [FICHSRV Other Reference](#fichsrv-other-reference-data)
   - [TMP_2Y](#tmp_2y-multi-year-reference)
   - [TMP_1Y](#tmp_1y-analyst-working-tables)
   - [External Databases](#external-database-references)
@@ -24,6 +27,43 @@ All tables live in `VING_PRD_TREND_DB` unless otherwise noted.
 - [Common Join Patterns](#common-join-patterns)
 - [Schema Conventions](#schema-naming-conventions)
 - [Session Variables](#session-variables)
+
+---
+
+# Source-to-Table Map
+
+| Source | Deliverable | Table |
+|--------|-------------|-------|
+| Enrollment | Enrollment | `fichsrv.tre_membership` |
+| Enrollment | Enrollment | `fichsrv.macra_crosswalk` |
+| COSMOS | IP | `fichsrv.glxy_ip_admit_f` |
+| COSMOS | OP | `fichsrv.glxy_op_f` |
+| COSMOS | PR | `fichsrv.glxy_pr_f` |
+| COSMOS | Group Retiree Claims | `fichgrp.cosmos_arsg` |
+| COSMOS Denials | IP | `fichsrv.cosmos_ip_w_dnls_clm` |
+| COSMOS Denials | PR | `fichsrv.glxy_pr_f_dn` |
+| COSMOS Denials | PR (report-only codes) | `fichsrv.glxy_pr_rpt_only_cd_dn` |
+| NICE | IP | `fichsrv.nce_ip_admit_f` |
+| NICE | OP | `fichsrv.nce_op_f` |
+| NICE | PR | `fichsrv.nce_pr_f` |
+| SMART (CSP) | IP | `fichsrv.dcsp_ip_admit_f` |
+| SMART (CSP) | OP | `fichsrv.dcsp_op_f` |
+| SMART (CSP) | PR | `fichsrv.dcsp_pr_f` |
+| Provider Risk | Provider Risk Hierarchy | `fichsrv.prov_risk_hrchy` |
+| Dimensions | Bill Type | `fichsrv.tadm_glxy_cosmos_bill_type_cd` |
+| Dimensions | Legal Entity | `fichsrv.tadm_glxy_cosmos_legal_entity` |
+| Dimensions | Diagnosis Code | `fichsrv.tadm_glxy_diagnosis_code` |
+| Dimensions | DRG Code | `fichsrv.tadm_glxy_drg_code` |
+| Dimensions | Place of Service | `fichsrv.tadm_glxy_place_of_service_cd` |
+| Dimensions | Procedure Code | `fichsrv.tadm_glxy_procedure_code` |
+| Dimensions | Procedure Modifier | `fichsrv.tadm_glxy_procedure_mod_code` |
+| Dimensions | Product | `fichsrv.tadm_glxy_product` |
+| Dimensions | Provider | `fichsrv.tadm_glxy_provider` |
+| Dimensions | Provider Category | `fichsrv.tadm_glxy_provider_ctgy_cd` |
+| Dimensions | Provider NPI Detail | `fichsrv.tadm_glxy_provider_npi_detail` |
+| Dimensions | Provider Specialty | `fichsrv.tadm_glxy_provider_specialty` |
+| Dimensions | Reason Code | `fichsrv.tadm_glxy_reason_code` |
+| Dimensions | Revenue Code | `fichsrv.tadm_glxy_revenue_code` |
 
 ---
 
@@ -108,21 +148,31 @@ iff(clm_cap_flag = 'FFS', 'NA', 'ENC') as global_cap
 
 | Table | Rows | Description |
 |-------|------|-------------|
-| `fichgrp.cosmos_arsg` | 810M | COSMOS All Service Groups (full claim-line detail) |
+| `fichgrp.cosmos_arsg` | 810M | COSMOS All Service Groups — group retiree claims |
 | `fichgrp.glxy_ip_f_enc` | 14.6M | Galaxy IP encounters (grouped by encounter) |
 | `fichgrp.glxy_op_f_enc` | 263M | Galaxy OP encounters (grouped) |
 | `fichgrp.glxy_pr_f_enc` | 293M | Galaxy PR encounters (grouped) |
 
 ### Admit-Level (FICHSRV)
 
-| Table | Rows | Description |
-|-------|------|-------------|
-| `fichsrv.glxy_ip_admit_f` | 137M | Galaxy IP admissions |
-| `fichsrv.glxy_ip_admit_f_denial` | 137M | Galaxy IP admissions with denial info |
-| `fichsrv.dcsp_ip_admit_f` | 59M | CSP IP admissions |
-| `fichsrv.cosmos_ip_w_dnls_clm` | 8.5M | COSMOS IP with denial claims |
+| Table | Source | Rows | Description |
+|-------|--------|------|-------------|
+| `fichsrv.glxy_ip_admit_f` | COSMOS | 137M | Galaxy IP admissions |
+| `fichsrv.glxy_ip_admit_f_denial` | COSMOS | 137M | Galaxy IP admissions with denial info |
+| `fichsrv.dcsp_ip_admit_f` | SMART/CSP | 59M | CSP IP admissions |
+| `fichsrv.nce_ip_admit_f` | NICE | 3.9M | NICE IP admissions |
 
 **Note**: IP data in HCE analyses primarily flows through the authorization path (AVTAR/ADR tables) rather than standalone IP claims tables.
+
+---
+
+## Denials
+
+| Table | Source | Rows | Description |
+|-------|--------|------|-------------|
+| `fichsrv.cosmos_ip_w_dnls_clm` | COSMOS | 8.5M | COSMOS IP with denial claims |
+| `fichsrv.glxy_pr_f_dn` | COSMOS | 1.1B | COSMOS PR denials (full denial file) |
+| `fichsrv.glxy_pr_rpt_only_cd_dn` | COSMOS | 1.7M | COSMOS PR report-only code denials |
 
 ---
 
@@ -400,7 +450,36 @@ Schema description: "Lookup/reference tables used in operations or other process
 
 ---
 
-## FICHSRV (Enterprise Reference Data)
+## FICHSRV Galaxy Dimensions
+
+The `tadm_glxy_*` tables in `fichsrv` are the canonical Galaxy data model dimensions.
+
+| Table | Rows | Description |
+|-------|------|-------------|
+| `tadm_glxy_diagnosis_code` | 115,797 | ICD diagnosis code reference |
+| `tadm_glxy_procedure_code` | 342,997 | CPT/HCPCS procedure code reference (with AHRQ categories) |
+| `tadm_glxy_drg_code` | 892 | DRG code, description, weight, MDC |
+| `tadm_glxy_revenue_code` | 10,001 | Revenue code reference |
+| `tadm_glxy_reason_code` | 37,137 | Claim reason/denial code reference |
+| `tadm_glxy_place_of_service_cd` | 1,558 | Place of service code reference |
+| `tadm_glxy_cosmos_bill_type_cd` | 2,015 | COSMOS bill type code reference |
+| `tadm_glxy_cosmos_legal_entity` | 2,291 | COSMOS legal entity reference |
+| `tadm_glxy_procedure_mod_code` | 2,280 | Procedure modifier code reference |
+| `tadm_glxy_product` | 2,082 | Product reference |
+| `tadm_glxy_provider` | 79,486,115 | Provider master (large — full provider directory) |
+| `tadm_glxy_provider_npi_detail` | 60,815,533 | Provider NPI detail (large) |
+| `tadm_glxy_provider_ctgy_cd` | 6,852 | Provider category code reference |
+| `tadm_glxy_provider_specialty` | 101 | Provider specialty reference |
+
+### Provider Risk
+
+| Table | Rows | Description |
+|-------|------|-------------|
+| `fichsrv.prov_risk_hrchy` | 575,236,049 | Provider risk hierarchy (large fact/dimension hybrid) |
+
+---
+
+## FICHSRV Other Reference Data
 
 389 tables total. Key reference/dimension tables (fact tables listed above):
 
@@ -434,6 +513,8 @@ Schema description: "Lookup/reference tables used in operations or other process
 |-------|------|-------------|
 | `MARKET_TABLE` | 2,174,859 | Market-level reference data |
 | `GATEKEEP_PLANS_26F` | 501 | Gatekeeper plan PBPs (2026 forward) |
+
+**Note**: The Galaxy dimension tables (`tadm_glxy_*`) are listed in a dedicated section above.
 
 ---
 

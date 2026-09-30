@@ -26,7 +26,7 @@ select
     , iff(special_network in ('ERICKSON'), 1, 0) as erk
     , sgr_source_name
 from hce_ops_archv.gl_rstd_gpsgalnce_f_202607
-where fin_inc_year > 2018
+where fin_inc_year > 2023
     and fin_brand = 'M&R'
     and sgr_source_name in ('COSMOS', 'NICE')
     and ((sgr_source_name = 'COSMOS' and global_cap = 'NA') or (sgr_source_name = 'NICE' and nce_tadm_dec_risk_type in ('FFS', 'PHYSICIAN')))
@@ -136,11 +136,11 @@ select
     , *
 from tmp_1q.kn_lopa_pr_1_202607
 ;
-select serv_month, sum(allowed)
-from tmp_1q.kn_mbm_episode_pr_202607
-where serv_month >= '202601'
-group by 1
-order by 1
+-- select serv_month, sum(allowed)
+-- from tmp_1q.kn_mbm_episode_pr_202607
+-- where serv_month >= '202601'
+-- group by 1
+-- order by 1
 
 /*==============================================================================
  * PROVIDER CLAIMS PROCESSING

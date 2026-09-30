@@ -1,0 +1,32 @@
+table KN_PBI_USER_LIST
+	lineageTag: 85fc19fd-843c-4d44-ac18-20dc3d1fa3a8
+
+	column USER_NAME
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: 8f9800d2-609d-432e-b45b-d6dae6e0fff1
+		summarizeBy: none
+		sourceColumn: USER_NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column USER_FLAG
+		dataType: string
+		sourceProviderType: nvarchar(16777216)
+		lineageTag: a3b2c1d0-e4f5-6789-abcd-ef0123456789
+		summarizeBy: none
+		sourceColumn: USER_FLAG
+
+		annotation SummarizationSetBy = Automatic
+
+	partition KN_PBI_USER_LIST = m
+		mode: directQuery
+		source =
+				let
+				    Source = Snowflake.Databases("uhg-uhgdwaas.snowflakecomputing.com","VING_PRD_MNR_HCE_DATAINFRA_WH",[Implementation="2.0"]),
+				    VING_PRD_TREND_DB_Database = Source{[Name="VING_PRD_TREND_DB",Kind="Database"]}[Data],
+				    TMP_1M_Schema = VING_PRD_TREND_DB_Database{[Name="TMP_1M",Kind="Schema"]}[Data],
+				    KN_PBI_USER_LIST_View = TMP_1M_Schema{[Name="KN_PBI_USER_LIST",Kind="View"]}[Data]
+				in
+				    KN_PBI_USER_LIST_View
+

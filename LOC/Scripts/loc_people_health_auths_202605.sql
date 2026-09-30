@@ -224,6 +224,7 @@ with auths as (
         , fin_tfm_product_new
         , fin_contractpbp
         , prov_tin
+        , fin_market
         , count(distinct case_id) as case_count
         , count(distinct (case when initialfulladr_cases = 1 then case_id end)) as Initial_ADR_cnt	
         , count(distinct (case when persistentfulladr_cases = 1 then case_id end)) as Persistent_ADR_cnt
@@ -236,6 +237,7 @@ with auths as (
         , fin_tfm_product_new
         , fin_contractpbp
         , prov_tin
+        , fin_market
 )
 
 , mm as (
@@ -304,13 +306,14 @@ select
     , a.initial_adr_cnt
     , a.persistent_adr_cnt
     , a.case_count
+    , a.fin_market
     , b.membership
     , a.case_count * 1000.0 / nullif(b.membership, 0) as auth_per_k
 from auth_agg as a
 left join mm as b
     on a.admit_act_month = b.fin_inc_month
     and a.population = b.population
-;
+where ip_type = ''
 
 select * from tmp_1m.kn_people_health_auths_202605
 ;

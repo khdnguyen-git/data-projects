@@ -1,0 +1,194 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "cc00000000000000cc07",
+  "position": {
+    "x": 660,
+    "y": 400,
+    "z": 2000,
+    "height": 300,
+    "width": 1240,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "USER_NAME"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.USER_NAME",
+              "nativeQueryRef": "User",
+              "displayName": "User",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "QUERY_DATE"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.QUERY_DATE",
+              "nativeQueryRef": "Date",
+              "displayName": "Date",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "QUERY_TYPE"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.QUERY_TYPE",
+              "nativeQueryRef": "Type",
+              "displayName": "Type",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "WAREHOUSE_NAME"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.WAREHOUSE_NAME",
+              "nativeQueryRef": "Warehouse",
+              "displayName": "Warehouse",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "ELAPSED_SEC"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.ELAPSED_SEC",
+              "nativeQueryRef": "Elapsed (s)",
+              "displayName": "Elapsed (s)",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "GB_SCANNED"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.GB_SCANNED",
+              "nativeQueryRef": "GB Scanned",
+              "displayName": "GB Scanned",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "CACHE_HIT_PCT"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.CACHE_HIT_PCT",
+              "nativeQueryRef": "Cache Hit %",
+              "displayName": "Cache Hit %",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "EXECUTION_STATUS"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.EXECUTION_STATUS",
+              "nativeQueryRef": "Status",
+              "displayName": "Status",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "KN_PBI_QUERY_ACTIVITY"
+                    }
+                  },
+                  "Property": "QUERY_PREVIEW"
+                }
+              },
+              "queryRef": "KN_PBI_QUERY_ACTIVITY.QUERY_PREVIEW",
+              "nativeQueryRef": "SQL Preview",
+              "displayName": "SQL Preview",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Query Detail'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
